@@ -47,10 +47,29 @@ def main():
     nearest_idx = dists.idxmin()
     
     nearest_ngcm_row = df_ngcm.iloc[[nearest_idx]].copy()
-    nearest_geo_row = df_geology.iloc[[nearest_idx]].copy()
-    full_row = pd.merge(nearest_ngcm_row, nearest_geo_row, on=['latitude', 'longitude', 'geological_unit'])
+    
+    # BUG FIX: pd.merge can produce empty DataFrame if geology row doesn't match.
+    # Use positional iloc lookup on geology instead of merge to guarantee non-empty result.
+    nearest_geo_row = df_geology.iloc[[nearest_idx]].copy() if nearest_idx < len(df_geology) else pd.DataFrame()
+    
+    if not nearest_geo_row.empty:
+        # Only merge on common columns that actually exist in both frames
+        common_cols = list(set(nearest_ngcm_row.columns) & set(nearest_geo_row.columns))
+        merge_keys = [c for c in ['latitude', 'longitude', 'geological_unit'] if c in common_cols]
+        if merge_keys:
+            merged = pd.merge(nearest_ngcm_row, nearest_geo_row, on=merge_keys)
+            full_row = merged if not merged.empty else nearest_ngcm_row.copy()
+        else:
+            full_row = nearest_ngcm_row.copy()
+    else:
+        full_row = nearest_ngcm_row.copy()
+    
+    # Ensure full_row is not empty (absolute fallback)
+    if full_row.empty:
+        full_row = nearest_ngcm_row.copy()
     
     # 4. Override user-input features
+    full_row = full_row.copy()
     full_row['latitude'] = args.latitude
     full_row['longitude'] = args.longitude
     full_row['rock_type'] = args.rock_type
@@ -67,18 +86,28 @@ def main():
     
     # 5. Model Prediction
     features_cols = model.feature_names_in_
-    X_input = full_row[features_cols]
+    # BUG FIX: Use reindex to fill any missing columns with 0 instead of crashing with KeyError
+    X_input = full_row.reindex(columns=features_cols, fill_value=0)
     
     pred_score = float(model.predict(X_input)[0])
     mineral_probability = float(np.clip(pred_score, 0.0, 1.0))
+    
+    # BUG FIX: Helper to safely read a column value from full_row with fallback
+    def safe_col(col, default=0.0):
+        if col in full_row.columns:
+            val = full_row[col].values[0]
+            if pd.isna(val):
+                return default
+            return float(val)
+        return default
     
     # 6. Analyze element enrichment and compile likely minerals
     predicted_minerals = []
     
     # Thresholds (70th percentile of elements in dataset)
-    thresh_fe = df_ngcm['fe2o3__'].quantile(0.70)
-    thresh_cu = df_ngcm['cu_ppm'].quantile(0.70)
-    thresh_zn = df_ngcm['zn_ppm'].quantile(0.70)
+    thresh_fe = df_ngcm['fe2o3__'].quantile(0.70) if 'fe2o3__' in df_ngcm.columns else 5.0
+    thresh_cu = df_ngcm['cu_ppm'].quantile(0.70) if 'cu_ppm' in df_ngcm.columns else 30.0
+    thresh_zn = df_ngcm['zn_ppm'].quantile(0.70) if 'zn_ppm' in df_ngcm.columns else 60.0
     
     if fe2o3_val > thresh_fe: predicted_minerals.append("Iron")
     if args.cu > thresh_cu: predicted_minerals.append("Copper")
@@ -94,21 +123,23 @@ def main():
     }
     for col, min_name in element_to_mineral.items():
         if min_name not in predicted_minerals:
-            val = float(full_row[col].values[0])
-            thresh = df_ngcm[col].quantile(0.70)
-            if val > thresh:
-                predicted_minerals.append(min_name)
+            if col in df_ngcm.columns:
+                val = safe_col(col)
+                thresh = df_ngcm[col].quantile(0.70)
+                if val > thresh:
+                    predicted_minerals.append(min_name)
                 
     # Query nearest mineral occurrences within 15 km
-    df_min_occ_temp = df_min_occ.copy()
-    dists_min = np.sqrt((df_min_occ_temp['y'] - args.latitude)**2 + (df_min_occ_temp['x'] - args.longitude)**2) * 111.0
+    dists_min = np.sqrt((df_min_occ['y'] - args.latitude)**2 + (df_min_occ['x'] - args.longitude)**2) * 111.0
     near_min_indices = dists_min[dists_min <= 15.0].index
     if not near_min_indices.empty:
         for idx in near_min_indices:
-            commodity = str(df_min_occ.loc[idx, 'commodity']).strip().capitalize()
-            if "Banded magnetite quartzite" in commodity:
+            # BUG FIX: Use title() for proper casing, not capitalize() which lowercases rest
+            commodity = str(df_min_occ.loc[idx, 'commodity']).strip().title()
+            # Normalize common names
+            if any(kw in commodity.lower() for kw in ['magnetite', 'banded ferruginous']):
                 commodity = "Iron"
-            if commodity not in predicted_minerals:
+            if commodity and commodity not in predicted_minerals:
                 predicted_minerals.append(commodity)
                 
     if not predicted_minerals:
@@ -138,36 +169,37 @@ def main():
         elif min_name == "Zinc":
             mineral_percentages[min_name] = round(args.zn / 10000.0, 6)
         elif min_name == "Gold":
-            val = float(full_row['au_ppb'].values[0])
-            mineral_percentages[min_name] = round(val / 1000000.0, 8)
+            mineral_percentages[min_name] = round(safe_col('au_ppb') / 1000000.0, 8)
         elif min_name == "Manganese":
-            val = float(full_row['mno__'].values[0])
-            mineral_percentages[min_name] = round(val, 4)
+            mineral_percentages[min_name] = round(safe_col('mno__'), 4)
         elif min_name == "Nickel":
-            val = float(full_row['ni_ppm'].values[0])
-            mineral_percentages[min_name] = round(val / 10000.0, 6)
+            mineral_percentages[min_name] = round(safe_col('ni_ppm') / 10000.0, 6)
         elif min_name == "Lead":
-            val = float(full_row['pb_ppm'].values[0])
-            mineral_percentages[min_name] = round(val / 10000.0, 6)
+            mineral_percentages[min_name] = round(safe_col('pb_ppm') / 10000.0, 6)
         elif min_name == "Chromium":
-            val = float(full_row['cr_ppm'].values[0])
-            mineral_percentages[min_name] = round(val / 10000.0, 6)
+            mineral_percentages[min_name] = round(safe_col('cr_ppm') / 10000.0, 6)
         elif min_name == "Quartzite":
             mineral_percentages[min_name] = 65.0
         elif min_name == "Clay":
             mineral_percentages[min_name] = 45.0
         else:
-            # Fallback estimation
             mineral_percentages[min_name] = 1.5
             
-    # 8. Output JSON to stdout
+    # 8. Determine geological zone safely
+    geo_zone = "Unknown Formation"
+    if 'geological_unit' in full_row.columns:
+        gz_val = full_row['geological_unit'].values[0]
+        if not pd.isna(gz_val):
+            geo_zone = str(gz_val)
+            
+    # 9. Output JSON to stdout
     result = {
         "mineral_probability": prob_percent,
         "predicted_minerals": predicted_minerals,
         "mineral_percentages": mineral_percentages,
         "confidence": confidence,
-        "geological_zone": str(full_row['geological_unit'].values[0]),
-        "rock_type": str(full_row['rock_type'].values[0]),
+        "geological_zone": geo_zone,
+        "rock_type": str(full_row['rock_type'].values[0]) if 'rock_type' in full_row.columns else args.rock_type,
         "nearest_mineral": str(df_min_occ.loc[dists_min.idxmin(), 'commodity']),
         "nearest_mineral_dist_km": float(dists_min.min()),
         "altitude": args.altitude
@@ -176,4 +208,9 @@ def main():
     print(json.dumps(result))
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception as e:
+        # Catch-all: always return JSON so Node.js can parse the error cleanly
+        print(json.dumps({"error": str(e)}))
+        sys.exit(1)

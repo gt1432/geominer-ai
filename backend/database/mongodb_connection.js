@@ -83,10 +83,11 @@ const dbService = {
                 return await newPrediction.save();
             } catch (err) {
                 console.error('MongoDB write failed. Saving to local database fallback.', err);
+                // Fall through to local JSON fallback below
             }
         }
         
-        // Fallback JSON Saving
+        // Local JSON Fallback Saving (also used when MongoDB write fails)
         const db = readLocalDb();
         const doc = {
             _id: Math.random().toString(16).substring(2, 14) + Math.random().toString(16).substring(2, 14),

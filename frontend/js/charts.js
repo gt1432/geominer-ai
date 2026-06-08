@@ -12,6 +12,7 @@ async function loadDashboardData(occCanvas, actCanvas) {
     try {
         // 1. Fetch Stats from server
         const statsResponse = await fetch(`${API_BASE_URL}/stats`);
+        if (!statsResponse.ok) throw new Error(`Stats API error: ${statsResponse.status}`);
         const stats = await statsResponse.json();
         
         // Update metric
@@ -19,6 +20,7 @@ async function loadDashboardData(occCanvas, actCanvas) {
         
         // 2. Fetch Occurrences from server to plot commodities count
         const occResponse = await fetch(`${API_BASE_URL}/occurrences`);
+        if (!occResponse.ok) throw new Error(`Occurrences API error: ${occResponse.status}`);
         const occurrences = await occResponse.json();
         
         // Count commodities frequency

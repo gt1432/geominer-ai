@@ -29,8 +29,14 @@ connectDb();
 const predictionRoutes = require('./routes/prediction_routes');
 app.use('/', predictionRoutes);
 
-// Fallback HTML routing for index
+// Fallback HTML routing — only for non-API requests (prevents API errors returning HTML)
 app.get('*', (req, res) => {
+    // If the path looks like an API call, return 404 JSON
+    if (req.path.startsWith('/api/') || req.path.startsWith('/predict') ||
+        req.path.startsWith('/predictions') || req.path.startsWith('/stats') ||
+        req.path.startsWith('/occurrences') || req.path.startsWith('/geocode')) {
+        return res.status(404).json({ error: `Route not found: ${req.method} ${req.path}` });
+    }
     res.sendFile(path.join(frontendPath, 'index.html'));
 });
 

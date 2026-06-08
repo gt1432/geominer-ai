@@ -150,9 +150,14 @@ function loadPredictionResults() {
         nearestEl.textContent = `${data.nearest_mineral} (${(data.nearest_mineral_dist_km || 0).toFixed(2)} km away)`;
     }
     
-    // ── 5. PDF Download Link ──
-    if (data._id) {
-        document.getElementById('btn-pdf-download').href = `${API_BASE_URL}/predictions/${data._id}/pdf`;
+    // ── 5. PDF Download Link (safe _id handling for both MongoDB ObjectId and JSON fallback string) ──
+    const predId = data._id ? (data._id.$oid || data._id.toString() || data._id) : null;
+    if (predId) {
+        document.getElementById('btn-pdf-download').href = `${API_BASE_URL}/predictions/${predId}/pdf`;
+    } else {
+        // Hide PDF button if no ID available
+        const pdfBtn = document.getElementById('btn-pdf-download');
+        if (pdfBtn) { pdfBtn.style.display = 'none'; }
     }
     
     // ── 6. Mineral Inventory (Progress Bars + Donut Chart) ──

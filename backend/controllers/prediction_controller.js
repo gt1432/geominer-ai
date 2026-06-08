@@ -35,8 +35,8 @@ exports.predictMineralPotential = async (req, res) => {
             '--altitude', cleanAlt.toString()
         ];
         
-        // Spawn Python ML subprocess
-        execFile(PYTHON_PATH, args, async (error, stdout, stderr) => {
+        // Spawn Python ML subprocess (120s timeout to prevent indefinite hang)
+        execFile(PYTHON_PATH, args, { timeout: 120000, maxBuffer: 1024 * 1024 * 5 }, async (error, stdout, stderr) => {
             if (error) {
                 console.error('Python prediction execution failed:', error, stderr);
                 return res.status(500).json({ 
@@ -496,6 +496,7 @@ exports.geocodeLocation = async (req, res) => {
             try {
                 const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(q)}&key=${key}`;
                 const response = await fetch(url);
+                if (!response.ok) throw new Error(`Google Maps API returned ${response.status}`);
                 const data = await response.json();
                 if (data.status === 'OK') {
                     const loc = data.results[0].geometry.location;
