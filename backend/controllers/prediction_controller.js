@@ -134,201 +134,315 @@ exports.downloadPdfReport = async (req, res) => {
             return res.status(404).json({ error: 'Prediction record not found.' });
         }
         
-        // Setup PDF Document
-        const doc = new PDFDocument({ margin: 50 });
+        // Setup PDF Document with size A4
+        const doc = new PDFDocument({ margin: 50, size: 'A4' });
         const filename = `geominer-report-${id.substring(0, 8)}.pdf`;
         
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
-        
-        // Pipe the PDF document to response stream
         doc.pipe(res);
         
-        // --- PDF STYLING & DRAWING ---
+        // ─── COLOR PALETTE ───
+        const C_DARK       = '#0f172a';
+        const C_BLUE       = '#0284c7';
+        const C_BLUE_LIGHT = '#38bdf8';
+        const C_PURPLE     = '#7c3aed';
+        const C_GREEN      = '#10b981';
+        const C_AMBER      = '#f59e0b';
+        const C_RED        = '#ef4444';
+        const C_GRAY       = '#64748b';
+        const C_LIGHT_BG   = '#f8fafc';
+        const C_CARD_BG    = '#f1f5f9';
         
-        // Colors
-        const brandBlue = '#0f172a'; // Slate / Dark Blue
-        const highlightBlue = '#0284c7'; // Teal blue
-        const textMuted = '#4b5563';
+        const PAGE_W = doc.page.width;
+        const MARGIN = 50;
+        const CONTENT_W = PAGE_W - MARGIN * 2;
         
-        // Header Logo / Brand Title
-        doc.fillColor(brandBlue)
-           .font('Helvetica-Bold')
-           .fontSize(22)
-           .text('GEOMINER AI', 50, 45)
-           .fontSize(10)
-           .fillColor(highlightBlue)
-           .text('GEOLOGICAL INTELLIGENCE & DISCOVERY PLATFORM', 50, 68);
-           
-        // Draw Double Border Horizontal lines
-        doc.strokeColor(brandBlue).lineWidth(2).moveTo(50, 85).lineTo(560, 85).stroke();
-        doc.strokeColor(highlightBlue).lineWidth(0.5).moveTo(50, 90).lineTo(560, 90).stroke();
+        // ─── HELPER FUNCTIONS ───
+        const drawHRule = (y, color = '#e2e8f0', width = 1) => {
+            doc.strokeColor(color).lineWidth(width)
+               .moveTo(MARGIN, y).lineTo(PAGE_W - MARGIN, y).stroke();
+        };
         
-        // Document Subtitle / Metadata
-        doc.fillColor(textMuted)
-           .font('Helvetica-Oblique')
-           .fontSize(8)
-           .text(`Report ID: ${id}`, 350, 48, { align: 'right' })
-           .text(`Generated: ${new Date(record.createdAt || Date.now()).toLocaleString()}`, 350, 60, { align: 'right' });
-           
-        // Section 1: Executive Summary Card
-        doc.fillColor(brandBlue)
-           .font('Helvetica-Bold')
-           .fontSize(14)
-           .text('1. Executive Exploration Summary', 50, 110);
-           
-        // Draw a light grey bounding card box
-        doc.rect(50, 130, 510, 80)
-           .fillColor('#f3f4f6')
-           .fill();
-           
-        doc.fillColor(brandBlue)
-           .font('Helvetica-Bold')
-           .fontSize(10)
-           .text('Mineral Potential Score:', 70, 145)
-           .fontSize(22)
-           .fillColor(highlightBlue)
-           .text(`${record.mineral_probability}%`, 70, 160)
-           .fontSize(9)
-           .fillColor(textMuted)
-           .text('Computed Exploration Probability', 70, 190);
-           
-        doc.fillColor(brandBlue)
-           .font('Helvetica-Bold')
-           .fontSize(10)
-           .text('Confidence Classification:', 300, 145)
-           .fontSize(16)
-           .fillColor(record.confidence === 'High' ? '#10b981' : '#f59e0b')
-           .text(record.confidence, 300, 162)
-           .fontSize(9)
-           .fillColor(textMuted)
-           .text('Target exploration risk index', 300, 185);
-           
-        // Section 2: Spatial Details
-        doc.fillColor(brandBlue)
-           .font('Helvetica-Bold')
-           .fontSize(14)
-           .text('2. Spatial & Geographic Information', 50, 230);
-           
-        // Coordinates and Location info
-        doc.font('Helvetica')
-           .fontSize(10)
-           .fillColor(brandBlue)
-           .text('Latitude:', 55, 250, { width: 100 })
-           .font('Helvetica-Bold')
-           .text(record.latitude.toFixed(5), 150, 250)
-           .font('Helvetica')
-           .text('Longitude:', 55, 268, { width: 100 })
-           .font('Helvetica-Bold')
-           .text(record.longitude.toFixed(5), 150, 268)
-           .font('Helvetica')
-           .text('Altitude:', 55, 286, { width: 100 })
-           .font('Helvetica-Bold')
-           .text(`${(record.altitude || 450.0).toFixed(1)} m (AMSL)`, 150, 286)
-           .font('Helvetica')
-           .text('Geological Zone:', 55, 304, { width: 100 })
-           .font('Helvetica-Bold')
-           .text(record.geological_zone || 'Vanivilas formation', 150, 304);
-           
-        doc.font('Helvetica')
-           .text('Selected Rock Type:', 300, 250, { width: 150 })
-           .font('Helvetica-Bold')
-           .text(record.rock_type, 440, 250)
-           .font('Helvetica')
-           .text('Nearest Known Target:', 300, 268, { width: 150 })
-           .font('Helvetica-Bold')
-           .text(record.nearest_mineral || 'Quartzite Quarry', 440, 268)
-           .font('Helvetica')
-           .text('Nearest Dist (km):', 300, 286, { width: 150 })
-           .font('Helvetica-Bold')
-           .text(`${(record.nearest_mineral_dist_km || 0).toFixed(2)} km`, 440, 286);
-           
-        doc.strokeColor('#e5e7eb').lineWidth(0.5).moveTo(50, 325).lineTo(560, 325).stroke();
+        const drawBox = (x, y, w, h, fillColor = C_CARD_BG, strokeColor = '#e2e8f0') => {
+            doc.roundedRect(x, y, w, h, 6)
+               .fillColor(fillColor).fill()
+               .strokeColor(strokeColor).lineWidth(0.5).stroke();
+        };
         
-        // Section 3: Geochemical Indicators
-        doc.fillColor(brandBlue)
-           .font('Helvetica-Bold')
-           .fontSize(14)
-           .text('3. Input Geochemical Elements Override', 50, 340);
-           
-        doc.font('Helvetica')
-           .fontSize(10)
-           .text('Iron oxide concentration (Fe):', 55, 365)
-           .font('Helvetica-Bold')
-           .text(`${record.fe} %`, 250, 365)
-           .font('Helvetica')
-           .text('Copper concentration (Cu_ppm):', 55, 385)
-           .font('Helvetica-Bold')
-           .text(`${record.cu} ppm`, 250, 385)
-           .font('Helvetica')
-           .text('Zinc concentration (Zn_ppm):', 55, 405)
-           .font('Helvetica-Bold')
-           .text(`${record.zn} ppm`, 250, 405);
-           
-        // Section 4: Likely Minerals
-        doc.fillColor(brandBlue)
-           .font('Helvetica-Bold')
-           .fontSize(14)
-           .text('4. Likely Minerals Inventory', 320, 340);
-           
-        let yPos = 365;
-        const minerals = record.predicted_minerals || [];
-        const percentages = record.mineral_percentages || {};
+        const sectionHeader = (title, y) => {
+            doc.rect(MARGIN, y, 3, 18).fillColor(C_BLUE).fill();
+            doc.fillColor(C_DARK).font('Helvetica-Bold').fontSize(13)
+               .text(title, MARGIN + 10, y + 1);
+            return y + 28;
+        };
+        
+        const formatPct = (pct) => {
+            if (pct === undefined || pct === null) return '1.50%';
+            if (pct < 0.001) return `${(pct * 100).toFixed(6)}%`;
+            if (pct < 0.01)  return `${pct.toFixed(5)}%`;
+            if (pct < 1.0)   return `${pct.toFixed(3)}%`;
+            return `${pct.toFixed(2)}%`;
+        };
+        
+        // ═══════════════════════════════════════════
+        // HEADER BANNER
+        // ═══════════════════════════════════════════
+        doc.rect(0, 0, PAGE_W, 100).fillColor(C_DARK).fill();
+        
+        // Brand name
+        doc.fillColor('#ffffff').font('Helvetica-Bold').fontSize(24)
+           .text('GEOMINER AI', MARGIN, 28);
+        doc.fillColor(C_BLUE_LIGHT).font('Helvetica').fontSize(9)
+           .text('MINERAL INTELLIGENCE & GEOLOGICAL DISCOVERY PLATFORM', MARGIN, 56);
+        
+        // Report meta (right side)
+        doc.fillColor('#94a3b8').font('Helvetica').fontSize(8)
+           .text(`Report ID: ${id}`, MARGIN, 28, { align: 'right', width: CONTENT_W })
+           .text(`Generated: ${new Date(record.createdAt || Date.now()).toLocaleString('en-IN')}`, MARGIN, 40, { align: 'right', width: CONTENT_W })
+           .text(`Coordinates: ${record.latitude.toFixed(5)}°N, ${record.longitude.toFixed(5)}°E`, MARGIN, 52, { align: 'right', width: CONTENT_W })
+           .text(`Altitude: ${(record.altitude || 450.0).toFixed(1)} m (AMSL)`, MARGIN, 64, { align: 'right', width: CONTENT_W });
+        
+        let curY = 118;
+        
+        // ═══════════════════════════════════════════
+        // SECTION 1: EXECUTIVE SUMMARY
+        // ═══════════════════════════════════════════
+        curY = sectionHeader('1. Executive Summary', curY);
+        
+        // Score box (left)
+        drawBox(MARGIN, curY, 155, 80, C_CARD_BG);
+        doc.fillColor(C_GRAY).font('Helvetica').fontSize(8).text('MINERAL POTENTIAL SCORE', MARGIN + 10, curY + 10);
+        doc.fillColor(C_BLUE).font('Helvetica-Bold').fontSize(32)
+           .text(`${record.mineral_probability}%`, MARGIN + 10, curY + 24);
+        doc.fillColor(C_GRAY).font('Helvetica').fontSize(8)
+           .text('AI computed probability vs. known deposits', MARGIN + 10, curY + 62, { width: 130 });
+        
+        // Confidence box (center)
+        const confColor = record.confidence === 'High' ? C_RED : (record.confidence === 'Medium' ? C_AMBER : C_GREEN);
+        drawBox(MARGIN + 165, curY, 150, 80, C_CARD_BG);
+        doc.fillColor(C_GRAY).font('Helvetica').fontSize(8).text('CONFIDENCE RATING', MARGIN + 175, curY + 10);
+        doc.fillColor(confColor).font('Helvetica-Bold').fontSize(26)
+           .text(record.confidence || 'Medium', MARGIN + 175, curY + 28);
+        doc.fillColor(C_GRAY).font('Helvetica').fontSize(8)
+           .text('Exploration risk classification index', MARGIN + 175, curY + 62, { width: 130 });
+        
+        // Nearest target box (right)
+        drawBox(MARGIN + 325, curY, 185, 80, C_CARD_BG);
+        doc.fillColor(C_GRAY).font('Helvetica').fontSize(8).text('NEAREST KNOWN TARGET', MARGIN + 335, curY + 10);
+        doc.fillColor(C_DARK).font('Helvetica-Bold').fontSize(11)
+           .text(record.nearest_mineral || 'Quartzite', MARGIN + 335, curY + 28, { width: 160 });
+        doc.fillColor(C_BLUE).font('Helvetica-Bold').fontSize(14)
+           .text(`${(record.nearest_mineral_dist_km || 0).toFixed(2)} km`, MARGIN + 335, curY + 48);
+        doc.fillColor(C_GRAY).font('Helvetica').fontSize(8)
+           .text('from selected target point', MARGIN + 335, curY + 65);
+        
+        curY += 98;
+        drawHRule(curY, '#e2e8f0');
+        curY += 16;
+        
+        // ═══════════════════════════════════════════
+        // SECTION 2: SPATIAL & GEOGRAPHIC DETAILS
+        // ═══════════════════════════════════════════
+        curY = sectionHeader('2. Spatial & Geographic Information', curY);
+        
+        drawBox(MARGIN, curY, CONTENT_W, 90, C_LIGHT_BG);
+        
+        const col1X = MARGIN + 12;
+        const col2X = MARGIN + 130;
+        const col3X = MARGIN + 290;
+        const col4X = MARGIN + 420;
+        
+        // Row 1
+        const r1Y = curY + 14;
+        doc.fillColor(C_GRAY).font('Helvetica').fontSize(8)
+           .text('LATITUDE', col1X, r1Y).text('LONGITUDE', col2X, r1Y)
+           .text('ALTITUDE (AMSL)', col3X, r1Y).text('ROCK TYPE', col4X, r1Y);
+        
+        doc.fillColor(C_DARK).font('Helvetica-Bold').fontSize(11)
+           .text(`${record.latitude.toFixed(5)}°N`, col1X, r1Y + 12)
+           .text(`${record.longitude.toFixed(5)}°E`, col2X, r1Y + 12)
+           .text(`${(record.altitude || 450.0).toFixed(1)} m`, col3X, r1Y + 12)
+           .text(record.rock_type || 'Granite', col4X, r1Y + 12, { width: 130 });
+        
+        // Row 2
+        const r2Y = curY + 54;
+        doc.fillColor(C_GRAY).font('Helvetica').fontSize(8)
+           .text('GEOLOGICAL ZONE', col1X, r2Y)
+           .text('NEAREST MINERAL (DIST)', col3X, r2Y);
+        
+        doc.fillColor(C_DARK).font('Helvetica-Bold').fontSize(9.5)
+           .text(record.geological_zone || 'Vanivilas Formation', col1X, r2Y + 12, { width: 240 })
+           .text(`${record.nearest_mineral || 'Quartzite'} — ${(record.nearest_mineral_dist_km || 0).toFixed(2)} km`, col3X, r2Y + 12, { width: 240 });
+        
+        curY += 108;
+        drawHRule(curY, '#e2e8f0');
+        curY += 16;
+        
+        // ═══════════════════════════════════════════
+        // SECTION 3: MINERAL INVENTORY
+        // ═══════════════════════════════════════════
+        curY = sectionHeader('3. Detected Mineral Inventory with Estimated Concentrations', curY);
+        
+        const minerals   = record.predicted_minerals || [];
+        const pctMap     = record.mineral_percentages || {};
+        
         if (minerals.length > 0) {
-            minerals.forEach((min) => {
-                const pct = percentages[min] !== undefined ? percentages[min] : 1.5;
-                let pctStr = '';
-                if (pct < 0.001) {
-                    pctStr = `${(pct * 100).toFixed(6)}%`;
-                } else if (pct < 1.0) {
-                    pctStr = `${pct.toFixed(4)}%`;
-                } else {
-                    pctStr = `${pct.toFixed(2)}%`;
-                }
+            // Table header
+            drawBox(MARGIN, curY, CONTENT_W, 22, C_DARK);
+            doc.fillColor('#ffffff').font('Helvetica-Bold').fontSize(8.5)
+               .text('Mineral Name', MARGIN + 12, curY + 7)
+               .text('Est. Concentration (%)', MARGIN + 200, curY + 7)
+               .text('Enrichment Class', MARGIN + 340, curY + 7)
+               .text('Indicator Elements', MARGIN + 440, curY + 7);
+            curY += 22;
+            
+            const MINERAL_ELEMENTS = {
+                'Iron':      'Fe₂O₃ oxide',
+                'Copper':    'Cu (ppm)',
+                'Zinc':      'Zn (ppm)',
+                'Gold':      'Au (ppb)',
+                'Manganese': 'MnO oxide',
+                'Nickel':    'Ni (ppm)',
+                'Lead':      'Pb (ppm)',
+                'Chromium':  'Cr (ppm)',
+                'Quartzite': 'SiO₂ silica',
+                'Clay':      'Al₂O₃ oxide'
+            };
+            
+            minerals.forEach((min, idx) => {
+                const pct = pctMap[min] !== undefined ? pctMap[min] : 1.5;
+                const pctStr = formatPct(pct);
+                const rowBg = idx % 2 === 0 ? '#ffffff' : C_LIGHT_BG;
+                const enrichClass = pct > 5 ? 'HIGH' : (pct > 1 ? 'MODERATE' : 'TRACE');
+                const enrichColor = pct > 5 ? C_RED : (pct > 1 ? C_AMBER : C_GRAY);
+                const elemStr = MINERAL_ELEMENTS[min] || 'Multi-element';
                 
-                doc.fillColor(highlightBlue)
-                   .text('  [✓]  ', 320, yPos)
-                   .fillColor(brandBlue)
-                   .font('Helvetica-Bold')
-                   .text(`${min} (${pctStr})`, 360, yPos);
-                yPos += 20;
+                drawBox(MARGIN, curY, CONTENT_W, 22, rowBg, '#e2e8f0');
+                doc.fillColor(C_DARK).font('Helvetica-Bold').fontSize(9)
+                   .text(min, MARGIN + 12, curY + 7);
+                doc.fillColor(C_BLUE).font('Helvetica-Bold').fontSize(9)
+                   .text(pctStr, MARGIN + 200, curY + 7);
+                doc.fillColor(enrichColor).font('Helvetica-Bold').fontSize(8)
+                   .text(enrichClass, MARGIN + 340, curY + 7);
+                doc.fillColor(C_GRAY).font('Helvetica').fontSize(8)
+                   .text(elemStr, MARGIN + 440, curY + 7);
+                curY += 22;
             });
+            
+            curY += 6;
+            doc.fillColor(C_GRAY).font('Helvetica-Oblique').fontSize(7.5)
+               .text('Note: Concentrations are estimated from the NGCM geochemical database (spatial KNN) and geochemical enrichment thresholds (70th percentile). Values represent estimated % composition relative to sediment background levels.', MARGIN, curY, { width: CONTENT_W, lineGap: 2 });
+            curY += 24;
+            
         } else {
-            doc.font('Helvetica-Oblique').fontSize(9).fillColor(textMuted).text('No significant minerals matched.', 320, 365);
+            drawBox(MARGIN, curY, CONTENT_W, 36, C_LIGHT_BG);
+            doc.fillColor(C_GRAY).font('Helvetica-Oblique').fontSize(9)
+               .text('No significant mineral concentrations detected above the 70th percentile enrichment threshold at this location.', MARGIN + 12, curY + 12, { width: CONTENT_W - 24 });
+            curY += 52;
         }
         
-        doc.strokeColor('#e5e7eb').lineWidth(0.5).moveTo(50, 440).lineTo(560, 440).stroke();
+        drawHRule(curY, '#e2e8f0');
+        curY += 16;
         
-        // Section 5: ML Explainability Text
-        doc.fillColor(brandBlue)
-           .font('Helvetica-Bold')
-           .fontSize(14)
-           .text('5. Explainable AI (XAI) Model Interpretation', 50, 460);
-           
-        const targetDesc = record.mineral_probability > 60 
-            ? `High score of ${record.mineral_probability}% indicates strongly enriched mineralized signatures typical of local mining clusters. `
-            : `Moderate to low score of ${record.mineral_probability}% indicates mostly background crustal levels with low anomalous element indications. `;
-            
-        const geologicalDesc = `The selected rock type '${record.rock_type}' matches matching units in the '${record.geological_zone}' geological formation. `;
-        const geoChemDesc = `With input inputs (Fe: ${record.fe}%, Cu: ${record.cu} ppm, Zn: ${record.zn} ppm), the model correlates this geochemistry against the GSI NGCM sediment database and determines known target overlaps (nearest mineralization commodity is '${record.nearest_mineral}' located ${(record.nearest_mineral_dist_km || 0).toFixed(2)} km away).`;
+        // ═══════════════════════════════════════════
+        // SECTION 4: GEOCHEMICAL INPUT PARAMETERS
+        // ═══════════════════════════════════════════
+        curY = sectionHeader('4. Input Geochemical Parameters', curY);
         
-        doc.font('Helvetica')
-           .fontSize(9.5)
-           .fillColor(textMuted)
-           .text(targetDesc + geologicalDesc + geoChemDesc, 50, 485, {
-               align: 'justify',
-               width: 510,
-               lineGap: 4
-           });
-           
-        // Footer notice
-        doc.strokeColor(brandBlue).lineWidth(1).moveTo(50, 720).lineTo(560, 720).stroke();
-        doc.fillColor(textMuted)
-           .font('Helvetica')
-           .fontSize(8)
-           .text('Disclaimer: This report is generated by GeoMiner AI based on mathematical predictive models. Exploration involves risk and should be verified in field.', 50, 730, { align: 'center', width: 510 });
-           
-        // Finalize PDF file
+        drawBox(MARGIN, curY, CONTENT_W, 60, C_CARD_BG);
+        
+        const geoParams = [
+            ['Iron Oxide (Fe₂O₃)', `${record.fe} %`, MARGIN + 12, curY + 14],
+            ['Copper (Cu)', `${record.cu} ppm`, MARGIN + 12, curY + 34],
+            ['Zinc (Zn)', `${record.zn} ppm`, MARGIN + 175, curY + 14],
+        ];
+        
+        geoParams.forEach(([label, val, x, y]) => {
+            doc.fillColor(C_GRAY).font('Helvetica').fontSize(8).text(label, x, y);
+            doc.fillColor(C_DARK).font('Helvetica-Bold').fontSize(10).text(val, x + 140, y);
+        });
+        
+        curY += 76;
+        
+        // ═══════════════════════════════════════════
+        // SECTION 5: XAI MODEL INTERPRETATION
+        // ═══════════════════════════════════════════
+        curY = sectionHeader('5. Explainable AI (XAI) Model Interpretation', curY);
+        
+        const scoreDesc = record.mineral_probability > 60
+            ? `The HIGH potential score of ${record.mineral_probability}% indicates strongly enriched mineralized geochemical signatures, consistent with known local mining clusters and quarry activity. This region shows element concentrations significantly above background levels.`
+            : record.mineral_probability > 20
+            ? `The MODERATE potential score of ${record.mineral_probability}% indicates measurable geochemical anomalies above background crustal levels. Element enrichment is present but sub-economic. Further detailed prospecting is recommended.`
+            : `The LOW potential score of ${record.mineral_probability}% indicates geochemical values within normal crustal background ranges. The region shows minimal enrichment signals relative to the NGCM database baseline.`;
+        
+        const geoDesc = `Rock Type: The selected '${record.rock_type}' lithology matches geological units within the '${record.geological_zone || 'identified formation'}', which are known hosts for associated mineral assemblages in the Dharwar Craton of southern India.`;
+        
+        const chemDesc = `Geochemistry: Input concentrations (Fe₂O₃: ${record.fe}%, Cu: ${record.cu} ppm, Zn: ${record.zn} ppm) were cross-correlated against 10,004 stream sediment samples from the National Geochemical Campaign Mapping (NGCM) database. The nearest known mineral occurrence ('${record.nearest_mineral}') is located ${(record.nearest_mineral_dist_km || 0).toFixed(2)} km from the prediction target, influencing the spatial proximity score component.`;
+        
+        const methodDesc = `Methodology: Predictions are generated by a trained Random Forest Regressor (scikit-learn) using features: latitude, longitude, Fe₂O₃, Cu_ppm, Zn_ppm, Au_ppb, MnO, Ni_ppm, Cr_ppm, Pb_ppm, geological_unit, and rock_type. The model was trained on joined NGCM + GSI lithology spatial data with KNN proximity weighting.`;
+        
+        doc.fillColor(C_DARK).font('Helvetica').fontSize(9).lineGap(3)
+           .text(scoreDesc, MARGIN, curY, { width: CONTENT_W, align: 'justify' });
+        curY = doc.y + 8;
+        
+        doc.fillColor(C_GRAY).font('Helvetica-Bold').fontSize(8).text('Rock Type Assessment:', MARGIN, curY);
+        curY = doc.y + 2;
+        doc.fillColor(C_DARK).font('Helvetica').fontSize(8.5).lineGap(2)
+           .text(geoDesc, MARGIN + 12, curY, { width: CONTENT_W - 12, align: 'justify' });
+        curY = doc.y + 8;
+        
+        doc.fillColor(C_GRAY).font('Helvetica-Bold').fontSize(8).text('Geochemical Analysis:', MARGIN, curY);
+        curY = doc.y + 2;
+        doc.fillColor(C_DARK).font('Helvetica').fontSize(8.5).lineGap(2)
+           .text(chemDesc, MARGIN + 12, curY, { width: CONTENT_W - 12, align: 'justify' });
+        curY = doc.y + 8;
+        
+        doc.fillColor(C_GRAY).font('Helvetica-Bold').fontSize(8).text('Methodology:', MARGIN, curY);
+        curY = doc.y + 2;
+        doc.fillColor(C_DARK).font('Helvetica').fontSize(8.5).lineGap(2)
+           .text(methodDesc, MARGIN + 12, curY, { width: CONTENT_W - 12, align: 'justify' });
+        curY = doc.y + 18;
+        
+        // ═══════════════════════════════════════════
+        // SECTION 6: CORE PLATFORM CAPABILITIES
+        // ═══════════════════════════════════════════
+        drawHRule(curY, '#e2e8f0');
+        curY += 16;
+        curY = sectionHeader('6. GeoMiner AI — Core Platform Capabilities', curY);
+        
+        const caps = [
+            ['Spatial Area Selection', 'Interactive GIS map with click-to-point and rectangle area draw. 5 km exploration boundary auto-plotted from centroid coordinates.'],
+            ['Predictive ML Models', 'Random Forest regressors on NGCM (10,004 records, 68 elements). Mineral probability + element-wise percentage concentrations output.'],
+            ['Prospectivity Heatmaps', 'Real-time density heatmaps overlaid on Leaflet.js maps showing high-potential exploration zones from known mineral occurrence registry.'],
+            ['PDF Exploration Reports', 'Auto-generated reports covering: mineral inventory, concentrations (%), lat/lon/altitude, geological zone, nearest deposits, XAI model interpretation.'],
+        ];
+        
+        caps.forEach(([title, desc], idx) => {
+            const cx = idx % 2 === 0 ? MARGIN : MARGIN + CONTENT_W / 2 + 6;
+            const cy = curY + Math.floor(idx / 2) * 52;
+            drawBox(cx, cy, CONTENT_W / 2 - 6, 46, C_LIGHT_BG);
+            doc.fillColor(C_BLUE).font('Helvetica-Bold').fontSize(8.5).text(`• ${title}`, cx + 10, cy + 8);
+            doc.fillColor(C_GRAY).font('Helvetica').fontSize(7.5).lineGap(1.5)
+               .text(desc, cx + 10, cy + 22, { width: CONTENT_W / 2 - 26 });
+        });
+        
+        curY += 110;
+        
+        // ═══════════════════════════════════════════
+        // FOOTER
+        // ═══════════════════════════════════════════
+        const footerY = doc.page.height - 55;
+        doc.rect(0, footerY - 5, PAGE_W, 60).fillColor(C_DARK).fill();
+        doc.fillColor('#94a3b8').font('Helvetica').fontSize(7.5)
+           .text(
+            'DISCLAIMER: This report is generated by GeoMiner AI using mathematical predictive models trained on publicly available geological databases (NGCM, GSI). Mineral prospectivity scores are probabilistic estimates and do not constitute a guarantee of economic mineral deposits. All exploration activities should be verified through certified geological field surveys before investment decisions.',
+            MARGIN, footerY + 4, { align: 'center', width: CONTENT_W, lineGap: 2 }
+           );
+        doc.fillColor(C_BLUE_LIGHT).font('Helvetica-Bold').fontSize(8)
+           .text('GeoMiner AI  |  ML Exploration Platform  |  v1.0.0', MARGIN, footerY + 32, { align: 'center', width: CONTENT_W });
+        
+        // Finalize PDF
         doc.end();
         
     } catch (err) {
