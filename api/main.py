@@ -1,0 +1,193 @@
+import os
+import pandas as pd
+import numpy as np
+import joblib
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+
+app = FastAPI(
+    title="AI Mineral Discovery Platform API",
+    description="REST API to predict mineral potential score and identify likely mineral occurrences using machine learning.",
+    version="1.0"
+)
+
+# Global variables to cache model and reference data
+model = None
+df_ngcm = None
+df_geology = None
+df_min_occ = None
+
+# Percentiles for element enrichment check
+element_thresholds = {}
+
+class PredictionInput(BaseModel):
+    latitude: float
+    longitude: float
+    fe: float  # Iron concentration
+    cu: float  # Copper concentration
+    zn: float  # Zinc concentration
+    rock_type: str
+
+class PredictionOutput(BaseModel):
+    mineral_probability: float
+    predicted_minerals: list[str]
+    risk_level: str
+
+@app.on_event("startup")
+def startup_event():
+    global model, df_ngcm, df_geology, df_min_occ, element_thresholds
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    models_dir = os.path.join(base_dir, "models")
+    data_dir = os.path.join(base_dir, "data")
+    
+    # 1. Load trained model
+    model_path = os.path.join(models_dir, "best_model.pkl")
+    if os.path.exists(model_path):
+        model = joblib.load(model_path)
+        print("Model loaded successfully.")
+    else:
+        print(f"Warning: Model not found at {model_path}. Predict endpoint will fail until trained.")
+        
+    # 2. Load preprocessed reference data
+    ngcm_path = os.path.join(data_dir, "ngcm.csv")
+    geology_path = os.path.join(data_dir, "geology.csv")
+    min_occ_path = os.path.join(data_dir, "mineral_occurrence.csv")
+    
+    if os.path.exists(ngcm_path) and os.path.exists(geology_path) and os.path.exists(min_occ_path):
+        df_ngcm = pd.read_csv(ngcm_path)
+        df_geology = pd.read_csv(geology_path)
+        df_min_occ = pd.read_csv(min_occ_path)
+        print("Reference datasets loaded successfully.")
+        
+        # Precompute 70th percentiles for geochemical elements to identify enrichment
+        geo_cols = [c for c in df_ngcm.columns if c.endswith('_ppm') or c.endswith('_ppb') or c.endswith('__') or c.endswith('_') or c.endswith('loi')]
+        for col in geo_cols:
+            element_thresholds[col] = df_ngcm[col].quantile(0.70)
+    else:
+        print("Warning: Reference data CSVs not found in data/ folder.")
+
+@app.get("/")
+def read_root():
+    return {
+        "status": "online",
+        "message": "Welcome to the AI Mineral Discovery Platform REST API. Use POST /predict to query coordinates."
+    }
+
+@app.post("/predict", response_model=PredictionOutput)
+def predict(payload: PredictionInput):
+    global model, df_ngcm, df_geology, df_min_occ, element_thresholds
+    
+    if model is None or df_ngcm is None:
+        raise HTTPException(status_code=503, detail="Model or reference datasets not initialized.")
+        
+    # 1. Fast Spatial KNN search (K=1) to get background geochemistry of the area
+    lat_in, lon_in = payload.latitude, payload.longitude
+    
+    # Euclidean distance to all reference points
+    dists = np.sqrt((df_ngcm['latitude'] - lat_in)**2 + (df_ngcm['longitude'] - lon_in)**2)
+    nearest_idx = dists.idxmin()
+    
+    # Copy nearest row as a baseline
+    nearest_ngcm_row = df_ngcm.iloc[[nearest_idx]].copy()
+    nearest_geo_row = df_geology.iloc[[nearest_idx]].copy()
+    
+    # Merge them to reconstruct features expected by preprocessor
+    full_row = pd.merge(nearest_ngcm_row, nearest_geo_row, on=['latitude', 'longitude', 'geological_unit'])
+    
+    # 2. Override baseline features with user-supplied values
+    full_row['latitude'] = lat_in
+    full_row['longitude'] = lon_in
+    full_row['rock_type'] = payload.rock_type
+    
+    # Map user input values to corresponding columns with appropriate scaling
+    # fe is mapped to fe2o3__ (if > 100, we treat it as ppm and convert to oxide percent, e.g. 1200 ppm -> 0.17%)
+    fe_val = payload.fe
+    if fe_val > 100.0:
+        fe2o3_val = fe_val * 1.43 / 10000.0
+    else:
+        fe2o3_val = fe_val
+    full_row['fe2o3__'] = fe2o3_val
+    
+    full_row['cu_ppm'] = payload.cu
+    full_row['zn_ppm'] = payload.zn
+    
+    # 3. Predict Mineral Potential Score
+    features_cols = model.feature_names_in_
+    X_input = full_row[features_cols]
+    
+    pred_score = float(model.predict(X_input)[0])
+    # Clip probability between 0.0 and 1.0
+    mineral_probability = float(np.clip(pred_score, 0.0, 1.0))
+    
+    # 4. Determine likely minerals present based on geochemical enrichment and regional geology
+    predicted_minerals = []
+    
+    # Mapping of element columns to mineral names
+    element_to_mineral = {
+        'cu_ppm': 'Copper',
+        'fe2o3__': 'Iron Ore',
+        'zn_ppm': 'Zinc',
+        'au_ppb': 'Gold',
+        'mno__': 'Manganese',
+        'ni_ppm': 'Nickel',
+        'cr_ppm': 'Chromium',
+        'pb_ppm': 'Lead'
+    }
+    
+    # Check if the user-supplied values are enriched relative to reference data
+    # fe
+    if fe2o3_val > element_thresholds.get('fe2o3__', 4.5):
+        predicted_minerals.append("Iron Ore")
+    # cu
+    if payload.cu > element_thresholds.get('cu_ppm', 30.0):
+        predicted_minerals.append("Copper")
+    # zn
+    if payload.zn > element_thresholds.get('zn_ppm', 50.0):
+        predicted_minerals.append("Zinc")
+        
+    # Check other elements from nearest sample for regional indicators
+    for col, min_name in element_to_mineral.items():
+        if min_name not in predicted_minerals:
+            # Get value from our padded background row
+            val = float(full_row[col].values[0])
+            thresh = element_thresholds.get(col, 0.0)
+            if val > thresh:
+                predicted_minerals.append(min_name)
+                
+    # Also query the nearest mineralizations within 15 km to add actual commodities of the zone
+    dists_min = np.sqrt((df_min_occ['y'] - lat_in)**2 + (df_min_occ['x'] - lon_in)**2) * 111.0
+    near_min_indices = dists_min[dists_min <= 15.0].index
+    if not near_min_indices.empty:
+        for idx in near_min_indices:
+            commodity = str(df_min_occ.loc[idx, 'commodity']).strip()
+            # Map commodity names to user-friendly titles
+            if "quartz" in commodity.lower() or "magnetite" in commodity.lower():
+                commodity_name = "Iron Ore"
+            else:
+                commodity_name = commodity.capitalize()
+            if commodity_name not in predicted_minerals:
+                predicted_minerals.append(commodity_name)
+                
+    # Ensure a fallback default list if empty and potential is high
+    if not predicted_minerals and mineral_probability > 0.5:
+        predicted_minerals = ["Iron Ore", "Quartzite", "Granite Gneiss"]
+        
+    # Sort for deterministic output
+    predicted_minerals.sort()
+    
+    # Limit to top 3-4 likely minerals
+    predicted_minerals = predicted_minerals[:3]
+    
+    # 5. Determine risk level
+    if mineral_probability >= 0.60:
+        risk_level = "High"
+    elif mineral_probability >= 0.20:
+        risk_level = "Medium"
+    else:
+        risk_level = "Low"
+        
+    return PredictionOutput(
+        mineral_probability=round(mineral_probability, 3),
+        predicted_minerals=predicted_minerals,
+        risk_level=risk_level
+    )

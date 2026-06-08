@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prediction Results - GeoMiner AI</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Leaflet.js for Results Proximity Map -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="logo-container">
+                <h1 class="logo-title">GeoMiner AI</h1>
+                <div class="logo-subtitle">ML Exploration</div>
+            </div>
+            
+            <nav>
+                <ul class="nav-links">
+                    <li class="nav-item">
+                        <a href="index.html">
+                            <i class="fa-solid fa-house"></i> Overview
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="dashboard.html">
+                            <i class="fa-solid fa-chart-line"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item active">
+                        <a href="predict.html">
+                            <i class="fa-solid fa-map-location-dot"></i> Prediction
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="settings.html">
+                            <i class="fa-solid fa-sliders"></i> Settings
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+            
+            <footer class="sidebar-footer">
+                <p>&copy; 2026 GeoMiner AI</p>
+                <p>v1.0.0</p>
+            </footer>
+        </aside>
+        
+        <!-- Main Content Panel -->
+        <main class="content-wrapper">
+            <header class="page-header" style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h1 class="page-title">Prediction Discovery Report</h1>
+                    <p class="page-description">Analysis complete. Model predictions, matched rock zones, and likely commodities are logged below.</p>
+                </div>
+                <div>
+                    <a id="btn-pdf-download" href="#" class="btn-primary" style="padding: 12px 24px;">
+                        <i class="fa-solid fa-file-pdf"></i> Download PDF Report
+                    </a>
+                </div>
+            </header>
+            
+            <!-- Result Overview Grid -->
+            <section class="card-grid" style="grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 30px;">
+                <!-- Result Card -->
+                <div class="glass-card" style="margin-bottom: 0;">
+                    <h4 class="glass-card-header">Discovery Target Analysis</h4>
+                    
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-top: 15px;">
+                        <div>
+                            <div class="metric-label" style="font-size: 0.8rem; color: var(--text-secondary);">Mineral Potential Score</div>
+                            <div class="metric-value" id="res-score">0%</div>
+                            <div class="metric-meta">Computed probability matching local anomalies</div>
+                        </div>
+                        
+                        <div style="text-align: right;">
+                            <div class="metric-label" style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 6px;">Confidence Rating</div>
+                            <span id="res-confidence-badge" class="badge">Loading</span>
+                        </div>
+                    </div>
+                    
+                    <hr style="border: 0.5px solid var(--border-color); margin: 20px 0;"/>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; font-size: 0.9rem;">
+                        <div>
+                            <span style="color: var(--text-secondary);">Query Latitude:</span><br/>
+                            <strong id="res-lat" style="color: var(--text-primary);">0.00000</strong>
+                        </div>
+                        <div>
+                            <span style="color: var(--text-secondary);">Query Longitude:</span><br/>
+                            <strong id="res-lon" style="color: var(--text-primary);">0.00000</strong>
+                        </div>
+                        <div>
+                            <span style="color: var(--text-secondary);">Altitude:</span><br/>
+                            <strong id="res-alt" style="color: var(--text-primary);">0.0 m</strong>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Likely Minerals & Geology Card -->
+                <div class="glass-card" style="margin-bottom: 0;">
+                    <h4 class="glass-card-header">Matched Geological Attributes</h4>
+                    
+                    <div style="margin-top: 15px; display: grid; grid-template-columns: 3fr 2fr; gap: 15px;">
+                        <div>
+                            <div class="metric-label" style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 6px;">Geological Formation Zone</div>
+                            <strong id="res-formation" style="color: var(--primary-light); display: block; font-size: 1rem; margin-bottom: 15px;">Loading...</strong>
+                            
+                            <div class="metric-label" style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 6px;">Selected Rock Type</div>
+                            <strong id="res-rock-type" style="color: var(--text-primary); display: block; font-size: 0.95rem; margin-bottom: 15px;">Loading...</strong>
+                            
+                            <div class="metric-label" style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 6px;">Nearest Known Mineral Target</div>
+                            <strong id="res-nearest-target" style="color: var(--text-primary); display: block; font-size: 0.95rem;">Loading...</strong>
+                        </div>
+                        
+                        <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-color); border-radius: 12px; padding: 15px;">
+                            <div class="metric-label" style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 8px;">Likely Commodities</div>
+                            <div id="res-minerals-list" style="display: flex; flex-direction: column; gap: 8px;">
+                                <!-- Likely minerals list gets appended here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Interactive Map & Heatmap Section -->
+            <section class="glass-card" style="margin-top: 30px;">
+                <h4 style="font-size: 1.2rem; margin-bottom: 15px; color: var(--text-primary);">
+                    <i class="fa-solid fa-map-location-dot" style="color: var(--primary-light);"></i> Target Proximity & Prospectivity Heatmap
+                </h4>
+                <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 15px;">
+                    Visualizing the exploration zone (5 km selection radius) overlayed with regional prospectivity heatmap density. Known mineral deposits and quarries are highlighted.
+                </p>
+                <div id="results-explore-map" style="height: 350px; border-radius: 12px; border: 1px solid var(--border-color); overflow: hidden; background: rgba(0,0,0,0.2); margin-bottom: 10px;"></div>
+            </section>
+
+            <!-- Core Platform Capabilities on Results Page -->
+            <section style="margin-top: 30px; margin-bottom: 30px;">
+                <h4 style="font-size: 1.2rem; margin-bottom: 20px; color: var(--text-primary); border-left: 4px solid var(--primary-light); padding-left: 12px;">Core Platform Capabilities</h4>
+                <div class="card-grid" style="grid-template-columns: 1fr 1fr 1fr; gap: 20px;">
+                    <div class="glass-card" style="margin-bottom: 0; padding: 20px;">
+                        <div style="font-size: 1.5rem; color: var(--primary-light); margin-bottom: 10px;"><i class="fa-solid fa-compass-drafting"></i></div>
+                        <h5 style="font-size: 1rem; margin-bottom: 8px; color: var(--text-primary);">Spatial Discovery</h5>
+                        <p style="color: var(--text-secondary); font-size: 0.8rem; line-height: 1.4;">Coordinates capture & 5km visual boundary marking of interest zones directly from interactive maps.</p>
+                    </div>
+                    <div class="glass-card" style="margin-bottom: 0; padding: 20px;">
+                        <div style="font-size: 1.5rem; color: var(--purple-light); margin-bottom: 10px;"><i class="fa-solid fa-microchip"></i></div>
+                        <h5 style="font-size: 1rem; margin-bottom: 8px; color: var(--text-primary);">Predictive AI Models</h5>
+                        <p style="color: var(--text-secondary); font-size: 0.8rem; line-height: 1.4;">Random Forest regressors trained on joined national geochemical databases (NGCM) and spatial lithology layers.</p>
+                    </div>
+                    <div class="glass-card" style="margin-bottom: 0; padding: 20px;">
+                        <div style="font-size: 1.5rem; color: var(--success); margin-bottom: 10px;"><i class="fa-solid fa-file-pdf"></i></div>
+                        <h5 style="font-size: 1rem; margin-bottom: 8px; color: var(--text-primary);">Automated Reports</h5>
+                        <p style="color: var(--text-secondary); font-size: 0.8rem; line-height: 1.4;">Instantly compiled and streamed PDF reports containing coordinates, altitude, rock zones, and mineral percentages.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Explainable AI (XAI) Plots -->
+            <section class="glass-card">
+                <h4 style="font-size: 1.2rem; margin-bottom: 20px; color: var(--text-primary);"><i class="fa-solid fa-brain" style="color: var(--primary-light);"></i> Model Validation & Explainable AI (XAI)</h4>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; align-items: start;">
+                    <div>
+                        <h5 style="color: var(--text-primary); margin-bottom: 10px; font-size: 1rem;">Feature Importance Breakdown</h5>
+                        <p style="color: var(--text-secondary); font-size: 0.85rem; line-height: 1.5; margin-bottom: 15px;">
+                            This chart illustrates the top contributing features used by our Random Forest model. 
+                            The regional coordinates (Chitradurga, Kurnool bounds), Cadmium (cd) and Tin (sn) concentration indicators, and the local amphibolite schist lithologies act as the strongest anomaly indicators in the GSI sediment mappings.
+                        </p>
+                        <div style="border: 1px solid var(--border-color); border-radius: 12px; overflow: hidden; background: rgba(0,0,0,0.2);">
+                            <img src="img/feature_importance.png" alt="Feature Importance" style="width: 100%; display: block;"/>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h5 style="color: var(--text-primary); margin-bottom: 10px; font-size: 1rem;">Correlation Analysis</h5>
+                        <p style="color: var(--text-secondary); font-size: 0.85rem; line-height: 1.5; margin-bottom: 15px;">
+                            Correlation matrix illustrating the covariance between the target Mineral Potential Score and top elemental oxide concentrations. 
+                            Positive values identify elements that correlate with high occurrences of target quarries and mineralization outcrops.
+                        </p>
+                        <div style="border: 1px solid var(--border-color); border-radius: 12px; overflow: hidden; background: rgba(0,0,0,0.2);">
+                            <img src="img/correlation_heatmap.png" alt="Correlation Heatmap" style="width: 100%; display: block;"/>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+    
+    <!-- Load results logic script -->
+    <script src="js/app.js"></script>
+    <script src="js/prediction.js"></script>
+    <script>
+        // Trigger results loading on page show
+        document.addEventListener('DOMContentLoaded', () => {
+            loadPredictionResults();
+        });
+    </script>
+</body>
+</html>

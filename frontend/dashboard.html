@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - GeoMiner AI</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="logo-container">
+                <h1 class="logo-title">GeoMiner AI</h1>
+                <div class="logo-subtitle">ML Exploration</div>
+            </div>
+            
+            <nav>
+                <ul class="nav-links">
+                    <li class="nav-item">
+                        <a href="index.html">
+                            <i class="fa-solid fa-house"></i> Overview
+                        </a>
+                    </li>
+                    <li class="nav-item active">
+                        <a href="dashboard.html">
+                            <i class="fa-solid fa-chart-line"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="predict.html">
+                            <i class="fa-solid fa-map-location-dot"></i> Prediction
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="settings.html">
+                            <i class="fa-solid fa-sliders"></i> Settings
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+            
+            <footer class="sidebar-footer">
+                <p>&copy; 2026 GeoMiner AI</p>
+                <p>v1.0.0</p>
+            </footer>
+        </aside>
+        
+        <!-- Main Content Panel -->
+        <main class="content-wrapper">
+            <header class="page-header">
+                <h1 class="page-title">Discovery Dashboard</h1>
+                <p class="page-description">Geological target stats, model validation indexes, and prediction logs summary.</p>
+            </header>
+            
+            <!-- Metrics Cards Row -->
+            <section class="card-grid">
+                <div class="glass-card">
+                    <div class="glass-card-header">Total Geochemical Records</div>
+                    <div class="metric-value">10,004</div>
+                    <div class="metric-meta">Grid points analyzed in GSI mapping</div>
+                </div>
+                <div class="glass-card">
+                    <div class="glass-card-header">Geological Units</div>
+                    <div class="metric-value">3,599</div>
+                    <div class="metric-meta">Unique lithology polygons mapped</div>
+                </div>
+                <div class="glass-card">
+                    <div class="glass-card-header">Model R² Accuracy</div>
+                    <div class="metric-value">0.855</div>
+                    <div class="metric-meta">Random Forest Regressor accuracy</div>
+                </div>
+                <div class="glass-card">
+                    <div class="glass-card-header">Prediction Requests</div>
+                    <div class="metric-value" id="stats-request-count">0</div>
+                    <div class="metric-meta">Logged queries in server database</div>
+                </div>
+            </section>
+            
+            <!-- Charts Section -->
+            <section class="card-grid" style="grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 40px;">
+                <!-- Chart 1: Mineral Occurrences Distribution -->
+                <div class="glass-card" style="margin-bottom: 0;">
+                    <h4 style="font-size: 1.1rem; margin-bottom: 20px; color: var(--text-primary);"><i class="fa-solid fa-gem"></i> Mineral Occurrences Distribution</h4>
+                    <div style="height: 300px; position: relative;">
+                        <canvas id="occurrencesChart"></canvas>
+                    </div>
+                </div>
+                
+                <!-- Chart 2: Recent Predictions Scores -->
+                <div class="glass-card" style="margin-bottom: 0;">
+                    <h4 style="font-size: 1.1rem; margin-bottom: 20px; color: var(--text-primary);"><i class="fa-solid fa-wave-square"></i> Recent Predictions Activity</h4>
+                    <div style="height: 300px; position: relative;">
+                        <canvas id="activityChart"></canvas>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Recent Predictions Table -->
+            <section class="glass-card">
+                <h4 style="font-size: 1.1rem; margin-bottom: 15px; color: var(--text-primary);"><i class="fa-solid fa-clock-rotate-left"></i> Recent Prediction Log History</h4>
+                <div class="table-container">
+                    <table class="custom-table">
+                        <thead>
+                            <tr>
+                                <th>Date/Time</th>
+                                <th>Coordinates</th>
+                                <th>Rock Type</th>
+                                <th>Potential Score</th>
+                                <th>Confidence</th>
+                                <th>Likely Minerals</th>
+                                <th>Report</th>
+                            </tr>
+                        </thead>
+                        <tbody id="history-table-body">
+                            <tr>
+                                <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 30px;">
+                                    <i class="fa-solid fa-spinner fa-spin" style="margin-right: 8px;"></i> Loading history logs...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+    
+    <!-- Load dashboard logic script -->
+    <script src="js/app.js"></script>
+    <script src="js/charts.js"></script>
+</body>
+</html>

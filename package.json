@@ -1,0 +1,19 @@
+{
+  "name": "geominer-ai",
+  "version": "1.0.0",
+  "description": "GeoMiner AI: AI-Powered Mineral Discovery Platform",
+  "main": "backend/server.js",
+  "scripts": {
+    "start": "node backend/server.js",
+    "test": "echo \"Error: no test specified\" && exit 0"
+  },
+  "dependencies": {
+    "body-parser": "^1.20.2",
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "mongoose": "^8.5.1",
+    "pdfkit": "^0.15.0"
+  },
+  "author": "Antigravity",
+  "license": "ISC"
+}

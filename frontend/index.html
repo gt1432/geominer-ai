@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GeoMiner AI - Mineral Discovery Platform</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="logo-container">
+                <h1 class="logo-title">GeoMiner AI</h1>
+                <div class="logo-subtitle">ML Exploration</div>
+            </div>
+            
+            <nav>
+                <ul class="nav-links">
+                    <li class="nav-item active">
+                        <a href="index.html">
+                            <i class="fa-solid fa-house"></i> Overview
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="dashboard.html">
+                            <i class="fa-solid fa-chart-line"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="predict.html">
+                            <i class="fa-solid fa-map-location-dot"></i> Prediction
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="settings.html">
+                            <i class="fa-solid fa-sliders"></i> Settings
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+            
+            <footer class="sidebar-footer">
+                <p>&copy; 2026 GeoMiner AI</p>
+                <p>v1.0.0</p>
+            </footer>
+        </aside>
+        
+        <!-- Main Content Panel -->
+        <main class="content-wrapper">
+            <!-- Hero Header Section -->
+            <section class="page-header" style="text-align: center; padding: 40px 0; margin-bottom: 50px;">
+                <h1 class="header-title" style="font-size: 3.8rem; line-height: 1.1;">GeoMiner AI</h1>
+                <h2 style="font-size: 1.4rem; color: var(--text-secondary); font-weight: 400; margin-top: 15px; margin-bottom: 30px; max-width: 700px; margin-left: auto; margin-right: auto;">
+                    AI-Powered Mineral Potential Prediction and Geological Intelligence Platform
+                </h2>
+                <div>
+                    <a href="predict.html" class="btn-primary" style="margin-right: 15px; padding: 14px 28px;">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i> Explore Minerals
+                    </a>
+                    <a href="dashboard.html" class="btn-primary" style="background: rgba(255, 255, 255, 0.05); color: white; border: 1px solid var(--border-color); box-shadow: none; padding: 14px 28px;">
+                        <i class="fa-solid fa-chart-simple"></i> View Dashboard
+                    </a>
+                </div>
+            </section>
+            
+            <!-- Core Platform Features -->
+            <section style="margin-bottom: 50px;">
+                <h3 style="font-size: 1.5rem; margin-bottom: 25px; border-left: 4px solid var(--primary-light); padding-left: 12px;">Core Platform Capabilities</h3>
+                <div class="card-grid">
+                    <div class="glass-card">
+                        <div style="font-size: 2rem; color: var(--primary-light); margin-bottom: 15px;"><i class="fa-solid fa-compass-drafting"></i></div>
+                        <h4 style="font-size: 1.15rem; margin-bottom: 10px;">Spatial Target Discovery</h4>
+                        <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.5;">Input coordinate names, specific latitudes, or simply click on the interactive Leaflet GIS map to pinpoint mineral targets.</p>
+                    </div>
+                    <div class="glass-card">
+                        <div style="font-size: 2rem; color: var(--purple-light); margin-bottom: 15px;"><i class="fa-solid fa-microchip"></i></div>
+                        <h4 style="font-size: 1.15rem; margin-bottom: 10px;">Predictive ML Models</h4>
+                        <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.5;">Evaluates coordinates against pre-trained Random Forest and XGBoost regressors, delivering mineral potential scores and likely commodities.</p>
+                    </div>
+                    <div class="glass-card">
+                        <div style="font-size: 2rem; color: var(--success); margin-bottom: 15px;"><i class="fa-solid fa-brain"></i></div>
+                        <h4 style="font-size: 1.15rem; margin-bottom: 10px;">Explainable AI (XAI)</h4>
+                        <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.5;">Understand predictions through element threshold enrichment analysis, distance-to-known-deposit decay indices, and global feature importance charts.</p>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Dataset & Technical Stack Overview -->
+            <section style="margin-bottom: 40px;">
+                <div class="card-grid" style="grid-template-columns: 1fr 1fr;">
+                    <!-- Geological Ingestion Stack -->
+                    <div class="glass-card" style="margin-bottom: 0;">
+                        <h4 style="font-size: 1.2rem; margin-bottom: 15px; color: var(--primary-light);"><i class="fa-solid fa-database"></i> Geological Reference Data</h4>
+                        <ul style="list-style: none; display: flex; flex-direction: column; gap: 12px; font-size: 0.9rem; color: var(--text-secondary);">
+                            <li>
+                                <strong style="color: var(--text-primary);">NGCM Geochemical Database</strong>: Ingests 10,004 stream sediment records mapping 68 chemical elements and oxides in Karnataka & Andhra Pradesh.
+                            </li>
+                            <li>
+                                <strong style="color: var(--text-primary);">Lithology Map Layer</strong>: Spatially intersects points against 3,599 shapefile polygons representing formations, standard rock types, and stratigraphy.
+                            </li>
+                            <li>
+                                <strong style="color: var(--text-primary);">Mineral Occurrence Registry</strong>: Integrates coordinates for 57 known mineral mineralization spots and quarries for distance calculations.
+                            </li>
+                        </ul>
+                    </div>
+                    
+                    <!-- Tech Stack Ingestion -->
+                    <div class="glass-card" style="margin-bottom: 0;">
+                        <h4 style="font-size: 1.2rem; margin-bottom: 15px; color: var(--purple-light);"><i class="fa-solid fa-layer-group"></i> Enterprise Technology Stack</h4>
+                        <ul style="list-style: none; display: flex; flex-direction: column; gap: 12px; font-size: 0.9rem; color: var(--text-secondary);">
+                            <li>
+                                <strong style="color: var(--text-primary);">Node.js & Express</strong>: Fast backend REST API controller serving static pages and managing predictions DB logic.
+                            </li>
+                            <li>
+                                <strong style="color: var(--text-primary);">MongoDB (Mongoose)</strong>: Stores prediction history logs and geocoding settings with offline file-based fallback support.
+                            </li>
+                            <li>
+                                <strong style="color: var(--text-primary);">Interactive Maps & Charts</strong>: Dynamic mapping rendered via Leaflet.js (OSM tiles) and analytics drawn using Chart.js.
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+</body>
+</html>
