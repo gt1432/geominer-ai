@@ -1,7 +1,5 @@
 // GeoMiner AI — Prediction REST Integration v2.0
 
-const API_BASE_URL = window.location.origin;
-
 // ══════════════════════════════════════════
 // Mineral color / icon lookup tables
 // ══════════════════════════════════════════
