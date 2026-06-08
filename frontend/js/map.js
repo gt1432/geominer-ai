@@ -1,205 +1,241 @@
-// GIS Map Handler for GeoMiner AI
-let exploreMap = null;
-let activeMarker = null;
-let heatmapLayer = null;
+// GeoMiner AI — GIS Map Handler v2.0
+// Supports: point/area selection, tile layer switching, heatmap toggle
+
+let exploreMap      = null;
+let activeMarker    = null;
+let heatmapLayer    = null;
+let heatmapVisible  = false;
 let occurrencesLayer = null;
 let explorationArea = null;
-let selectionRect = null;
-let selectionMode = 'point'; // 'point' or 'area'
-let drawStart = null;
+let selectionRect   = null;
+let selectionMode   = 'point'; // 'point' | 'area'
+let drawStart       = null;
+
+// Tile layer references
+let tileLayers = {};
+let activeTile = 'osm';
+
+const TILE_DEFS = {
+    osm: {
+        url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+        options: {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
+            subdomains: 'abcd', maxZoom: 20
+        }
+    },
+    satellite: {
+        url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+        options: {
+            attribution: '&copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye',
+            maxZoom: 18
+        }
+    },
+    geo: {
+        url: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
+        options: {
+            attribution: '&copy; <a href="https://opentopomap.org">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)',
+            maxZoom: 17
+        }
+    }
+};
 
 document.addEventListener('DOMContentLoaded', () => {
-    const mapContainer = document.getElementById('leaflet-explore-map');
-    if (!mapContainer) return; // Only run on predict page
+    const mapId = 'prediction-map';
+    const mapContainer = document.getElementById(mapId);
+    if (!mapContainer) return;
 
-    // Initial centering coordinates (Chitradurga, Karnataka)
+    // Default to Chitradurga, Karnataka
     const startLat = 14.2207;
     const startLon = 76.2385;
 
-    // Initialize Leaflet Map
-    exploreMap = L.map('leaflet-explore-map', { zoomControl: true }).setView([startLat, startLon], 10);
+    // Init map
+    exploreMap = L.map(mapId, { zoomControl: true, preferCanvas: true }).setView([startLat, startLon], 10);
 
-    // Dark Matter Premium Map Tiles (CartoDB)
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-        subdomains: 'abcd',
-        maxZoom: 20
-    }).addTo(exploreMap);
+    // Build tile layers
+    Object.entries(TILE_DEFS).forEach(([key, def]) => {
+        tileLayers[key] = L.tileLayer(def.url, def.options);
+    });
+    tileLayers['osm'].addTo(exploreMap);
 
-    // Add default active marker (draggable)
+    // Default draggable marker
     activeMarker = L.marker([startLat, startLon], { draggable: true }).addTo(exploreMap);
-    activeMarker.bindPopup(`
-        <div style="font-family:sans-serif;min-width:150px;">
-            <b style="color:#38bdf8;">📍 Exploration Target</b><br/>
-            <span>Lat: ${startLat.toFixed(5)}</span><br/>
-            <span>Lon: ${startLon.toFixed(5)}</span>
-        </div>
-    `).openPopup();
+    activeMarker.bindPopup(makePopup(startLat, startLon)).openPopup();
 
-    // Add exploration area circle (5km radius)
+    // Exploration radius circle
     explorationArea = L.circle([startLat, startLon], {
         radius: 5000,
-        color: '#38bdf8',
-        fillColor: '#0284c7',
-        fillOpacity: 0.12,
+        color: '#3B82F6',
+        fillColor: '#1d4ed8',
+        fillOpacity: 0.10,
         weight: 1.8,
         dashArray: '6, 4'
     }).addTo(exploreMap);
 
-    // Update inputs when marker is dragged
-    activeMarker.on('dragend', function() {
+    // Update inputs on drag
+    activeMarker.on('dragend', () => {
         const pos = activeMarker.getLatLng();
         updateCoords(pos.lat, pos.lng);
         if (explorationArea) explorationArea.setLatLng([pos.lat, pos.lng]);
+        activeMarker.setPopupContent(makePopup(pos.lat, pos.lng));
     });
 
-    // Map Click Handler
+    // ── Point click ──
     exploreMap.on('click', (e) => {
-        if (selectionMode === 'area') return; // handled separately
-        const lat = e.latlng.lat;
-        const lon = e.latlng.lng;
-        activeMarker.setLatLng([lat, lon]);
-        activeMarker.getPopup().setContent(`
-            <div style="font-family:sans-serif;min-width:150px;">
-                <b style="color:#38bdf8;">📍 Exploration Target</b><br/>
-                <span>Lat: ${lat.toFixed(5)}</span><br/>
-                <span>Lon: ${lon.toFixed(5)}</span>
-            </div>
-        `);
-        if (explorationArea) explorationArea.setLatLng([lat, lon]);
-        updateCoords(lat, lon);
+        if (selectionMode !== 'point') return;
+        const { lat, lng } = e.latlng;
+        activeMarker.setLatLng([lat, lng]);
+        activeMarker.setPopupContent(makePopup(lat, lng)).openPopup();
+        if (explorationArea) explorationArea.setLatLng([lat, lng]);
+        updateCoords(lat, lng);
     });
 
-    // Rectangle area selection handler
-    exploreMap.on('mousedown', function(e) {
+    // ── Area draw ──
+    exploreMap.on('mousedown', (e) => {
         if (selectionMode !== 'area') return;
         exploreMap.dragging.disable();
         drawStart = e.latlng;
-
-        if (selectionRect) {
-            exploreMap.removeLayer(selectionRect);
-            selectionRect = null;
-        }
-
+        if (selectionRect) { exploreMap.removeLayer(selectionRect); selectionRect = null; }
         selectionRect = L.rectangle([drawStart, drawStart], {
-            color: '#a855f7',
-            fillColor: '#7c3aed',
-            fillOpacity: 0.15,
-            weight: 2,
-            dashArray: '4, 3'
+            color: '#a855f7', fillColor: '#7c3aed',
+            fillOpacity: 0.15, weight: 2, dashArray: '4, 3'
         }).addTo(exploreMap);
     });
 
-    exploreMap.on('mousemove', function(e) {
+    exploreMap.on('mousemove', (e) => {
         if (selectionMode !== 'area' || !drawStart || !selectionRect) return;
         selectionRect.setBounds(L.latLngBounds(drawStart, e.latlng));
     });
 
-    exploreMap.on('mouseup', function(e) {
+    exploreMap.on('mouseup', (e) => {
         if (selectionMode !== 'area' || !drawStart) return;
         exploreMap.dragging.enable();
-        const bounds = L.latLngBounds(drawStart, e.latlng);
-        const center = bounds.getCenter();
-        // Snap marker to center of selection
-        activeMarker.setLatLng(center);
-        if (explorationArea) explorationArea.setLatLng(center);
-        updateCoords(center.lat, center.lng);
-        // Show area dimensions in popup
+        const bounds  = L.latLngBounds(drawStart, e.latlng);
+        const center  = bounds.getCenter();
         const latSpan = Math.abs(bounds.getNorth() - bounds.getSouth()) * 111;
-        const lonSpan = Math.abs(bounds.getEast() - bounds.getWest()) * 111 * Math.cos(center.lat * Math.PI / 180);
-        activeMarker.bindPopup(`
+        const lonSpan = Math.abs(bounds.getEast()  - bounds.getWest())  * 111 * Math.cos(center.lat * Math.PI / 180);
+        activeMarker.setLatLng(center);
+        activeMarker.setPopupContent(`
             <div style="font-family:sans-serif;min-width:160px;">
                 <b style="color:#a855f7;">🟪 Selected Area</b><br/>
-                <span>Center Lat: ${center.lat.toFixed(5)}</span><br/>
-                <span>Center Lon: ${center.lng.toFixed(5)}</span><br/>
-                <span>Area: ~${latSpan.toFixed(1)} × ${lonSpan.toFixed(1)} km</span>
+                Center: ${center.lat.toFixed(5)}, ${center.lng.toFixed(5)}<br/>
+                Area: ~${latSpan.toFixed(1)} × ${lonSpan.toFixed(1)} km
             </div>
         `).openPopup();
-        selectionRect.bindPopup(`
-            <div style="font-family:sans-serif;">
-                <b style="color:#a855f7;">📐 Area Selection</b><br/>
-                N: ${bounds.getNorth().toFixed(4)} | S: ${bounds.getSouth().toFixed(4)}<br/>
-                E: ${bounds.getEast().toFixed(4)} | W: ${bounds.getWest().toFixed(4)}<br/>
-                Size: ~${latSpan.toFixed(1)} × ${lonSpan.toFixed(1)} km
-            </div>
-        `);
+        if (explorationArea) explorationArea.setLatLng(center);
+        updateCoords(center.lat, center.lng);
         drawStart = null;
     });
 
-    // Create layer groups
+    // ── Occurrence layer ──
     occurrencesLayer = L.layerGroup().addTo(exploreMap);
-
-    // Load and render known mineral occurrences & heatmap
     loadOccurrencesAndHeatmap();
 
-    // Layer Toggles
-    document.getElementById('chk-heatmap').addEventListener('change', function() {
-        if (this.checked) {
-            if (heatmapLayer) exploreMap.addLayer(heatmapLayer);
-        } else {
-            if (heatmapLayer) exploreMap.removeLayer(heatmapLayer);
-        }
-    });
-
-    document.getElementById('chk-mines').addEventListener('change', function() {
-        if (this.checked) {
-            exploreMap.addLayer(occurrencesLayer);
-        } else {
-            exploreMap.removeLayer(occurrencesLayer);
-        }
-    });
-
-    // Selection mode toggle buttons
-    const btnPoint = document.getElementById('btn-mode-point');
-    const btnArea = document.getElementById('btn-mode-area');
-    if (btnPoint && btnArea) {
-        btnPoint.addEventListener('click', () => {
-            selectionMode = 'point';
-            btnPoint.classList.add('active');
-            btnArea.classList.remove('active');
-            exploreMap.dragging.enable();
-            if (selectionRect) { exploreMap.removeLayer(selectionRect); selectionRect = null; }
-            exploreMap.getContainer().style.cursor = 'crosshair';
-        });
-        btnArea.addEventListener('click', () => {
-            selectionMode = 'area';
-            btnArea.classList.add('active');
-            btnPoint.classList.remove('active');
-            exploreMap.getContainer().style.cursor = 'crosshair';
-        });
-    }
-
-    // Default cursor
+    // Cursor
     exploreMap.getContainer().style.cursor = 'crosshair';
 });
 
-// Helper: update coordinate inputs
+// ══════════════════════════════════
+// PUBLIC: Switch tile layer
+// ══════════════════════════════════
+function switchTile(key) {
+    if (!exploreMap || !tileLayers[key] || activeTile === key) return;
+    exploreMap.removeLayer(tileLayers[activeTile]);
+    tileLayers[key].addTo(exploreMap);
+    activeTile = key;
+
+    // Update button states
+    document.querySelectorAll('.layer-btn[id^="layer-"]').forEach(btn => btn.classList.remove('active'));
+    const btn = document.getElementById(`layer-${key}`);
+    if (btn) btn.classList.add('active');
+}
+
+// ══════════════════════════════════
+// PUBLIC: Toggle heatmap
+// ══════════════════════════════════
+function toggleHeatmap() {
+    if (!exploreMap || !heatmapLayer) return;
+    const btn = document.getElementById('layer-heat');
+    if (heatmapVisible) {
+        exploreMap.removeLayer(heatmapLayer);
+        heatmapVisible = false;
+        if (btn) btn.classList.remove('active');
+    } else {
+        exploreMap.addLayer(heatmapLayer);
+        heatmapVisible = true;
+        if (btn) btn.classList.add('active');
+    }
+}
+
+// ══════════════════════════════════
+// PUBLIC: Set point / area mode
+// ══════════════════════════════════
+function setMode(mode) {
+    selectionMode = mode;
+
+    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+    const modeBtn = document.getElementById(`mode-${mode}`);
+    if (modeBtn) modeBtn.classList.add('active');
+
+    const infoEl = document.getElementById('mode-info-text');
+    if (infoEl) {
+        infoEl.innerHTML = mode === 'area'
+            ? '<b>Area mode:</b> Click and drag on the map to draw a selection rectangle. The center will be used as the prediction target.'
+            : '<b>Point mode:</b> Click anywhere on the map to select a prediction target. Coordinates auto-fill in the form.';
+    }
+
+    if (mode === 'point' && selectionRect) {
+        exploreMap.removeLayer(selectionRect);
+        selectionRect = null;
+    }
+    if (exploreMap) exploreMap.getContainer().style.cursor = 'crosshair';
+}
+
+// ══════════════════════════════════
+// Helper: build popup HTML
+// ══════════════════════════════════
+function makePopup(lat, lng) {
+    return `
+        <div style="font-family:sans-serif;min-width:150px;">
+            <b style="color:#60a5fa;">📍 Exploration Target</b><br/>
+            <span>Lat: ${parseFloat(lat).toFixed(5)}</span><br/>
+            <span>Lon: ${parseFloat(lng).toFixed(5)}</span>
+        </div>
+    `;
+}
+
+// ══════════════════════════════════
+// Helper: fill coordinate inputs + pill
+// ══════════════════════════════════
 function updateCoords(lat, lon) {
     const latInput = document.getElementById('inp-lat');
     const lonInput = document.getElementById('inp-lon');
-    if (latInput) latInput.value = lat.toFixed(5);
-    if (lonInput) lonInput.value = lon.toFixed(5);
+    if (latInput) latInput.value = parseFloat(lat).toFixed(5);
+    if (lonInput) lonInput.value = parseFloat(lon).toFixed(5);
+
+    // Update coordinate pill
+    const pill    = document.getElementById('coord-pill');
+    const display = document.getElementById('coord-display');
+    if (pill && display) {
+        display.textContent = `${parseFloat(lat).toFixed(5)}, ${parseFloat(lon).toFixed(5)}`;
+        pill.style.display = 'block';
+    }
 }
 
-// Fetch occurrences from Express server and render heatmap + markers
+// ══════════════════════════════════
+// Load occurrences + build heatmap
+// ══════════════════════════════════
 async function loadOccurrencesAndHeatmap() {
     try {
-        const response = await fetch(`${API_BASE_URL}/occurrences`);
-        if (!response.ok) return;
+        const res = await fetch(`${window.API_BASE_URL || window.location.origin}/occurrences`);
+        if (!res.ok) return;
+        const occurrences = await res.json();
 
-        const occurrences = await response.json();
-
-        // 1. Add circle markers for known mineral occurrences
         occurrences.forEach(occ => {
             const isMine = occ.type.toLowerCase().includes('quarry') || occ.type.toLowerCase().includes('mine');
-            const color = isMine ? '#f59e0b' : '#ef4444';
+            const color  = isMine ? '#f59e0b' : '#ef4444';
             const circle = L.circleMarker([occ.y, occ.x], {
-                radius: 7,
-                fillColor: color,
-                color: '#ffffff',
-                weight: 1.2,
-                opacity: 0.9,
-                fillOpacity: 0.85
+                radius: 7, fillColor: color, color: '#ffffff',
+                weight: 1.2, opacity: 0.9, fillOpacity: 0.85
             });
             circle.bindPopup(`
                 <div style="font-family:sans-serif;min-width:140px;">
@@ -211,53 +247,32 @@ async function loadOccurrencesAndHeatmap() {
             occurrencesLayer.addLayer(circle);
         });
 
-        // 2. Build heatmap from occurrences + density fill
-        const heatPoints = occurrences.map(occ => [occ.y, occ.x, 0.9]);
-        // Add background noise around known sites
+        const heatPoints = occurrences.map(o => [o.y, o.x, 0.9]);
         for (let i = 0; i < 60; i++) {
             const ref = occurrences[Math.floor(Math.random() * occurrences.length)];
-            if (ref) {
-                const dy = (Math.random() - 0.5) * 0.2;
-                const dx = (Math.random() - 0.5) * 0.2;
-                heatPoints.push([ref.y + dy, ref.x + dx, Math.random() * 0.5 + 0.3]);
-            }
+            if (ref) heatPoints.push([ref.y + (Math.random() - 0.5) * 0.2, ref.x + (Math.random() - 0.5) * 0.2, Math.random() * 0.5 + 0.3]);
         }
 
         heatmapLayer = L.heatLayer(heatPoints, {
-            radius: 28,
-            blur: 22,
-            maxZoom: 15,
-            max: 1.0,
-            gradient: {
-                0.0: '#000033',
-                0.3: '#0000ff',
-                0.5: '#00ffff',
-                0.65: '#00ff00',
-                0.8: '#ffff00',
-                0.9: '#ff8800',
-                1.0: '#ff0000'
-            }
-        }).addTo(exploreMap);
+            radius: 28, blur: 22, maxZoom: 15, max: 1.0,
+            gradient: { 0.0: '#000033', 0.3: '#0000ff', 0.5: '#00ffff', 0.65: '#00ff00', 0.8: '#ffff00', 0.9: '#ff8800', 1.0: '#ff0000' }
+        });
+        // Don't add to map by default — user toggles it
 
     } catch (err) {
-        console.error('Failed to load occurrences for Leaflet map:', err);
+        console.warn('GeoMiner: Could not load occurrences:', err.message);
     }
 }
 
-// Center map to specified coordinates (called during geocoding search)
+// ══════════════════════════════════
+// Public: re-center map (geocode)
+// ══════════════════════════════════
 function recenterMap(lat, lon) {
-    if (exploreMap && activeMarker) {
-        const target = L.latLng(lat, lon);
-        exploreMap.setView(target, 11);
-        activeMarker.setLatLng(target);
-        activeMarker.getPopup().setContent(`
-            <div style="font-family:sans-serif;min-width:150px;">
-                <b style="color:#38bdf8;">📍 Exploration Target</b><br/>
-                <span>Lat: ${lat.toFixed(5)}</span><br/>
-                <span>Lon: ${lon.toFixed(5)}</span>
-            </div>
-        `).openOn(exploreMap);
-        if (explorationArea) explorationArea.setLatLng(target);
-        updateCoords(lat, lon);
-    }
+    if (!exploreMap || !activeMarker) return;
+    const target = L.latLng(lat, lon);
+    exploreMap.setView(target, 11);
+    activeMarker.setLatLng(target);
+    activeMarker.setPopupContent(makePopup(lat, lon)).openOn(exploreMap);
+    if (explorationArea) explorationArea.setLatLng(target);
+    updateCoords(lat, lon);
 }

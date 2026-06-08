@@ -1,304 +1,205 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Prediction - GeoMiner AI</title>
-    <meta name="description" content="Select an area on the interactive GIS map and let GeoMiner AI analyze geological and satellite data for mineral prospectivity scores.">
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Leaflet.js CDN -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <!-- Leaflet Heatmap Plugin -->
-    <script src="https://cdn.jsdelivr.net/npm/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
-    <style>
-        .mode-toggle-group {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 14px;
-        }
-        .mode-btn {
-            flex: 1;
-            padding: 9px 14px;
-            border-radius: 8px;
-            border: 1px solid var(--border-color);
-            background: rgba(255,255,255,0.03);
-            color: var(--text-secondary);
-            font-family: inherit;
-            font-size: 0.85rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.25s ease;
-            display: flex;
-            align-items: center;
-            gap: 7px;
-            justify-content: center;
-        }
-        .mode-btn:hover {
-            background: rgba(255,255,255,0.06);
-            color: var(--text-primary);
-        }
-        .mode-btn.active {
-            background: linear-gradient(135deg, rgba(2,132,199,0.3), rgba(124,58,237,0.3));
-            border-color: var(--primary-light);
-            color: var(--primary-light);
-            box-shadow: 0 0 12px rgba(56,189,248,0.15);
-        }
-        .map-legend {
-            display: flex;
-            gap: 18px;
-            flex-wrap: wrap;
-            margin-top: 12px;
-            font-size: 0.8rem;
-            color: var(--text-secondary);
-        }
-        .legend-item {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-        .legend-dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            flex-shrink: 0;
-        }
-        .map-info-banner {
-            background: rgba(2,132,199,0.08);
-            border: 1px solid rgba(56,189,248,0.2);
-            border-radius: 8px;
-            padding: 9px 14px;
-            font-size: 0.82rem;
-            color: var(--primary-light);
-            margin-bottom: 14px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Prediction Map — GeoMiner AI</title>
+  <meta name="description" content="Select a location on the interactive GIS map and predict mineral prospectivity using AI.">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
 </head>
 <body>
-    <!-- Fullscreen Loading Screen -->
-    <div class="loading-overlay" id="pred-loading-screen">
-        <div class="spinner"></div>
-        <h3 style="color: white; font-weight: 500; font-size: 1.2rem;">Analyzing Geochemical Anomalies...</h3>
-        <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 5px;">Running Random Forest Regressor &amp; spatial proximity join</p>
-        <p style="color: var(--text-muted); font-size: 0.78rem; margin-top: 8px;">This may take 20–40 seconds for the ML model to process.</p>
+<div class="app-container">
+
+  <!-- ── SIDEBAR ── -->
+  <aside class="sidebar">
+    <div class="logo-container">
+      <div class="logo-icon"><i class="fa-solid fa-mountain-sun" style="color:#fff;font-size:1rem;"></i></div>
+      <div class="logo-title">GeoMiner AI</div>
+      <div class="logo-subtitle">ML Exploration</div>
     </div>
+    <nav>
+      <ul class="nav-links">
+        <li class="nav-item"><a href="index.html"><i class="fa-solid fa-house"></i> Overview</a></li>
+        <li class="nav-item"><a href="dashboard.html"><i class="fa-solid fa-chart-line"></i> Dashboard</a></li>
+        <li class="nav-item active"><a href="predict.html"><i class="fa-solid fa-map-location-dot"></i> Prediction</a></li>
+        <li class="nav-item"><a href="settings.html"><i class="fa-solid fa-sliders"></i> Settings</a></li>
+      </ul>
+    </nav>
+    <footer class="sidebar-footer"><p>&copy; 2026 GeoMiner AI</p><p>v2.0.0</p></footer>
+  </aside>
 
-    <div class="app-container">
-        <!-- Sidebar Navigation -->
-        <aside class="sidebar">
-            <div class="logo-container">
-                <h1 class="logo-title">GeoMiner AI</h1>
-                <div class="logo-subtitle">ML Exploration</div>
-            </div>
-            
-            <nav>
-                <ul class="nav-links">
-                    <li class="nav-item">
-                        <a href="index.html">
-                            <i class="fa-solid fa-house"></i> Overview
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="dashboard.html">
-                            <i class="fa-solid fa-chart-line"></i> Dashboard
-                        </a>
-                    </li>
-                    <li class="nav-item active">
-                        <a href="predict.html">
-                            <i class="fa-solid fa-map-location-dot"></i> Prediction
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="settings.html">
-                            <i class="fa-solid fa-sliders"></i> Settings
-                        </a>
-                    </li>
-                </ul>
-            </nav>
-            
-            <footer class="sidebar-footer">
-                <p>&copy; 2026 GeoMiner AI</p>
-                <p>v1.0.0</p>
-            </footer>
-        </aside>
-        
-        <!-- Main Content Panel -->
-        <main class="content-wrapper">
-            <header class="page-header">
-                <h1 class="page-title">Mineral Target Prediction</h1>
-                <p class="page-description">Select a point or draw an area on the GIS map. AI analyzes satellite &amp; geological data to return mineral prospectivity scores, exploration targets, and confidence levels.</p>
-            </header>
-            
-            <div class="card-grid" style="grid-template-columns: 3fr 2fr; gap: 30px; align-items: start;">
-                <!-- GIS Leaflet Map Selection -->
-                <div class="glass-card" style="margin-bottom: 0;">
-                    <h4 style="font-size: 1.1rem; margin-bottom: 12px; color: var(--text-primary);">
-                        <i class="fa-solid fa-earth-asia" style="color: var(--primary-light);"></i> Interactive GIS Map Explorer
-                    </h4>
+  <!-- ── MAIN ── -->
+  <main class="content-wrapper">
+    <header class="page-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px;">
+      <div>
+        <h1 class="page-title">Mineral Target Prediction</h1>
+        <p class="page-description">Select a location on the map or enter coordinates, then run the AI prediction engine.</p>
+      </div>
+      <div style="display:flex; gap:10px; align-items:center;">
+        <div id="status-pill" style="background:rgba(34,197,94,0.1); border:1px solid rgba(34,197,94,0.2); border-radius:30px; padding:6px 14px; font-size:0.75rem; font-weight:700; color:var(--success); display:flex; align-items:center; gap:6px;">
+          <span style="width:7px;height:7px;border-radius:50%;background:var(--success);display:inline-block;animation:pulse 2s infinite;"></span>
+          Server Online
+        </div>
+      </div>
+    </header>
 
-                    <!-- Selection Mode Toggle -->
-                    <div class="mode-toggle-group">
-                        <button class="mode-btn active" id="btn-mode-point">
-                            <i class="fa-solid fa-location-crosshairs"></i> Point Selection
-                        </button>
-                        <button class="mode-btn" id="btn-mode-area">
-                            <i class="fa-solid fa-vector-square"></i> Area Selection
-                        </button>
-                    </div>
+    <!-- Grid: Map + Form -->
+    <div style="display:grid; grid-template-columns:1fr 380px; gap:20px; align-items:start;">
 
-                    <div class="map-info-banner" id="map-mode-hint">
-                        <i class="fa-solid fa-mouse-pointer"></i>
-                        <span id="map-hint-text">Click anywhere on the map to set the prediction target coordinates.</span>
-                    </div>
-                    
-                    <div id="leaflet-explore-map" class="map-container"></div>
-                    
-                    <!-- Map Legend -->
-                    <div class="map-legend">
-                        <div class="legend-item">
-                            <div class="legend-dot" style="background:#f59e0b;"></div> Known Quarry / Mine
-                        </div>
-                        <div class="legend-item">
-                            <div class="legend-dot" style="background:#ef4444;"></div> Mineralization Zone
-                        </div>
-                        <div class="legend-item">
-                            <div class="legend-dot" style="background:#38bdf8; border-radius: 3px;"></div> 5km Exploration Radius
-                        </div>
-                        <div class="legend-item">
-                            <div style="width:24px;height:10px;background:linear-gradient(to right,blue,cyan,lime,yellow,red);border-radius:3px;"></div> Prospectivity Heatmap
-                        </div>
-                    </div>
+      <!-- ── MAP PANEL ── -->
+      <div>
+        <!-- Layer Controls Row -->
+        <div style="display:flex; gap:10px; margin-bottom:14px; flex-wrap:wrap; align-items:center;">
+          <div class="mode-toggle-group" style="flex:1; min-width:200px;">
+            <button class="mode-btn active" id="mode-point" onclick="setMode('point')">
+              <i class="fa-solid fa-location-dot"></i> Point
+            </button>
+            <button class="mode-btn" id="mode-area" onclick="setMode('area')">
+              <i class="fa-solid fa-vector-square"></i> Area
+            </button>
+          </div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <button class="layer-btn active" id="layer-osm" onclick="switchTile('osm')"><i class="fa-solid fa-map"></i> Street</button>
+            <button class="layer-btn" id="layer-satellite" onclick="switchTile('satellite')"><i class="fa-solid fa-satellite"></i> Satellite</button>
+            <button class="layer-btn" id="layer-geo" onclick="switchTile('geo')"><i class="fa-solid fa-layer-group"></i> Terrain</button>
+            <button class="layer-btn" id="layer-heat" onclick="toggleHeatmap()"><i class="fa-solid fa-fire"></i> Heatmap</button>
+          </div>
+        </div>
 
-                    <!-- Map Controls Checklist -->
-                    <div style="display: flex; gap: 20px; flex-wrap: wrap; margin-top: 14px;">
-                        <label class="form-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none;">
-                            <input type="checkbox" id="chk-heatmap" checked style="width: 16px; height: 16px; accent-color: var(--primary);"> Show Regional Heatmap
-                        </label>
-                        <label class="form-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none;">
-                            <input type="checkbox" id="chk-mines" checked style="width: 16px; height: 16px; accent-color: var(--primary);"> Show Mineral Occurrences
-                        </label>
-                    </div>
-                </div>
-                
-                <!-- Prediction Parameters Form -->
-                <div class="glass-card" style="margin-bottom: 0;">
-                    <h4 style="font-size: 1.1rem; margin-bottom: 20px; color: var(--text-primary);"><i class="fa-solid fa-sliders"></i> Prediction Parameters</h4>
-                    
-                    <!-- Search Location Name -->
-                    <div class="form-group" style="position: relative; margin-bottom: 25px;">
-                        <label class="form-label" for="loc-search-input">Search Location Name</label>
-                        <div style="display: flex; gap: 8px;">
-                            <input type="text" id="loc-search-input" class="form-control" placeholder="e.g. Chitradurga, Bellary, Kolar..." value="Chitradurga">
-                            <button type="button" id="btn-geocode" class="btn-primary" style="padding: 10px 16px; flex-shrink: 0;"><i class="fa-solid fa-magnifying-glass"></i></button>
-                        </div>
-                        <small style="color: var(--text-muted); font-size: 0.75rem; margin-top: 4px; display: block;">OpenStreetMap geocoding search</small>
-                    </div>
-                    
-                    <form id="prediction-form">
-                        <!-- Coordinates Input -->
-                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 15px;">
-                            <div class="form-group">
-                                <label class="form-label" for="inp-lat">Latitude</label>
-                                <input type="number" id="inp-lat" step="0.000001" class="form-control" value="14.22" required>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label" for="inp-lon">Longitude</label>
-                                <input type="number" id="inp-lon" step="0.000001" class="form-control" value="76.24" required>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label" for="inp-alt">Altitude (m)</label>
-                                <input type="number" id="inp-alt" step="0.1" class="form-control" value="450.0" required>
-                            </div>
-                        </div>
-                        
-                        <!-- Element Concentration Input Overrides -->
-                        <div class="form-group">
-                            <label class="form-label" for="inp-fe">Iron Oxide (Fe₂O₃ %)</label>
-                            <input type="number" id="inp-fe" step="0.1" class="form-control" value="5.2">
-                            <small class="metric-meta">Leave blank for background geochemistry auto-fill</small>
-                        </div>
-                        
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 15px;">
-                            <div class="form-group">
-                                <label class="form-label" for="inp-cu">Copper (Cu ppm)</label>
-                                <input type="number" id="inp-cu" step="1" class="form-control" value="35">
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label" for="inp-zn">Zinc (Zn ppm)</label>
-                                <input type="number" id="inp-zn" step="1" class="form-control" value="65">
-                            </div>
-                        </div>
-                        
-                        <!-- Rock Type Dropdown -->
-                        <div class="form-group" style="margin-bottom: 25px;">
-                            <label class="form-label" for="sel-rock-type">Geological Rock Type</label>
-                            <select id="sel-rock-type" class="form-control">
-                                <option value="Granite" selected>Granite</option>
-                                <option value="Basalt">Basalt</option>
-                                <option value="Amphibolite">Amphibolite</option>
-                                <option value="Hornblende actinolite schist">Hornblende actinolite schist</option>
-                                <option value="Rhyolite">Rhyolite</option>
-                                <option value="Granodiorite">Granodiorite</option>
-                                <option value="Banded ferruginous chert">Banded ferruginous chert</option>
-                                <option value="Dolomite">Dolomite</option>
-                                <option value="Soil">Soil</option>
-                            </select>
-                        </div>
-                        
-                        <!-- Submit -->
-                        <button type="submit" id="btn-predict" class="btn-primary" style="width: 100%; justify-content: center; padding: 14px 20px;">
-                            <i class="fa-solid fa-wand-magic-sparkles"></i> Predict Mineral Potential
-                        </button>
-                    </form>
-                </div>
+        <!-- Location Search -->
+        <div class="search-wrap" style="margin-bottom:12px;">
+          <input type="text" id="loc-search-input" class="form-control" placeholder="Search location (e.g. Chitradurga, Karnataka)..." style="padding-left:15px;">
+          <button onclick="handleGeocodeSearch()" style="position:absolute; right:8px; top:50%; transform:translateY(-50%); background:var(--primary); border:none; border-radius:7px; width:32px; height:32px; cursor:pointer; color:#fff; font-size:0.85rem;">
+            <i class="fa-solid fa-search"></i>
+          </button>
+        </div>
+
+        <!-- Map -->
+        <div style="position:relative;">
+          <div id="prediction-map" class="map-container" style="height:500px;"></div>
+          <!-- Coordinate Pill -->
+          <div id="coord-pill" style="position:absolute; bottom:14px; right:14px; z-index:1000; background:rgba(11,18,32,0.92); backdrop-filter:blur(8px); border:1px solid var(--border); border-radius:9px; padding:9px 14px; font-family:var(--mono); font-size:0.78rem; color:var(--text-3); display:none;">
+            <i class="fa-solid fa-location-dot" style="color:var(--primary-light); margin-right:5px;"></i>
+            <span id="coord-display">—</span>
+          </div>
+        </div>
+
+        <!-- Info Banner -->
+        <div class="info-banner" style="margin-top:12px;">
+          <i class="fa-solid fa-circle-info"></i>
+          <span id="mode-info-text"><b>Point mode:</b> Click anywhere on the map to select a prediction target. Coordinates auto-fill in the form.</span>
+        </div>
+      </div>
+
+      <!-- ── PREDICTION FORM PANEL ── -->
+      <div>
+        <div class="glass-card" style="padding:28px;">
+          <h4 style="font-size:1.05rem; font-weight:700; margin-bottom:20px; color:var(--text); display:flex; align-items:center; gap:9px;">
+            <i class="fa-solid fa-flask" style="color:var(--primary-light);"></i> Prediction Parameters
+          </h4>
+
+          <form id="prediction-form">
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+              <div class="form-group" style="margin-bottom:0;">
+                <label class="form-label"><i class="fa-solid fa-location-dot" style="color:var(--primary-light);"></i> Latitude</label>
+                <input type="number" id="inp-lat" class="form-control" placeholder="e.g. 14.231" step="0.00001" required>
+              </div>
+              <div class="form-group" style="margin-bottom:0;">
+                <label class="form-label"><i class="fa-solid fa-location-dot" style="color:var(--purple);"></i> Longitude</label>
+                <input type="number" id="inp-lon" class="form-control" placeholder="e.g. 76.406" step="0.00001" required>
+              </div>
             </div>
 
-            <!-- Core Platform Capabilities on Prediction Page -->
-            <section style="margin-top: 40px; margin-bottom: 10px;">
-                <h3 style="font-size: 1.3rem; margin-bottom: 20px; color: var(--text-primary); border-left: 4px solid var(--primary-light); padding-left: 12px;">Core Platform Capabilities</h3>
-                <div class="card-grid" style="grid-template-columns: repeat(4, 1fr); gap: 18px;">
-                    <div class="glass-card" style="margin-bottom: 0; padding: 20px;">
-                        <div style="font-size: 1.6rem; color: var(--primary-light); margin-bottom: 10px;"><i class="fa-solid fa-map-location-dot"></i></div>
-                        <h5 style="font-size: 0.95rem; margin-bottom: 8px; color: var(--text-primary);">Spatial Area Analysis</h5>
-                        <p style="color: var(--text-secondary); font-size: 0.78rem; line-height: 1.4;">Click-to-point or draw rectangular areas on the map. Centroid coordinates feed the ML pipeline for prospectivity scoring.</p>
-                    </div>
-                    <div class="glass-card" style="margin-bottom: 0; padding: 20px;">
-                        <div style="font-size: 1.6rem; color: #a855f7; margin-bottom: 10px;"><i class="fa-solid fa-fire"></i></div>
-                        <h5 style="font-size: 0.95rem; margin-bottom: 8px; color: var(--text-primary);">Prospectivity Heatmaps</h5>
-                        <p style="color: var(--text-secondary); font-size: 0.78rem; line-height: 1.4;">Real-time density heatmaps overlay known mineral occurrence data, highlighting high-potential exploration zones.</p>
-                    </div>
-                    <div class="glass-card" style="margin-bottom: 0; padding: 20px;">
-                        <div style="font-size: 1.6rem; color: var(--success); margin-bottom: 10px;"><i class="fa-solid fa-microchip"></i></div>
-                        <h5 style="font-size: 0.95rem; margin-bottom: 8px; color: var(--text-primary);">ML Mineral Detection</h5>
-                        <p style="color: var(--text-secondary); font-size: 0.78rem; line-height: 1.4;">Random Forest regressor trained on NGCM geochemical database (10,004 records, 68 elements) returns element-wise concentration percentages.</p>
-                    </div>
-                    <div class="glass-card" style="margin-bottom: 0; padding: 20px;">
-                        <div style="font-size: 1.6rem; color: var(--warning); margin-bottom: 10px;"><i class="fa-solid fa-file-pdf"></i></div>
-                        <h5 style="font-size: 0.95rem; margin-bottom: 8px; color: var(--text-primary);">PDF Exploration Reports</h5>
-                        <p style="color: var(--text-secondary); font-size: 0.78rem; line-height: 1.4;">Auto-generated PDF with mineral inventory, location coordinates, altitude (AMSL), confidence levels, and XAI interpretation.</p>
-                    </div>
+            <div class="form-group" style="margin-top:14px;">
+              <label class="form-label"><i class="fa-solid fa-mountain" style="color:var(--warning);"></i> Altitude (m AMSL)</label>
+              <input type="number" id="inp-alt" class="form-control" placeholder="450" value="450" min="0" max="3000">
+            </div>
+
+            <div style="border-top:1px solid var(--border); margin:18px 0 16px; padding-top:16px;">
+              <div style="font-size:0.75rem; font-weight:700; color:var(--text-4); text-transform:uppercase; letter-spacing:0.08em; margin-bottom:14px;">
+                Geochemical Overrides (optional)
+              </div>
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                <div class="form-group" style="margin-bottom:0;">
+                  <label class="form-label">Fe₂O₃ (%)</label>
+                  <input type="number" id="inp-fe" class="form-control" placeholder="5.0" value="5.0" step="0.1" min="0">
                 </div>
-            </section>
-        </main>
+                <div class="form-group" style="margin-bottom:0;">
+                  <label class="form-label">Cu (ppm)</label>
+                  <input type="number" id="inp-cu" class="form-control" placeholder="30" value="30" step="1" min="0">
+                </div>
+                <div class="form-group" style="margin-bottom:0;">
+                  <label class="form-label">Zn (ppm)</label>
+                  <input type="number" id="inp-zn" class="form-control" placeholder="60" value="60" step="1" min="0">
+                </div>
+                <div class="form-group" style="margin-bottom:0;">
+                  <label class="form-label">Rock Type</label>
+                  <select id="sel-rock-type" class="form-control">
+                    <option value="Granite">Granite</option>
+                    <option value="Basalt">Basalt</option>
+                    <option value="Schist">Schist</option>
+                    <option value="Quartzite">Quartzite</option>
+                    <option value="Gneiss">Gneiss</option>
+                    <option value="Limestone">Limestone</option>
+                    <option value="Sandstone">Sandstone</option>
+                    <option value="Dolerite">Dolerite</option>
+                    <option value="Amphibolite">Amphibolite</option>
+                    <option value="Charnockite">Charnockite</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <button type="submit" class="btn-primary" style="width:100%; padding:14px; font-size:1rem; margin-top:4px; justify-content:center;">
+              <i class="fa-solid fa-bolt"></i> Run AI Prediction
+            </button>
+          </form>
+        </div>
+
+        <!-- Quick Tips -->
+        <div class="glass-card" style="padding:20px; margin-top:16px;">
+          <div style="font-size:0.75rem; font-weight:700; color:var(--text-4); text-transform:uppercase; letter-spacing:0.08em; margin-bottom:12px;">Quick Tips</div>
+          <ul style="list-style:none; display:flex; flex-direction:column; gap:8px;">
+            <li style="font-size:0.8rem; color:var(--text-3); display:flex; gap:8px; align-items:flex-start;">
+              <i class="fa-solid fa-check-circle" style="color:var(--success); margin-top:2px; flex-shrink:0;"></i>
+              <span>Click the map to select your target point</span>
+            </li>
+            <li style="font-size:0.8rem; color:var(--text-3); display:flex; gap:8px; align-items:flex-start;">
+              <i class="fa-solid fa-check-circle" style="color:var(--success); margin-top:2px; flex-shrink:0;"></i>
+              <span>Switch to Area mode to draw a rectangle over a region</span>
+            </li>
+            <li style="font-size:0.8rem; color:var(--text-3); display:flex; gap:8px; align-items:flex-start;">
+              <i class="fa-solid fa-check-circle" style="color:var(--success); margin-top:2px; flex-shrink:0;"></i>
+              <span>Toggle Heatmap to see known mineral density</span>
+            </li>
+            <li style="font-size:0.8rem; color:var(--text-3); display:flex; gap:8px; align-items:flex-start;">
+              <i class="fa-solid fa-check-circle" style="color:var(--success); margin-top:2px; flex-shrink:0;"></i>
+              <span>Coverage: Karnataka &amp; Andhra Pradesh (India)</span>
+            </li>
+          </ul>
+        </div>
+      </div>
     </div>
-    
-    <!-- Load predict JS scripts -->
-    <script src="js/app.js"></script>
-    <script src="js/map.js"></script>
-    <script src="js/prediction.js"></script>
-    <script>
-        // Update map hint text on mode switch
-        const modeHintEl = document.getElementById('map-hint-text');
-        document.getElementById('btn-mode-point').addEventListener('click', () => {
-            modeHintEl.textContent = 'Click anywhere on the map to set the prediction target coordinates.';
-        });
-        document.getElementById('btn-mode-area').addEventListener('click', () => {
-            modeHintEl.textContent = 'Click and drag to draw a rectangular area. The centroid will be used as the prediction target.';
-        });
-    </script>
+  </main>
+</div>
+
+<!-- Loading Overlay -->
+<div class="loading-overlay" id="pred-loading-screen">
+  <div class="spinner-ring"></div>
+  <div style="text-align:center;">
+    <div style="color:var(--text); font-weight:600; font-size:0.95rem; margin-bottom:4px;" id="loader-msg">Running AI prediction...</div>
+    <div style="color:var(--text-4); font-size:0.78rem;">Analyzing geochemistry · Querying geology · Scoring minerals</div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+
+<script src="js/app.js"></script>
+<script src="js/map.js"></script>
+<script src="js/prediction.js"></script>
 </body>
 </html>

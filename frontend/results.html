@@ -11,8 +11,6 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
         .mineral-bar-wrap {
             margin-bottom: 14px;
@@ -94,7 +92,7 @@
         }
         .stat-box {
             background: rgba(255,255,255,0.03);
-            border: 1px solid var(--border-color);
+            border: 1px solid var(--border);
             border-radius: 10px;
             padding: 14px 18px;
             text-align: center;
@@ -106,7 +104,7 @@
         }
         .stat-box-label {
             font-size: 0.73rem;
-            color: var(--text-muted);
+            color: var(--text-3);
             text-transform: uppercase;
             letter-spacing: 0.05em;
             margin-top: 4px;
@@ -118,7 +116,8 @@
         <!-- Sidebar Navigation -->
         <aside class="sidebar">
             <div class="logo-container">
-                <h1 class="logo-title">GeoMiner AI</h1>
+                <div class="logo-icon"><i class="fa-solid fa-mountain-sun" style="color:#fff;font-size:1rem;"></i></div>
+                <div class="logo-title">GeoMiner AI</div>
                 <div class="logo-subtitle">ML Exploration</div>
             </div>
             
@@ -141,7 +140,7 @@
             
             <footer class="sidebar-footer">
                 <p>&copy; 2026 GeoMiner AI</p>
-                <p>v1.0.0</p>
+                <p>v2.0.0</p>
             </footer>
         </aside>
         
@@ -370,8 +369,10 @@
         </main>
     </div>
     
+    <div id="toast-container"></div>
     <!-- Load results logic script -->
     <script src="js/app.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="js/prediction.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
