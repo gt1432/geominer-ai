@@ -4,7 +4,7 @@ const PDFDocument = require('pdfkit');
 const { dbService } = require('../database/mongodb_connection');
 
 // Constants
-const PYTHON_PATH = 'C:\\Python312\\python.exe';
+const PYTHON_PATH = process.env.PYTHON_PATH || 'C:\\Python312\\python.exe';
 const PREDICT_SCRIPT_PATH = path.join(__dirname, '..', '..', 'ml', 'predict.py');
 
 // 1. Process prediction request
