@@ -730,8 +730,16 @@ select.form-control { cursor: pointer; appearance: none; }
 ══════════════════════════════════════════ */
 .search-wrap {
   position: relative;
+  z-index: 10;
 }
 .search-wrap input { padding-right: 48px; }
+
+/* Ensure form panels always sit above map canvas */
+.glass-card { position: relative; z-index: 10; }
+.info-banner { position: relative; z-index: 10; }
+
+/* Fix: form-control inputs must always capture pointer events */
+.form-control { position: relative; z-index: 5; pointer-events: auto; }
 
 /* ══════════════════════════════════════════
    LANDING: DATASET CARD
