@@ -1,0 +1,29 @@
+# render.yaml — GeoMiner AI Deployment Configuration
+# Deploy this app at https://render.com by connecting your GitHub repo
+
+services:
+  - type: web
+    name: geominer-ai
+    runtime: docker          # Use the Dockerfile at repo root
+    dockerfilePath: ./Dockerfile
+    plan: starter            # Free tier (upgrade to standard for always-on)
+    region: singapore        # Closest to Karnataka/Andhra Pradesh data
+    branch: main
+    
+    # Environment variables — MONGODB_URI must be set in the Render dashboard
+    # Go to: Service > Environment > Add Environment Variable
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000           # Render assigns this port internally
+      - key: PYTHON_PATH
+        value: /opt/venv/bin/python3
+      - key: MONGODB_URI
+        sync: false            # Set this manually in Render dashboard (keeps secret safe)
+
+    # Health check path
+    healthCheckPath: /
+    
+    # Auto-deploy on every push to main branch
+    autoDeploy: true
