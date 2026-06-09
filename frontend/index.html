@@ -1,558 +1,452 @@
 <!DOCTYPE html>
-<html lang="en">
+<html class="dark" lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GeoMiner AI — AI-Powered Mineral Prospectivity Platform</title>
-  <meta name="description" content="Predict mineral-rich zones using AI, geochemical, geological, and geophysical data. Professional mineral prospectivity mapping platform.">
+  <!-- Zero Flash (FOUC) Theme Restorer -->
+  <script>
+    (function() {
+      const theme = localStorage.getItem('theme') || 'dark';
+      if (theme === 'light') {
+        document.documentElement.classList.add('light-theme');
+        document.documentElement.classList.add('light');
+        document.documentElement.classList.remove('dark');
+      } else {
+        document.documentElement.classList.add('dark');
+        document.documentElement.classList.remove('light');
+      }
+    })();
+  </script>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>GeoMiner AI | Professional Mineral Prospectivity Platform</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="css/style.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "primary": "#006576",
+            "background": "#f7f9fb",
+            "surface": "#f7f9fb",
+            "surface-container": "#eceef0",
+            "surface-container-high": "#e6e8ea",
+            "surface-container-highest": "#e0e3e5",
+            "surface-container-low": "#f2f4f6",
+            "surface-container-lowest": "#ffffff",
+            "secondary": "#555f71",
+            "on-surface": "#191c1e",
+            "on-surface-variant": "#3d494c",
+            "outline": "#6d797c",
+            "outline-variant": "#bcc9cc",
+            "primary-container": "#008094",
+            "on-primary-container": "#f9fdff",
+            "status-success": "#008094",
+            "status-error": "#ba1a1a"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "fontFamily": {
+            "display": ["Space Grotesk"],
+            "body": ["Geist"],
+            "label": ["JetBrains Mono"]
+          }
+        }
+      }
+    }
+  </script>
   <style>
-    body { overflow-x: hidden; }
-    nav.top-nav {
-      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-      background: rgba(11,18,32,0.85); backdrop-filter: blur(16px);
-      border-bottom: 1px solid var(--border);
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 0 32px; height: 64px;
+    /* Prevent custom layout overrides on top header and map backgrounds */
+    .glow-cyan {
+      box-shadow: 0 4px 20px rgba(0, 101, 118, 0.08);
     }
-    .nav-brand { display: flex; align-items: center; gap: 12px; }
-    .nav-logo-icon {
-      width: 34px; height: 34px; border-radius: 9px;
-      background: linear-gradient(135deg, var(--primary), var(--purple));
-      display: flex; align-items: center; justify-content: center; font-size: 1rem;
+    html.dark .glow-cyan {
+      box-shadow: 0 0 20px rgba(0, 218, 243, 0.15);
     }
-    .nav-title {
-      font-size: 1.1rem; font-weight: 800; letter-spacing: -0.03em;
-      background: linear-gradient(135deg, var(--primary-light), var(--purple));
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    .status-pulse {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+      animation: pulse 2s infinite;
     }
-    .nav-links-top { display: flex; gap: 6px; align-items: center; }
-    .nav-links-top a {
-      color: var(--text-3); font-size: 0.88rem; font-weight: 500;
-      padding: 7px 14px; border-radius: 8px; transition: all .2s;
+    @keyframes pulse {
+      0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 128, 148, 0.7); }
+      70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(0, 128, 148, 0); }
+      100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 128, 148, 0); }
     }
-    .nav-links-top a:hover { color: var(--text); background: rgba(255,255,255,0.04); }
-    .nav-links-top .nav-cta { background: var(--primary); color: #fff; padding: 8px 18px; border-radius: 9px; font-weight: 600; }
-    .nav-links-top .nav-cta:hover { background: var(--primary-dark); }
-
-    .page-main { padding-top: 64px; }
-
-    /* Feature cards */
-    .feature-card {
-      background: rgba(30,41,59,0.5); border: 1px solid var(--border);
-      border-radius: var(--radius-lg); padding: 32px;
-      transition: all .35s; position: relative; overflow: hidden;
+    html.dark .status-pulse {
+      animation: pulse-dark 2s infinite;
     }
-    .feature-card::before {
-      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
-      background: linear-gradient(90deg, transparent, var(--primary), transparent);
-      transform: scaleX(0); transition: transform .4s;
+    @keyframes pulse-dark {
+      0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 229, 255, 0.7); }
+      70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(0, 229, 255, 0); }
+      100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 229, 255, 0); }
     }
-    .feature-card:hover::before { transform: scaleX(1); }
-    .feature-card:hover { border-color: rgba(59,130,246,0.25); transform: translateY(-5px); box-shadow: 0 20px 60px rgba(0,0,0,0.4); }
-    .feature-icon {
-      width: 56px; height: 56px; border-radius: 15px; margin-bottom: 20px;
-      display: flex; align-items: center; justify-content: center; font-size: 1.5rem;
-    }
-    .feature-card h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 10px; color: var(--text); }
-    .feature-card p  { font-size: 0.88rem; color: var(--text-3); line-height: 1.7; }
-
-    /* Tech stack chips */
-    .tech-chip {
-      display: inline-flex; align-items: center; gap: 7px;
-      background: rgba(255,255,255,0.04); border: 1px solid var(--border);
-      padding: 8px 16px; border-radius: 30px;
-      font-size: 0.82rem; font-weight: 600; color: var(--text-3);
-      margin: 5px; transition: all .2s;
-    }
-    .tech-chip:hover { background: rgba(59,130,246,0.08); color: var(--primary-light); border-color: rgba(59,130,246,.2); }
-    .tech-chip i { font-size: 0.9rem; }
-
-    /* Timeline */
-    .flow-step {
-      display: flex; gap: 20px; align-items: flex-start;
-      padding: 20px 0; border-bottom: 1px solid var(--border);
-    }
-    .flow-step:last-child { border-bottom: none; }
-    .flow-num {
-      width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
-      background: linear-gradient(135deg, var(--primary), var(--purple));
-      display: flex; align-items: center; justify-content: center;
-      font-weight: 800; font-size: 0.85rem; color: #fff;
-    }
-    .flow-content h5 { font-size: 0.95rem; font-weight: 700; margin-bottom: 4px; }
-    .flow-content p  { font-size: 0.84rem; color: var(--text-3); }
   </style>
 </head>
-<body>
+<body class="font-body text-body-md transition-colors duration-300 bg-[#121414] text-[#e2e2e2] html[class*='light']:bg-[#f7f9fb] html[class*='light']:text-[#191c1e]">
 
-<!-- ── TOP NAV ── -->
-<nav class="top-nav">
-  <div class="nav-brand">
-    <div class="nav-logo-icon"><i class="fa-solid fa-mountain-sun" style="color:#fff;"></i></div>
-    <span class="nav-title">GeoMiner AI</span>
-  </div>
-  <div class="nav-links-top">
-    <a href="#features">Features</a>
-    <a href="#datasets">Datasets</a>
-    <a href="#about">About</a>
-    <a href="dashboard.html">Dashboard</a>
-    <a href="predict.html" class="nav-cta"><i class="fa-solid fa-bolt"></i> Start Prediction</a>
-  </div>
-</nav>
-
-<main class="page-main">
-
-<!-- ══════════ HERO ══════════ -->
-<section class="hero">
-  <div class="geo-grid"></div>
-  <canvas id="hero-canvas"></canvas>
-
-  <div class="hero-content">
-    <div class="hero-badge">
-      <i class="fa-solid fa-satellite-dish"></i>
-      AI · GIS · Geochemistry · ML
-    </div>
-    <h1 class="hero-title">
-      AI-Powered<br><span>Mineral Prospectivity</span><br>Mapping
-    </h1>
-    <p class="hero-subtitle">
-      Predict potential mineral-rich zones using geochemical, geological, remote sensing and geophysical data. Powered by Random Forest AI trained on 10,000+ field samples.
-    </p>
-    <div class="hero-actions">
-      <a href="predict.html" class="btn-primary" style="padding:14px 30px;font-size:1rem;">
-        <i class="fa-solid fa-map-location-dot"></i> Start Prediction
-      </a>
-      <a href="dashboard.html" class="btn-outline" style="padding:14px 30px;font-size:1rem;">
-        <i class="fa-solid fa-chart-line"></i> Explore Dashboard
-      </a>
-    </div>
-
-    <div class="hero-stats">
-      <div>
-        <div class="hero-stat-value" data-count="50000">0</div>
-        <div class="hero-stat-label">Geochemical Samples</div>
+  <!-- Top Navigation Bar -->
+  <nav class="w-full sticky top-0 z-50 bg-[#121414]/80 dark:bg-[#121414]/80 light:bg-[#f7f9fb]/80 backdrop-blur-md border-b border-white/10 dark:border-white/10 light:border-black/10">
+    <div class="flex justify-between items-center px-8 md:px-12 py-4 max-w-[1440px] mx-auto">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-[#00daf3] to-[#8A05FF] flex items-center justify-center text-white">
+          <i class="fa-solid fa-mountain-sun text-sm"></i>
+        </div>
+        <span class="font-display text-xl font-bold tracking-tight text-white dark:text-white light:text-[#006576]">GeoMiner AI</span>
       </div>
-      <div>
-        <div class="hero-stat-value" data-count="15">0</div>
-        <div class="hero-stat-label">Mineral Types</div>
+      <div class="hidden md:flex items-center gap-8">
+        <a class="text-white dark:text-white light:text-[#006576] font-semibold border-b-2 border-[#00daf3] light:border-[#006576] pb-1 cursor-pointer transition-colors" href="index.html">Overview</a>
+        <a class="text-[#bac9cc] light:text-[#555f71] hover:text-[#00daf3] light:hover:text-[#006576] transition-colors cursor-pointer" href="dashboard.html">Dashboard</a>
+        <a class="text-[#bac9cc] light:text-[#555f71] hover:text-[#00daf3] light:hover:text-[#006576] transition-colors cursor-pointer" href="predict.html">Prediction</a>
+        <a class="text-[#bac9cc] light:text-[#555f71] hover:text-[#00daf3] light:hover:text-[#006576] transition-colors cursor-pointer" href="hardware.html">Miner Fleet</a>
+        <a class="text-[#bac9cc] light:text-[#555f71] hover:text-[#00daf3] light:hover:text-[#006576] transition-colors cursor-pointer" href="network.html">Network</a>
+        <a class="text-[#bac9cc] light:text-[#555f71] hover:text-[#00daf3] light:hover:text-[#006576] transition-colors cursor-pointer" href="settings.html">Settings</a>
       </div>
-      <div>
-        <div class="hero-stat-value" data-count="90" data-suffix="%">0</div>
-        <div class="hero-stat-label">Model Accuracy</div>
-      </div>
-      <div>
-        <div class="hero-stat-value" data-count="2">0</div>
-        <div class="hero-stat-label">States Covered</div>
-      </div>
-      <div>
-        <div class="hero-stat-value" data-count="57">0</div>
-        <div class="hero-stat-label">Known Deposits</div>
+      <div class="flex items-center gap-6">
+        <!-- Theme switcher toggle slider -->
+        <div class="theme-switch-wrapper">
+          <label class="theme-switch" for="theme-toggle-checkbox">
+            <input type="checkbox" id="theme-toggle-checkbox" />
+            <div class="theme-switch-slider">
+              <i class="fa-solid fa-moon icon-moon"></i>
+              <i class="fa-solid fa-sun icon-sun"></i>
+            </div>
+          </label>
+        </div>
+        <a href="predict.html" class="bg-[#00daf3] light:bg-[#006576] text-[#00363d] light:text-white px-5 py-2 rounded-lg font-bold hover:opacity-90 active:scale-95 transition-all text-sm shadow-md">
+          Start Predicting
+        </a>
       </div>
     </div>
-  </div>
-</section>
+  </nav>
 
-<!-- ══════════ FEATURES ══════════ -->
-<section class="section" id="features" style="background: var(--bg-2);">
-  <div class="section-full">
-    <div style="text-align:center; margin-bottom:56px;" data-aos="fade-up">
-      <span class="section-badge">Platform Features</span>
-      <h2 class="section-title">Everything You Need for<br>Mineral Exploration</h2>
-      <p class="section-subtitle" style="margin:0 auto;">From interactive GIS mapping to AI-powered predictions and professional PDF reporting — all in one platform.</p>
-    </div>
-    <div style="display:grid; grid-template-columns: repeat(3,1fr); gap:24px;">
-      <div class="feature-card" data-aos="fade-up">
-        <div class="feature-icon" style="background: rgba(59,130,246,0.12); color: var(--primary-light);">
-          <i class="fa-solid fa-map-location-dot"></i>
-        </div>
-        <h3>Interactive GIS Map</h3>
-        <p>Click to select any location in Karnataka and Andhra Pradesh. Draw area rectangles. Real-time coordinate capture with multiple geological layer overlays.</p>
-      </div>
-      <div class="feature-card" data-aos="fade-up" style="transition-delay:.1s;">
-        <div class="feature-icon" style="background: rgba(168,85,247,0.12); color: var(--purple);">
-          <i class="fa-solid fa-microchip"></i>
-        </div>
-        <h3>Random Forest AI Model</h3>
-        <p>Trained on NGCM geochemical data (68 elements, 10,004 samples) joined with GSI lithology polygons. Achieves R² = 0.855 accuracy on test set.</p>
-      </div>
-      <div class="feature-card" data-aos="fade-up" style="transition-delay:.2s;">
-        <div class="feature-icon" style="background: rgba(34,197,94,0.12); color: var(--success);">
-          <i class="fa-solid fa-fire"></i>
-        </div>
-        <h3>Prospectivity Heatmaps</h3>
-        <p>Dynamic density heatmaps generated from mineral occurrence registry. Red = High potential, Yellow = Medium, Green = Low. Toggle on/off.</p>
-      </div>
-      <div class="feature-card" data-aos="fade-up" style="transition-delay:.1s;">
-        <div class="feature-icon" style="background: rgba(245,158,11,0.12); color: var(--warning);">
-          <i class="fa-solid fa-brain"></i>
-        </div>
-        <h3>Explainable AI (XAI)</h3>
-        <p>Every prediction comes with a "Why this result?" breakdown — feature importance, geochemical anomalies, lithology matching, and proximity scores.</p>
-      </div>
-      <div class="feature-card" data-aos="fade-up" style="transition-delay:.2s;">
-        <div class="feature-icon" style="background: rgba(239,68,68,0.12); color: var(--danger);">
-          <i class="fa-solid fa-file-pdf"></i>
-        </div>
-        <h3>PDF Exploration Reports</h3>
-        <p>Professional multi-page PDF reports with mineral inventory, concentration percentages, lat/lon/altitude, geological zone, and XAI interpretation.</p>
-      </div>
-      <div class="feature-card" data-aos="fade-up" style="transition-delay:.3s;">
-        <div class="feature-icon" style="background: rgba(6,182,212,0.12); color: var(--cyan);">
-          <i class="fa-solid fa-database"></i>
-        </div>
-        <h3>MongoDB Cloud Storage</h3>
-        <p>All predictions stored in MongoDB Atlas. Browse prediction history, compare results across locations, and track exploration campaigns over time.</p>
-      </div>
-    </div>
-  </div>
-</section>
+  <!-- Hero Section -->
+  <section class="relative overflow-hidden min-h-[800px] flex items-center px-8 md:px-12 bg-[#121414] dark:bg-[#121414] light:bg-[#f7f9fb]">
+    <!-- Animated Particle Canvas Background -->
+    <canvas id="hero-canvas" class="absolute inset-0 z-0 opacity-40 pointer-events-none"></canvas>
+    <!-- Background Grid Lines -->
+    <div class="absolute inset-0 z-0 opacity-10 pointer-events-none bg-[linear-gradient(rgba(0,218,243,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(0,218,243,0.08)_1px,transparent_1px)] bg-[size:40px_40px]"></div>
 
-<!-- ══════════ HOW IT WORKS ══════════ -->
-<section class="section" id="how">
-  <div class="section-full">
-    <div style="display:grid; grid-template-columns:1fr 1fr; gap:60px; align-items:center;">
-      <div data-aos="fade-right">
-        <span class="section-badge">Workflow</span>
-        <h2 class="section-title">From Map Click<br>to Exploration Report</h2>
-        <p class="section-subtitle" style="margin-bottom:32px;">Five steps from location selection to professional PDF exploration report.</p>
+    <div class="relative z-10 max-w-[1440px] mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+      <div class="lg:col-span-7">
+        <div class="inline-flex items-center gap-2 px-3 py-1 bg-[#00daf3]/10 light:bg-[#006576]/10 border border-[#00daf3]/20 light:border-[#006576]/20 rounded-full mb-6">
+          <span class="status-pulse bg-[#10B981] light:bg-[#008094]"></span>
+          <span class="text-[#00daf3] light:text-[#006576] font-label text-xs tracking-wider">PREDICTIVE SERVER ONLINE • 10k DATA POINTS</span>
+        </div>
+        <h1 class="font-display text-4xl lg:text-6xl mb-6 leading-tight font-bold tracking-tight text-white dark:text-white light:text-[#191c1e]">
+          The Next Generation of <br/>
+          <span class="text-[#00daf3] light:text-[#006576] bg-gradient-to-r from-[#00daf3] to-[#8A05FF] bg-clip-text text-transparent light:from-[#006576] light:to-[#7C3AED]">AI Mineral Discovery</span>
+        </h1>
+        <p class="text-lg text-[#bac9cc] light:text-[#3d494c] max-w-xl mb-10 leading-relaxed">
+          Harness institutional-grade geochemical mapping datasets and advanced Random Forest inversion modelling. Pinpoint prospectivity, access localized explanations, and download reports instantly.
+        </p>
+        <div class="flex flex-wrap gap-4">
+          <a href="predict.html" class="bg-[#00daf3] light:bg-[#006576] text-[#00363d] light:text-white px-8 py-4 rounded-xl font-bold hover:shadow-[0_0_20px_rgba(0,218,243,0.3)] light:hover:shadow-[0_0_20px_rgba(0,101,118,0.2)] transition-all flex items-center gap-2 group shadow-lg">
+            Start Prediction Map
+            <span class="material-symbols-outlined group-hover:translate-x-1 transition-transform">trending_up</span>
+          </a>
+          <a href="dashboard.html" class="bg-transparent border border-[#00daf3]/50 light:border-[#006576]/50 text-[#00daf3] light:text-[#006576] hover:bg-[#00daf3]/5 light:hover:bg-[#006576]/5 px-8 py-4 rounded-xl font-bold transition-all">
+            View Analytics Dashboard
+          </a>
+        </div>
+      </div>
+      <div class="lg:col-span-5 hidden lg:block">
+        <div class="glass-card rounded-2xl p-8 glow-cyan shadow-xl border-white/10 dark:border-white/10 light:border-black/5 bg-slate-900/50 dark:bg-slate-900/50 light:bg-white/80 backdrop-blur-md">
+          <div class="flex justify-between items-center mb-8 border-b border-white/10 light:border-black/10 pb-4">
+            <span class="font-label text-xs text-[#bac9cc] light:text-[#3d494c] uppercase tracking-wider">MODEL VALIDATION STATE</span>
+            <span class="font-label text-xs text-[#10B981] light:text-[#008094] font-bold">READY</span>
+          </div>
+          <div class="space-y-6">
+            <div class="bg-black/20 light:bg-black/5 p-5 rounded-xl border border-white/5 light:border-black/5">
+              <span class="block font-label text-xs text-[#bac9cc] light:text-[#3d494c] mb-1 uppercase tracking-wider">Model Accuracy R²</span>
+              <div class="flex items-baseline gap-2">
+                <span class="text-3xl font-bold text-white dark:text-white light:text-[#191c1e]">0.855</span>
+                <span class="font-label text-xs text-[#10B981] light:text-[#008094] font-semibold">(94.2% Peak)</span>
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+              <div class="bg-black/20 light:bg-black/5 p-5 rounded-xl border border-white/5 light:border-black/5">
+                <span class="block font-label text-xs text-[#bac9cc] light:text-[#3d494c] mb-1 uppercase tracking-wider">Geochem Points</span>
+                <span class="text-xl text-[#00daf3] light:text-[#006576] font-bold">10,004</span>
+              </div>
+              <div class="bg-black/20 light:bg-black/5 p-5 rounded-xl border border-white/5 light:border-black/5">
+                <span class="block font-label text-xs text-[#bac9cc] light:text-[#3d494c] mb-1 uppercase tracking-wider">Litho Polygons</span>
+                <span class="text-xl text-[#00daf3] light:text-[#006576] font-bold">3,599</span>
+              </div>
+            </div>
+            <div class="pt-4">
+              <div class="flex justify-between font-label text-xs text-[#bac9cc] light:text-[#3d494c] mb-2">
+                <span>MAPPING COVERAGE AREA</span>
+                <span class="font-bold">100% ACTIVE</span>
+              </div>
+              <div class="flex gap-1 h-3">
+                <div class="flex-1 bg-[#00daf3] light:bg-[#006576] rounded-sm"></div>
+                <div class="flex-1 bg-[#00daf3] light:bg-[#006576] rounded-sm"></div>
+                <div class="flex-1 bg-[#00daf3] light:bg-[#006576] rounded-sm"></div>
+                <div class="flex-1 bg-[#00daf3] light:bg-[#006576] rounded-sm"></div>
+                <div class="flex-1 bg-[#00daf3] light:bg-[#006576] rounded-sm"></div>
+                <div class="flex-1 bg-[#00daf3] light:bg-[#006576] rounded-sm"></div>
+                <div class="flex-1 bg-[#00daf3] light:bg-[#006576] rounded-sm"></div>
+                <div class="flex-1 bg-[#00daf3] light:bg-[#006576] rounded-sm"></div>
+                <div class="flex-1 bg-[#00daf3]/30 light:bg-[#006576]/20 rounded-sm"></div>
+                <div class="flex-1 bg-[#00daf3]/30 light:bg-[#006576]/20 rounded-sm"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features Bento Grid -->
+  <section class="py-24 px-8 md:px-12 max-w-[1440px] mx-auto">
+    <div class="mb-16">
+      <h2 class="font-label text-sm text-[#00daf3] light:text-[#006576] uppercase tracking-[0.2em] mb-4">Core Capabilities</h2>
+      <h3 class="font-display text-3xl md:text-4xl text-white dark:text-white light:text-[#191c1e] max-w-2xl font-bold tracking-tight">Engineered for absolute accuracy, transparency, and research depth.</h3>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <!-- Analytical Interpolation Card -->
+      <div class="md:col-span-2 glass-card rounded-2xl p-8 hover:glow-cyan transition-all group overflow-hidden relative min-h-[380px] border border-white/10 light:border-black/5 bg-slate-900/40 light:bg-white/80">
+        <div class="relative z-10 max-w-md">
+          <span class="material-symbols-outlined text-[#00daf3] light:text-[#006576] text-4xl mb-6">explore</span>
+          <h4 class="font-display text-2xl text-white dark:text-white light:text-[#191c1e] mb-4 font-bold tracking-tight">High-Density Interpolation</h4>
+          <p class="text-[#bac9cc] light:text-[#3d494c] leading-relaxed">
+            Our Inverse Distance Weighting (IDW) interpolation engine processes thousands of active grid points spaced at strict intervals across Karnataka and Andhra Pradesh, assuring localized prediction accuracy.
+          </p>
+        </div>
+        <div class="absolute right-0 bottom-0 w-2/3 h-2/3 opacity-10 group-hover:opacity-20 transition-opacity">
+          <img class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBn4iRCdNw-Tx7f9ZxQK0R2JrwOfhzCyR7mfY8OYarvHX8iaJ0ATPcQo-vbuC0_cdAgnPmt9CmIKzXRATzBDs5sUml8cpRb7wWMKBaMRRVxJSLeexAB6g03zMhqQrlotKd22BdIxa0BdWy9TQa3lA2JIiSfuAWlmBgovJpyM8ap7nuhdUJuJJUf4UUlLG0PJRcZnamn0e3-CtdD3RSuEmqeNhjsDOKdFtIr-VHXu_XynVFxBOP2waMLB_mhr5gAWUtMWqSc3Dcgo7I" alt="High-end circuit pathways"/>
+        </div>
+      </div>
+      <!-- Security/Validation Card -->
+      <div class="glass-card rounded-2xl p-8 hover:glow-cyan transition-all flex flex-col justify-between border border-white/10 light:border-black/5 bg-slate-900/40 light:bg-white/80">
         <div>
-          <div class="flow-step">
-            <div class="flow-num">1</div>
-            <div class="flow-content">
-              <h5>Select Location on Map</h5>
-              <p>Click a point or draw an area on the interactive Leaflet map. Coordinates auto-fill.</p>
-            </div>
-          </div>
-          <div class="flow-step">
-            <div class="flow-num">2</div>
-            <div class="flow-content">
-              <h5>Spatial KNN Geochemistry</h5>
-              <p>System finds the nearest NGCM stream sediment sample and retrieves local background geochemistry.</p>
-            </div>
-          </div>
-          <div class="flow-step">
-            <div class="flow-num">3</div>
-            <div class="flow-content">
-              <h5>AI Model Prediction</h5>
-              <p>Random Forest Regressor predicts mineral probability score (0–100%) from 12 geospatial features.</p>
-            </div>
-          </div>
-          <div class="flow-step">
-            <div class="flow-num">4</div>
-            <div class="flow-content">
-              <h5>Mineral Inventory</h5>
-              <p>Element enrichment analysis (70th percentile thresholds) identifies likely minerals with concentration estimates.</p>
-            </div>
-          </div>
-          <div class="flow-step">
-            <div class="flow-num">5</div>
-            <div class="flow-content">
-              <h5>Report Generation</h5>
-              <p>Download a comprehensive PDF report with all findings, heatmap, and XAI explanation.</p>
-            </div>
-          </div>
+          <span class="material-symbols-outlined text-[#00daf3] light:text-[#006576] text-4xl mb-6">shield</span>
+          <h4 class="font-display text-2xl text-white dark:text-white light:text-[#191c1e] mb-4 font-bold tracking-tight">Strict Local Validation</h4>
+          <p class="text-[#bac9cc] light:text-[#3d494c] leading-relaxed">
+            The platform enforces immediate checks of coordinate bounding envelopes, instantly flagging sea clicks or out-of-bounds inputs to assure mathematical and geospatial integrity.
+          </p>
+        </div>
+        <div class="mt-8 p-4 bg-black/30 light:bg-black/5 rounded-lg border border-white/5 light:border-black/5 flex items-center gap-3">
+          <span class="material-symbols-outlined text-[#10B981] light:text-[#008094]">verified_user</span>
+          <span class="font-label text-[10px] text-white dark:text-white light:text-[#191c1e] font-bold">BOUNDS CHECK COMPLIANT</span>
         </div>
       </div>
-      <div data-aos="fade-left">
-        <div class="glass-card" style="padding:32px;">
-          <h4 style="font-size:1rem; margin-bottom:24px; color:var(--text-3);">
-            <i class="fa-solid fa-terminal" style="color:var(--primary-light); margin-right:8px;"></i>Sample Prediction Output
-          </h4>
-          <pre style="font-family:var(--mono); font-size:0.8rem; color:var(--success); line-height:1.8; overflow-x:auto;">{
-  <span style="color:var(--primary-light);">"mineral_probability"</span>: <span style="color:var(--warning);">87</span>,
-  <span style="color:var(--primary-light);">"confidence"</span>: <span style="color:var(--success);">"High"</span>,
-  <span style="color:var(--primary-light);">"predicted_minerals"</span>: [
-    <span style="color:var(--warning);">"Iron"</span>,
-    <span style="color:var(--warning);">"Chromium"</span>,
-    <span style="color:var(--warning);">"Manganese"</span>
-  ],
-  <span style="color:var(--primary-light);">"mineral_percentages"</span>: {
-    <span style="color:var(--warning);">"Iron"</span>:      <span style="color:var(--cyan);">12.340</span>,
-    <span style="color:var(--warning);">"Chromium"</span>:  <span style="color:var(--cyan);">0.0021</span>,
-    <span style="color:var(--warning);">"Manganese"</span>: <span style="color:var(--cyan);">0.8700</span>
-  },
-  <span style="color:var(--primary-light);">"geological_zone"</span>: <span style="color:var(--success);">"Chitradurga"</span>,
-  <span style="color:var(--primary-light);">"nearest_deposit"</span>: <span style="color:var(--success);">"Banded Iron"</span>,
-  <span style="color:var(--primary-light);">"latitude"</span>: <span style="color:var(--cyan);">14.23150</span>,
-  <span style="color:var(--primary-light);">"longitude"</span>: <span style="color:var(--cyan);">76.40620</span>,
-  <span style="color:var(--primary-light);">"altitude"</span>: <span style="color:var(--cyan);">456.2</span>
-}</pre>
+      <!-- Explainable AI Card -->
+      <div class="glass-card rounded-2xl p-8 hover:glow-cyan transition-all flex flex-col justify-between border border-white/10 light:border-black/5 bg-slate-900/40 light:bg-white/80">
+        <div>
+          <span class="material-symbols-outlined text-[#00daf3] light:text-[#006576] text-4xl mb-6">query_stats</span>
+          <h4 class="font-display text-2xl text-white dark:text-white light:text-[#191c1e] mb-4 font-bold tracking-tight">Explainable AI (XAI)</h4>
+          <p class="text-[#bac9cc] light:text-[#3d494c] leading-relaxed">
+            Every score returns descriptive, localized geological indicators, explaining exactly why a region is prospectivity-rich rather than relying on distance metrics.
+          </p>
+        </div>
+        <div class="mt-8 font-label text-xs text-[#00daf3] light:text-[#006576] bg-[#00daf3]/5 p-2.5 rounded font-mono">
+          MODEL: RF_INVERSION_V2.0
+        </div>
+      </div>
+      <!-- Real-time Dashboard Card -->
+      <div class="md:col-span-2 glass-card rounded-2xl p-8 hover:glow-cyan transition-all group relative overflow-hidden border border-white/10 light:border-black/5 bg-slate-900/40 light:bg-white/80">
+        <div class="grid md:grid-cols-2 gap-8 items-center h-full">
+          <div>
+            <span class="material-symbols-outlined text-[#00daf3] light:text-[#006576] text-4xl mb-6">monitoring</span>
+            <h4 class="font-display text-2xl text-white dark:text-white light:text-[#191c1e] mb-4 font-bold tracking-tight">Unified Data Telemetry</h4>
+            <p class="text-[#bac9cc] light:text-[#3d494c] mb-6 leading-relaxed">
+              Track prediction requests history, geological class distributions, and query metrics in real-time.
+            </p>
+            <ul class="space-y-3">
+              <li class="flex items-center gap-2 text-sm text-[#e2e2e2] light:text-[#191c1e]">
+                <span class="material-symbols-outlined text-[#00daf3] light:text-[#006576] text-sm">check_circle</span>
+                Dynamic occurrence bar charts
+              </li>
+              <li class="flex items-center gap-2 text-sm text-[#e2e2e2] light:text-[#191c1e]">
+                <span class="material-symbols-outlined text-[#00daf3] light:text-[#006576] text-sm">check_circle</span>
+                Detailed system status telemetry
+              </li>
+            </ul>
+          </div>
+          <div class="bg-black/30 light:bg-black/5 rounded-xl border border-white/5 light:border-black/5 p-5 transform group-hover:scale-[1.02] transition-transform">
+            <div class="h-32 flex items-end gap-1.5 mb-4">
+              <div class="flex-1 bg-[#00daf3]/20 h-1/2 rounded-t-sm"></div>
+              <div class="flex-1 bg-[#00daf3]/40 h-2/3 rounded-t-sm"></div>
+              <div class="flex-1 bg-[#00daf3]/60 h-3/4 rounded-t-sm"></div>
+              <div class="flex-1 bg-[#00daf3] light:bg-[#006576] h-full rounded-t-sm"></div>
+              <div class="flex-1 bg-[#00daf3]/80 h-4/5 rounded-t-sm"></div>
+              <div class="flex-1 bg-[#00daf3]/40 h-1/2 rounded-t-sm"></div>
+              <div class="flex-1 bg-[#00daf3]/20 h-1/3 rounded-t-sm"></div>
+            </div>
+            <div class="flex justify-between text-[10px] text-[#bac9cc] light:text-[#3d494c] font-mono">
+              <span>00:00</span>
+              <span>08:00</span>
+              <span>16:00</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
-  </div>
-</section>
+  </section>
 
-<!-- ══════════ DATASETS ══════════ -->
-<section class="section" id="datasets" style="background:var(--bg-2);">
-  <div class="section-full">
-    <div style="text-align:center; margin-bottom:48px;" data-aos="fade-up">
-      <span class="section-badge">Data Sources</span>
-      <h2 class="section-title">Powered by Authoritative<br>Geological Datasets</h2>
-    </div>
-    <div style="display:grid; grid-template-columns: repeat(4,1fr); gap:20px;">
-      <div class="dataset-card" data-aos="fade-up">
-        <div class="dataset-icon" style="background:rgba(59,130,246,0.12); color:var(--primary-light);">
-          <i class="fa-solid fa-flask"></i>
-        </div>
-        <h4 style="font-size:0.95rem; font-weight:700; margin-bottom:8px;">NGCM Geochemical</h4>
-        <p style="font-size:0.8rem; color:var(--text-3); line-height:1.6;">National Geochemical Campaign Mapping data with 10,004 stream sediment samples across 68 elements (Fe, Cu, Zn, Au, Mn, Ni, Cr, Pb…)</p>
-        <div style="margin-top:14px; font-size:0.72rem; color:var(--primary-light); font-weight:700;">GSI · Government of India</div>
-      </div>
-      <div class="dataset-card" data-aos="fade-up" style="transition-delay:.1s;">
-        <div class="dataset-icon" style="background:rgba(34,197,94,0.12); color:var(--success);">
-          <i class="fa-solid fa-layer-group"></i>
-        </div>
-        <h4 style="font-size:0.95rem; font-weight:700; margin-bottom:8px;">GSI Geological Maps</h4>
-        <p style="font-size:0.8rem; color:var(--text-3); line-height:1.6;">Lithology and geological unit polygons from GSI shapefiles. 3,599 unique geological formations covering Karnataka and Andhra Pradesh.</p>
-        <div style="margin-top:14px; font-size:0.72rem; color:var(--success); font-weight:700;">GSI · Geological Survey of India</div>
-      </div>
-      <div class="dataset-card" data-aos="fade-up" style="transition-delay:.2s;">
-        <div class="dataset-icon" style="background:rgba(245,158,11,0.12); color:var(--warning);">
-          <i class="fa-solid fa-satellite"></i>
-        </div>
-        <h4 style="font-size:0.95rem; font-weight:700; margin-bottom:8px;">ASTER Mineral Maps</h4>
-        <p style="font-size:0.8rem; color:var(--text-3); line-height:1.6;">Advanced Spaceborne Thermal Emission and Reflection Radiometer satellite data for surface mineralogy and alteration zone identification.</p>
-        <div style="margin-top:14px; font-size:0.72rem; color:var(--warning); font-weight:700;">NASA · USGS</div>
-      </div>
-      <div class="dataset-card" data-aos="fade-up" style="transition-delay:.3s;">
-        <div class="dataset-icon" style="background:rgba(168,85,247,0.12); color:var(--purple);">
-          <i class="fa-solid fa-magnet"></i>
-        </div>
-        <h4 style="font-size:0.95rem; font-weight:700; margin-bottom:8px;">Mineral Occurrence DB</h4>
-        <p style="font-size:0.8rem; color:var(--text-3); line-height:1.6;">57 known mineral occurrences — quarries, mines, and mineralization zones including Banded Iron, Copper, Manganese, and Chromite deposits.</p>
-        <div style="margin-top:14px; font-size:0.72rem; color:var(--purple); font-weight:700;">GSI MINDB · IBMGOV</div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ══════════ TECH STACK ══════════ -->
-<section class="section" id="tech">
-  <div class="section-full" style="text-align:center;">
-    <span class="section-badge" data-aos="fade-up">Technology Stack</span>
-    <h2 class="section-title" data-aos="fade-up">Built with Modern,<br>Production-Grade Tools</h2>
-    <div style="margin-top:36px;" data-aos="fade-up">
-      <span class="tech-chip"><i class="fa-brands fa-node" style="color:#68a063;"></i> Node.js + Express</span>
-      <span class="tech-chip"><i class="fa-brands fa-python" style="color:#3776ab;"></i> Python + scikit-learn</span>
-      <span class="tech-chip" style="color:var(--text-3);"><i class="fa-solid fa-brain" style="color:var(--purple);"></i> Random Forest Regressor</span>
-      <span class="tech-chip"><i class="fa-solid fa-database" style="color:#00ed64;"></i> MongoDB Atlas</span>
-      <span class="tech-chip"><i class="fa-solid fa-map" style="color:var(--success);"></i> Leaflet.js + OSM</span>
-      <span class="tech-chip"><i class="fa-solid fa-chart-bar" style="color:var(--warning);"></i> Chart.js</span>
-      <span class="tech-chip"><i class="fa-solid fa-file-pdf" style="color:var(--danger);"></i> PDFKit</span>
-      <span class="tech-chip"><i class="fa-solid fa-cloud" style="color:var(--primary-light);"></i> Render.com Deploy</span>
-    </div>
-  </div>
-</section>
-
-<!-- ══════════ ABOUT ══════════ -->
-<section class="section" id="about" style="background:var(--bg-2);">
-  <div class="section-full">
-    <div style="display:grid; grid-template-columns:1fr 1fr; gap:60px; align-items:center;">
-      <div data-aos="fade-right">
-        <span class="section-badge">About the Project</span>
-        <h2 class="section-title">Built for Hackathons,<br>Designed for Industry</h2>
-        <p style="color:var(--text-3); line-height:1.8; margin-bottom:20px; font-size:0.95rem;">
-          GeoMiner AI was built to democratize mineral prospectivity analysis — a field previously requiring expensive GIS software and specialist knowledge.
+  <!-- Global Network Section -->
+  <section class="py-24 bg-black/10 light:bg-black/5">
+    <div class="px-8 md:px-12 max-w-[1440px] mx-auto">
+      <div class="text-center mb-16">
+        <h2 class="font-display text-3xl md:text-4xl text-white dark:text-white light:text-[#191c1e] mb-4 font-bold tracking-tight">Decentralized Power, Globally Anchored</h2>
+        <p class="text-[#bac9cc] light:text-[#3d494c] max-w-2xl mx-auto text-lg leading-relaxed">
+          GeoMiner AI coordinates target exploration zones mapping across multiple research hubs, securely anchored.
         </p>
-        <p style="color:var(--text-3); line-height:1.8; font-size:0.95rem;">
-          By combining national geochemical databases, geological shapefiles, and machine learning, GeoMiner AI delivers exploration-grade predictions through a modern web interface accessible to geologists, researchers, and startups alike.
+      </div>
+      <div class="relative h-[500px] rounded-3xl overflow-hidden border border-white/10 light:border-black/5 bg-slate-900/50 light:bg-white/80 shadow-xl">
+        <div class="absolute inset-0 flex items-center justify-center pointer-events-none opacity-40">
+          <div class="w-full h-full grayscale opacity-30 contrast-125 bg-cover bg-center" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuA64C4PY9R1tRWxvs2uMyjYWhZFqAfEZXNTXbldb2xj4idAG8qGVQHK8w4LGTXDFx0Bsf6o3MC97NrPorzqbSgCkdaZDAbqkQVYVGhbqTLcmzPShq0oQwTch_rUupHKNKx7kT-tK0YKor5zWh3VAkJmJ9USBb3cxEheC_7IQUfESxhhZPyF9dIXD6VRpT3CN6j5lvh2Ahp3Mx-c234-aTAqYi5Ro3R28l4-iHwbRGBH_h9J4Vcr7_d8j_V0crIsJEIzZqqOywU0Vc4');"></div>
+        </div>
+        <!-- Study Area Node Markers -->
+        <div class="absolute top-1/4 left-1/3 group cursor-pointer">
+          <div class="status-pulse bg-[#00daf3] light:bg-[#006576]"></div>
+          <div class="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 hidden group-hover:block bg-slate-800 p-3 rounded-lg border border-[#00daf3]/50 text-white font-label text-xs whitespace-nowrap shadow-xl">
+            Chitradurga Zone (Active)
+          </div>
+        </div>
+        <div class="absolute top-1/2 right-1/4 group cursor-pointer">
+          <div class="status-pulse bg-[#00daf3] light:bg-[#006576]"></div>
+          <div class="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 hidden group-hover:block bg-slate-800 p-3 rounded-lg border border-[#00daf3]/50 text-white font-label text-xs whitespace-nowrap shadow-xl">
+            Nellore Schist Belt (Studied)
+          </div>
+        </div>
+        <div class="absolute bottom-1/3 left-1/2 group cursor-pointer">
+          <div class="status-pulse bg-[#00daf3] light:bg-[#006576]"></div>
+          <div class="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 hidden group-hover:block bg-slate-800 p-3 rounded-lg border border-[#00daf3]/50 text-white font-label text-xs whitespace-nowrap shadow-xl">
+            Sandur greenstone (Mapped)
+          </div>
+        </div>
+        <!-- Overlay Stats -->
+        <div class="absolute bottom-8 left-8 flex gap-6 flex-wrap">
+          <div class="glass-card p-5 rounded-2xl shadow-md border border-white/10 light:border-black/5 bg-slate-900/60 light:bg-white/95">
+            <span class="block text-[#bac9cc] light:text-[#3d494c] font-label text-[10px] uppercase mb-1 tracking-wider">Total Grid Points</span>
+            <span class="text-2xl font-bold text-[#00daf3] light:text-[#006576]">10,004 Points</span>
+          </div>
+          <div class="glass-card p-5 rounded-2xl shadow-md border border-white/10 light:border-black/5 bg-slate-900/60 light:bg-white/95">
+            <span class="block text-[#bac9cc] light:text-[#3d494c] font-label text-[10px] uppercase mb-1 tracking-wider">Coverage Area</span>
+            <span class="text-2xl font-bold text-[#00daf3] light:text-[#006576]">5,200+ Sq Km</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Ready to predicted -->
+  <section class="py-32 px-8 text-center bg-[#121414] dark:bg-[#121414] light:bg-[#f7f9fb]">
+    <div class="max-w-3xl mx-auto">
+      <h2 class="font-display text-4xl text-white dark:text-white light:text-[#191c1e] mb-8 font-bold tracking-tight">Ready to explore mineral prospectivity?</h2>
+      <p class="text-[#bac9cc] light:text-[#3d494c] mb-12 text-lg">
+        Run coordinate predictions on our high-performance AI inversion layers and generate localized PDF reports instantaneously.
+      </p>
+      <div class="flex flex-col sm:flex-row justify-center gap-6">
+        <a href="predict.html" class="bg-[#00daf3] light:bg-[#006576] text-[#00363d] light:text-white px-12 py-5 rounded-xl font-bold text-lg hover:shadow-[0_0_24px_rgba(0,218,243,0.4)] light:hover:shadow-[0_0_24px_rgba(0,101,118,0.3)] transition-all shadow-md">
+          Start Predicting Now
+        </a>
+        <a href="dashboard.html" class="border border-[#00daf3]/50 light:border-[#006576]/50 text-[#00daf3] light:text-[#006576] px-12 py-5 rounded-xl font-bold text-lg hover:bg-[#00daf3]/5 light:hover:bg-[#006576]/5 transition-all">
+          View Dashboard
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="w-full py-12 bg-[#0c0f0f] light:bg-white border-t border-white/10 light:border-black/10">
+    <div class="flex flex-col md:flex-row justify-between items-center px-8 md:px-12 max-w-[1440px] mx-auto gap-8">
+      <div class="flex flex-col items-center md:items-start gap-2">
+        <div class="font-label text-sm font-bold text-[#00daf3] light:text-[#006576] uppercase tracking-[0.2em]">
+          GeoMiner AI
+        </div>
+        <p class="font-label text-[10px] text-[#bac9cc] light:text-[#3d494c]">
+          © 2026 GeoMiner Systems. All rights reserved.
         </p>
-        <div style="display:flex; gap:12px; margin-top:28px; flex-wrap:wrap;">
-          <a href="predict.html" class="btn-primary"><i class="fa-solid fa-rocket"></i> Launch App</a>
-          <a href="https://github.com/gt1432/geominer-ai" target="_blank" class="btn-ghost"><i class="fa-brands fa-github"></i> GitHub</a>
-        </div>
       </div>
-      <div data-aos="fade-left">
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
-          <div class="glass-card" style="padding:20px; text-align:center;">
-            <div style="font-size:2rem; margin-bottom:8px;">🎯</div>
-            <h5 style="font-size:0.9rem; font-weight:700; margin-bottom:6px;">Precision</h5>
-            <p style="font-size:0.78rem; color:var(--text-3);">85.5% R² model accuracy on validation set</p>
-          </div>
-          <div class="glass-card" style="padding:20px; text-align:center;">
-            <div style="font-size:2rem; margin-bottom:8px;">⚡</div>
-            <h5 style="font-size:0.9rem; font-weight:700; margin-bottom:6px;">Fast</h5>
-            <p style="font-size:0.78rem; color:var(--text-3);">Sub-5 second prediction turnaround</p>
-          </div>
-          <div class="glass-card" style="padding:20px; text-align:center;">
-            <div style="font-size:2rem; margin-bottom:8px;">🌍</div>
-            <h5 style="font-size:0.9rem; font-weight:700; margin-bottom:6px;">Spatial</h5>
-            <p style="font-size:0.78rem; color:var(--text-3);">Full KNN geochemistry for any point in coverage zone</p>
-          </div>
-          <div class="glass-card" style="padding:20px; text-align:center;">
-            <div style="font-size:2rem; margin-bottom:8px;">📄</div>
-            <h5 style="font-size:0.9rem; font-weight:700; margin-bottom:6px;">Reports</h5>
-            <p style="font-size:0.78rem; color:var(--text-3);">Professional PDF exploration reports in seconds</p>
-          </div>
-        </div>
+      <div class="flex flex-wrap justify-center gap-x-8 gap-y-4">
+        <a class="font-label text-xs text-[#bac9cc] light:text-[#3d494c] hover:text-[#00daf3] light:hover:text-[#006576] transition-colors cursor-pointer" href="#">Privacy Policy</a>
+        <a class="font-label text-xs text-[#bac9cc] light:text-[#3d494c] hover:text-[#00daf3] light:hover:text-[#006576] transition-colors cursor-pointer" href="#">Terms of Service</a>
+        <a class="font-label text-xs text-[#bac9cc] light:text-[#3d494c] hover:text-[#00daf3] light:hover:text-[#006576] transition-colors cursor-pointer" href="#">API Documentation</a>
+        <a class="font-label text-xs text-[#bac9cc] light:text-[#3d494c] hover:text-[#00daf3] light:hover:text-[#006576] transition-colors cursor-pointer" href="#">Support</a>
+      </div>
+      <div class="flex gap-6">
+        <a class="text-[#bac9cc] light:text-[#3d494c] hover:text-[#00daf3] light:hover:text-[#006576] transition-colors" href="#">
+          <span class="material-symbols-outlined text-[24px]">share</span>
+        </a>
+        <a class="text-[#bac9cc] light:text-[#3d494c] hover:text-[#00daf3] light:hover:text-[#006576] transition-colors" href="#">
+          <span class="material-symbols-outlined text-[24px]">database</span>
+        </a>
       </div>
     </div>
-  </div>
-</section>
+  </footer>
 
-<!-- ══════════ CTA ══════════ -->
-<section class="section" style="text-align:center;">
-  <div class="section-full">
-    <div style="background:linear-gradient(135deg,rgba(59,130,246,0.1),rgba(168,85,247,0.1)); border:1px solid rgba(59,130,246,0.2); border-radius:var(--radius-xl); padding:64px 32px;" data-aos="fade-up">
-      <h2 class="section-title" style="margin-bottom:14px;">Ready to Find Minerals?</h2>
-      <p style="color:var(--text-3); max-width:500px; margin:0 auto 32px; font-size:1rem;">Select any location on the map and get AI-powered mineral prospectivity predictions in seconds.</p>
-      <a href="predict.html" class="btn-primary" style="padding:15px 36px; font-size:1.05rem; box-shadow:0 8px 40px rgba(59,130,246,0.4);">
-        <i class="fa-solid fa-map-location-dot"></i> Start Free Prediction
-      </a>
-    </div>
-  </div>
-</section>
+  <!-- Background Particle Animation script -->
+  <script>
+    (function() {
+      const canvas = document.getElementById('hero-canvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      let W = window.innerWidth;
+      let H = 800;
+      canvas.width = W; canvas.height = H;
 
-</main>
-
-<!-- ══════════ FOOTER ══════════ -->
-<footer class="site-footer">
-  <div class="footer-grid">
-    <div class="footer-brand">
-      <div class="nav-brand" style="margin-bottom:12px;">
-        <div class="nav-logo-icon"><i class="fa-solid fa-mountain-sun" style="color:#fff;"></i></div>
-        <span class="nav-title" style="font-size:1.15rem;">GeoMiner AI</span>
-      </div>
-      <p>AI-powered mineral prospectivity mapping for geologists, researchers, and mining startups. Powered by GSI NGCM data and Random Forest machine learning.</p>
-      <div class="social-links" style="margin-top:18px;">
-        <a href="https://github.com/gt1432/geominer-ai" class="social-link" target="_blank" title="GitHub"><i class="fa-brands fa-github"></i></a>
-        <a href="#" class="social-link" title="LinkedIn"><i class="fa-brands fa-linkedin-in"></i></a>
-        <a href="#" class="social-link" title="Twitter"><i class="fa-brands fa-x-twitter"></i></a>
-      </div>
-    </div>
-    <div class="footer-col">
-      <h5>Platform</h5>
-      <ul>
-        <li><a href="predict.html">Prediction Map</a></li>
-        <li><a href="dashboard.html">Analytics Dashboard</a></li>
-        <li><a href="results.html">Results View</a></li>
-        <li><a href="settings.html">Settings</a></li>
-      </ul>
-    </div>
-    <div class="footer-col">
-      <h5>Resources</h5>
-      <ul>
-        <li><a href="#datasets">Datasets</a></li>
-        <li><a href="#how">How It Works</a></li>
-        <li><a href="#about">About</a></li>
-        <li><a href="https://github.com/gt1432/geominer-ai" target="_blank">GitHub Repo</a></li>
-      </ul>
-    </div>
-    <div class="footer-col">
-      <h5>Legal</h5>
-      <ul>
-        <li><a href="#">Privacy Policy</a></li>
-        <li><a href="#">Terms of Use</a></li>
-        <li><a href="#">Data Sources</a></li>
-        <li><a href="#">Contact</a></li>
-      </ul>
-    </div>
-  </div>
-  <div class="footer-bottom">
-    <div>&copy; 2026 GeoMiner AI. All rights reserved. Built with ❤️ for geological exploration.</div>
-    <div style="color:var(--text-4); font-size:0.75rem;">v2.0.0 · Node.js + Python + MongoDB</div>
-  </div>
-</footer>
-
-<div id="toast-container"></div>
-
-<script src="js/app.js"></script>
-<script>
-// ── Particle Hero Animation ──
-(function(){
-  const canvas = document.getElementById('hero-canvas');
-  const ctx = canvas.getContext('2d');
-  let W, H, particles = [];
-
-  function resize() {
-    W = canvas.width  = canvas.offsetWidth;
-    H = canvas.height = canvas.offsetHeight;
-  }
-  window.addEventListener('resize', resize);
-  resize();
-
-  class Particle {
-    constructor() { this.reset(); }
-    reset() {
-      this.x = Math.random() * W;
-      this.y = Math.random() * H;
-      this.r = Math.random() * 1.5 + 0.4;
-      this.vx = (Math.random() - 0.5) * 0.35;
-      this.vy = (Math.random() - 0.5) * 0.35;
-      this.alpha = Math.random() * 0.5 + 0.15;
-    }
-    update() {
-      this.x += this.vx; this.y += this.vy;
-      if (this.x < 0 || this.x > W || this.y < 0 || this.y > H) this.reset();
-    }
-    draw() {
-      ctx.beginPath(); ctx.arc(this.x, this.y, this.r, 0, Math.PI*2);
-      ctx.fillStyle = `rgba(96,165,250,${this.alpha})`; ctx.fill();
-    }
-  }
-
-  for (let i = 0; i < 140; i++) particles.push(new Particle());
-
-  function draw() {
-    ctx.clearRect(0, 0, W, H);
-    // Draw lines between nearby particles
-    particles.forEach((a, i) => {
-      particles.slice(i+1).forEach(b => {
-        const d = Math.hypot(a.x - b.x, a.y - b.y);
-        if (d < 110) {
-          ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y);
-          ctx.strokeStyle = `rgba(59,130,246,${0.06 * (1 - d/110)})`; ctx.lineWidth = 0.7;
-          ctx.stroke();
-        }
+      window.addEventListener('resize', () => {
+        W = window.innerWidth;
+        canvas.width = W;
       });
-      a.update(); a.draw();
-    });
-    requestAnimationFrame(draw);
-  }
-  draw();
-})();
 
-// ── Animated counters ──
-function animateCounter(el) {
-  const target = parseInt(el.dataset.count);
-  const suffix = el.dataset.suffix || '';
-  const prefix = el.dataset.prefix || '';
-  const duration = 2000;
-  let start = null;
-  function step(ts) {
-    if (!start) start = ts;
-    const progress = Math.min((ts - start) / duration, 1);
-    const eased = 1 - Math.pow(1 - progress, 3);
-    const val = Math.round(eased * target);
-    el.textContent = prefix + (target > 999 ? val.toLocaleString() : val) + suffix;
-    if (progress < 1) requestAnimationFrame(step);
-  }
-  requestAnimationFrame(step);
-}
+      const particles = [];
+      class Particle {
+        constructor() { this.reset(); }
+        reset() {
+          this.x = Math.random() * W;
+          this.y = Math.random() * H;
+          this.r = Math.random() * 2 + 1;
+          this.vx = Math.random() * 0.4 - 0.2;
+          this.vy = Math.random() * 0.4 - 0.2;
+          this.alpha = Math.random() * 0.5 + 0.15;
+        }
+        update() {
+          this.x += this.vx; this.y += this.vy;
+          if (this.x < 0 || this.x > W || this.y < 0 || this.y > H) this.reset();
+        }
+        draw() {
+          ctx.beginPath(); ctx.arc(this.x, this.y, this.r, 0, Math.PI*2);
+          ctx.fillStyle = `rgba(0,218,243,${this.alpha})`; ctx.fill();
+        }
+      }
 
-// Trigger on scroll with IntersectionObserver
-const counters = document.querySelectorAll('[data-count]');
-const obs = new IntersectionObserver((entries) => {
-  entries.forEach(e => { if (e.isIntersecting) { animateCounter(e.target); obs.unobserve(e.target); } });
-}, { threshold: 0.5 });
-counters.forEach(c => obs.observe(c));
+      for (let i = 0; i < 100; i++) particles.push(new Particle());
 
-// ── Simple AOS ──
-const aosEls = document.querySelectorAll('[data-aos]');
-const aosObs = new IntersectionObserver((entries) => {
-  entries.forEach(e => {
-    if (e.isIntersecting) {
-      const delay = e.target.style.transitionDelay || '0s';
-      e.target.style.transition = `opacity .7s ease ${delay}, transform .7s ease ${delay}`;
-      e.target.classList.add('aos-animate');
-      aosObs.unobserve(e.target);
-    }
-  });
-}, { threshold: 0.1 });
-aosEls.forEach(el => aosObs.observe(el));
-</script>
+      function draw() {
+        ctx.clearRect(0, 0, W, H);
+        particles.forEach((a, i) => {
+          particles.slice(i+1).forEach(b => {
+            const d = Math.hypot(a.x - b.x, a.y - b.y);
+            if (d < 120) {
+              ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y);
+              ctx.strokeStyle = `rgba(0,218,243,${0.07 * (1 - d/120)})`; ctx.lineWidth = 0.8;
+              ctx.stroke();
+            }
+          });
+          a.update(); a.draw();
+        });
+        requestAnimationFrame(draw);
+      }
+      draw();
+    })();
+  </script>
+
+  <!-- Load Global App logic -->
+  <script src="js/app.js"></script>
 </body>
 </html>

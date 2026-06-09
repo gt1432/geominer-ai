@@ -1,4 +1,29 @@
 // Dashboard Charting Handlers using Chart.js
+let occChartInstance = null;
+let actChartInstance = null;
+
+// Listen for theme changes to dynamically update charts gridlines and text colors
+document.addEventListener('themechange', (e) => {
+    const isLight = e.detail.theme === 'light';
+    const gridColor = isLight ? 'rgba(15, 23, 42, 0.06)' : 'rgba(255, 255, 255, 0.05)';
+    const textColor = isLight ? '#475569' : '#94a3b8';
+    const tooltipBg = isLight ? '#ffffff' : '#1e293b';
+    const tooltipColor = isLight ? '#0f172a' : '#f8fafc';
+    const tooltipBodyColor = isLight ? '#334155' : '#94a3b8';
+
+    [occChartInstance, actChartInstance].forEach(chart => {
+        if (chart) {
+            chart.options.scales.y.grid.color = gridColor;
+            chart.options.scales.y.ticks.color = textColor;
+            chart.options.scales.x.ticks.color = textColor;
+            chart.options.plugins.tooltip.backgroundColor = tooltipBg;
+            chart.options.plugins.tooltip.titleColor = tooltipColor;
+            chart.options.plugins.tooltip.bodyColor = tooltipBodyColor;
+            chart.update();
+        }
+    });
+});
+
 document.addEventListener('DOMContentLoaded', () => {
     // Only run if canvas elements are present (dashboard.html)
     const occCanvas = document.getElementById('occurrencesChart');
@@ -42,7 +67,19 @@ async function loadDashboardData(occCanvas, actCanvas) {
         const labels1 = Object.keys(commodityCounts);
         const data1 = Object.values(commodityCounts);
         
-        new Chart(occCanvas.getContext('2d'), {
+        // Dynamic colors on load
+        const isLight = document.documentElement.classList.contains('light-theme');
+        const gridColor = isLight ? 'rgba(15, 23, 42, 0.06)' : 'rgba(255, 255, 255, 0.05)';
+        const textColor = isLight ? '#475569' : '#94a3b8';
+        const tooltipBg = isLight ? '#ffffff' : '#1e293b';
+        const tooltipColor = isLight ? '#0f172a' : '#f8fafc';
+        const tooltipBodyColor = isLight ? '#334155' : '#94a3b8';
+
+        if (occChartInstance) {
+            occChartInstance.destroy();
+        }
+
+        occChartInstance = new Chart(occCanvas.getContext('2d'), {
             type: 'bar',
             data: {
                 labels: labels1,
@@ -60,16 +97,16 @@ async function loadDashboardData(occCanvas, actCanvas) {
                 maintainAspectRatio: false,
                 plugins: {
                     legend: { display: false },
-                    tooltip: { backgroundColor: '#1e293b', titleColor: '#f8fafc', bodyColor: '#94a3b8' }
+                    tooltip: { backgroundColor: tooltipBg, titleColor: tooltipColor, bodyColor: tooltipBodyColor }
                 },
                 scales: {
                     y: {
                         beginAtZero: true,
-                        ticks: { color: '#94a3b8' },
-                        grid: { color: 'rgba(255, 255, 255, 0.05)' }
+                        ticks: { color: textColor },
+                        grid: { color: gridColor }
                     },
                     x: {
-                        ticks: { color: '#94a3b8' },
+                        ticks: { color: textColor },
                         grid: { display: false }
                     }
                 }
@@ -91,7 +128,11 @@ async function loadDashboardData(occCanvas, actCanvas) {
         const displayLabels = labels2.length > 0 ? labels2 : ['12:00', '13:00', '14:00', '15:00', '16:00'];
         const displayData = data2.length > 0 ? data2 : [10, 45, 25, 78, 62];
         
-        new Chart(actCanvas.getContext('2d'), {
+        if (actChartInstance) {
+            actChartInstance.destroy();
+        }
+
+        actChartInstance = new Chart(actCanvas.getContext('2d'), {
             type: 'line',
             data: {
                 labels: displayLabels,
@@ -111,17 +152,17 @@ async function loadDashboardData(occCanvas, actCanvas) {
                 maintainAspectRatio: false,
                 plugins: {
                     legend: { display: false },
-                    tooltip: { backgroundColor: '#1e293b', titleColor: '#f8fafc', bodyColor: '#94a3b8' }
+                    tooltip: { backgroundColor: tooltipBg, titleColor: tooltipColor, bodyColor: tooltipBodyColor }
                 },
                 scales: {
                     y: {
                         beginAtZero: true,
                         max: 100,
-                        ticks: { color: '#94a3b8' },
-                        grid: { color: 'rgba(255, 255, 255, 0.05)' }
+                        ticks: { color: textColor },
+                        grid: { color: gridColor }
                     },
                     x: {
-                        ticks: { color: '#94a3b8' },
+                        ticks: { color: textColor },
                         grid: { display: false }
                     }
                 }

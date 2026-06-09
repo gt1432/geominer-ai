@@ -209,9 +209,7 @@ const MINERAL_DB = {
         economic: 'Medium — USD 1,900/tonne.',
         demand: 'MODERATE',
     },
-};
-
-function getMineralInfo(name) {
+};function getMineralInfo(name) {
     return MINERAL_DB[name] || {
         icon: '💎', color: 'var(--primary-light)',
         uses: ['Industrial minerals', 'Construction', 'Chemical industry'],
@@ -220,3 +218,39 @@ function getMineralInfo(name) {
         demand: 'MODERATE'
     };
 }
+
+// ══════════════════════════════════════════
+// THEME SWITCHER LOGIC
+// ══════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+    const themeCheckbox = document.getElementById('theme-toggle-checkbox');
+    if (!themeCheckbox) return;
+
+    // Set initial checkbox state
+    const currentTheme = localStorage.getItem('theme') || 'dark';
+    themeCheckbox.checked = (currentTheme === 'light');
+
+    // Make sure root HTML classes match on load
+    document.documentElement.classList.toggle('light-theme', currentTheme === 'light');
+    document.body.classList.toggle('light-theme', currentTheme === 'light');
+    document.documentElement.classList.toggle('light', currentTheme === 'light');
+    document.documentElement.classList.toggle('dark', currentTheme === 'dark');
+
+    // Handle change
+    themeCheckbox.addEventListener('change', () => {
+        const newTheme = themeCheckbox.checked ? 'light' : 'dark';
+        
+        // Toggle root element class
+        document.documentElement.classList.toggle('light-theme', newTheme === 'light');
+        document.body.classList.toggle('light-theme', newTheme === 'light');
+        
+        // Toggle root element class for Tailwind CSS
+        document.documentElement.classList.toggle('light', newTheme === 'light');
+        document.documentElement.classList.toggle('dark', newTheme === 'dark');
+        
+        localStorage.setItem('theme', newTheme);
+
+        // Dispatch global theme change event
+        document.dispatchEvent(new CustomEvent('themechange', { detail: { theme: newTheme } }));
+    });
+});

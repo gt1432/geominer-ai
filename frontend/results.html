@@ -1,383 +1,359 @@
 <!DOCTYPE html>
-<html lang="en">
+<html class="dark" lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Prediction Results - GeoMiner AI</title>
-    <meta name="description" content="GeoMiner AI mineral prospectivity analysis results — mineral inventory, heatmaps, exploration targets, confidence levels, and downloadable PDF report.">
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Leaflet.js -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
-    <style>
-        .mineral-bar-wrap {
-            margin-bottom: 14px;
+  <!-- Zero Flash (FOUC) Theme Restorer -->
+  <script>
+    (function() {
+      const theme = localStorage.getItem('theme') || 'dark';
+      if (theme === 'light') {
+        document.documentElement.classList.add('light-theme');
+        document.documentElement.classList.add('light');
+        document.documentElement.classList.remove('dark');
+      } else {
+        document.documentElement.classList.add('dark');
+        document.documentElement.classList.remove('light');
+      }
+    })();
+  </script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Prediction Results - GeoMiner AI</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+  <!-- Leaflet.js -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+  <link rel="stylesheet" href="css/style.css">
+
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "primary": "#006576",
+            "background": "#f7f9fb",
+            "surface": "#f7f9fb",
+            "surface-container": "#eceef0",
+            "surface-container-high": "#e6e8ea",
+            "surface-container-highest": "#e0e3e5",
+            "surface-container-low": "#f2f4f6",
+            "surface-container-lowest": "#ffffff",
+            "secondary": "#555f71",
+            "on-surface": "#191c1e",
+            "on-surface-variant": "#3d494c",
+            "outline": "#6d797c",
+            "outline-variant": "#bcc9cc",
+            "primary-container": "#008094",
+            "on-primary-container": "#f9fdff",
+            "status-success": "#008094",
+            "status-error": "#ba1a1a"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "fontFamily": {
+            "display": ["Space Grotesk"],
+            "body": ["Geist"],
+            "label": ["JetBrains Mono"]
+          }
         }
-        .mineral-bar-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 5px;
-        }
-        .mineral-bar-name {
-            font-size: 0.9rem;
-            font-weight: 600;
-            color: var(--text-primary);
-            display: flex;
-            align-items: center;
-            gap: 7px;
-        }
-        .mineral-bar-pct {
-            font-size: 0.88rem;
-            font-weight: 700;
-            color: var(--primary-light);
-        }
-        .mineral-bar-bg {
-            width: 100%;
-            height: 8px;
-            background: rgba(255,255,255,0.06);
-            border-radius: 20px;
-            overflow: hidden;
-        }
-        .mineral-bar-fill {
-            height: 100%;
-            border-radius: 20px;
-            transition: width 1s ease;
-        }
-        .score-ring {
-            width: 100px;
-            height: 100px;
-            position: relative;
-            flex-shrink: 0;
-        }
-        .score-ring svg {
-            transform: rotate(-90deg);
-        }
-        .score-ring-text {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            text-align: center;
-        }
-        .exploration-target-card {
-            background: rgba(2,132,199,0.08);
-            border: 1px solid rgba(56,189,248,0.2);
-            border-radius: 12px;
-            padding: 16px;
-            margin-bottom: 12px;
-            transition: all 0.25s ease;
-        }
-        .exploration-target-card:hover {
-            background: rgba(2,132,199,0.14);
-            transform: translateX(3px);
-        }
-        .section-divider {
-            height: 1px;
-            background: linear-gradient(to right, var(--primary), transparent);
-            margin: 32px 0;
-            opacity: 0.3;
-        }
-        .capability-icon-wrap {
-            width: 44px;
-            height: 44px;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.2rem;
-            flex-shrink: 0;
-        }
-        .stat-box {
-            background: rgba(255,255,255,0.03);
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            padding: 14px 18px;
-            text-align: center;
-        }
-        .stat-box-value {
-            font-size: 1.3rem;
-            font-weight: 700;
-            color: var(--primary-light);
-        }
-        .stat-box-label {
-            font-size: 0.73rem;
-            color: var(--text-3);
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            margin-top: 4px;
-        }
-    </style>
+      }
+    }
+  </script>
+  <style>
+    .glass-card {
+      background: rgba(30, 41, 59, 0.7);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(240, 240, 240, 0.1);
+    }
+    html.light .glass-card {
+      background: rgba(255, 255, 255, 0.8);
+      border: 1px solid rgba(0, 101, 118, 0.1);
+      box-shadow: 0 4px 24px -1px rgba(0, 0, 0, 0.05);
+    }
+    .glow-cyan {
+      box-shadow: 0 4px 20px rgba(0, 101, 118, 0.08);
+    }
+    html.dark .glow-cyan {
+      box-shadow: 0 0 20px rgba(0, 218, 243, 0.15);
+    }
+    .score-ring {
+      width: 100px;
+      height: 100px;
+      position: relative;
+      flex-shrink: 0;
+    }
+    .score-ring svg {
+      transform: rotate(-90deg);
+    }
+    .score-ring-text {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+    }
+    .status-pulse {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 128, 148, 0.7); }
+      70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(0, 128, 148, 0); }
+      100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 128, 148, 0); }
+    }
+  </style>
 </head>
-<body>
-    <div class="app-container">
-        <!-- Sidebar Navigation -->
-        <aside class="sidebar">
-            <div class="logo-container">
-                <div class="logo-icon"><i class="fa-solid fa-mountain-sun" style="color:#fff;font-size:1rem;"></i></div>
-                <div class="logo-title">GeoMiner AI</div>
-                <div class="logo-subtitle">ML Exploration</div>
-            </div>
-            
-            <nav>
-                <ul class="nav-links">
-                    <li class="nav-item">
-                        <a href="index.html"><i class="fa-solid fa-house"></i> Overview</a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="dashboard.html"><i class="fa-solid fa-chart-line"></i> Dashboard</a>
-                    </li>
-                    <li class="nav-item active">
-                        <a href="predict.html"><i class="fa-solid fa-map-location-dot"></i> Prediction</a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="settings.html"><i class="fa-solid fa-sliders"></i> Settings</a>
-                    </li>
-                </ul>
-            </nav>
-            
-            <footer class="sidebar-footer">
-                <p>&copy; 2026 GeoMiner AI</p>
-                <p>v2.0.0</p>
-            </footer>
-        </aside>
-        
-        <!-- Main Content Panel -->
-        <main class="content-wrapper">
-            <!-- Page Header with PDF Download -->
-            <header class="page-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
-                <div>
-                    <h1 class="page-title">Mineral Prospectivity Report</h1>
-                    <p class="page-description">Analysis complete — mineral inventory, prospectivity scores, exploration targets and heatmaps.</p>
-                </div>
-                <div style="display: flex; gap: 12px; flex-wrap: wrap;">
-                    <a href="predict.html" class="btn-primary" style="background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); box-shadow: none; padding: 10px 18px; font-size: 0.9rem;">
-                        <i class="fa-solid fa-arrow-left"></i> New Prediction
-                    </a>
-                    <a id="btn-pdf-download" href="#" class="btn-primary" style="padding: 10px 18px; font-size: 0.9rem;">
-                        <i class="fa-solid fa-file-pdf"></i> Download PDF Report
-                    </a>
-                </div>
-            </header>
+<body class="font-body text-body-md transition-colors duration-300 bg-[#121414] text-[#e2e2e2] html[class*='light']:bg-[#f7f9fb] html[class*='light']:text-[#191c1e]">
 
-            <!-- ═══ SECTION 1: Executive Score + Location ═══ -->
-            <section class="card-grid" style="grid-template-columns: 1fr 1.2fr 1fr; gap: 20px; margin-bottom: 28px;">
-                <!-- Score Ring Card -->
-                <div class="glass-card" style="margin-bottom:0; display:flex; flex-direction:column; align-items:center; text-align:center; padding: 28px 20px;">
-                    <div class="glass-card-header" style="margin-bottom:16px;">Mineral Potential Score</div>
-                    <div class="score-ring">
-                        <svg width="100" height="100" viewBox="0 0 100 100">
-                            <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="10"/>
-                            <circle cx="50" cy="50" r="42" fill="none" stroke="url(#scoreGrad)" stroke-width="10"
-                                stroke-dasharray="264" stroke-dashoffset="264" id="score-circle" stroke-linecap="round"/>
-                            <defs>
-                                <linearGradient id="scoreGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                                    <stop offset="0%" stop-color="#38bdf8"/>
-                                    <stop offset="100%" stop-color="#a855f7"/>
-                                </linearGradient>
-                            </defs>
-                        </svg>
-                        <div class="score-ring-text">
-                            <div id="res-score" style="font-size:1.4rem;font-weight:700;color:var(--primary-light);">0%</div>
-                        </div>
-                    </div>
-                    <div style="margin-top: 14px;">
-                        <span id="res-confidence-badge" class="badge">Loading</span>
-                    </div>
-                    <div style="color:var(--text-muted);font-size:0.75rem;margin-top:8px;">AI confidence classification</div>
-                </div>
-
-                <!-- Location Info Card -->
-                <div class="glass-card" style="margin-bottom:0;">
-                    <div class="glass-card-header">Location &amp; Spatial Data</div>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px;">
-                        <div class="stat-box">
-                            <div class="stat-box-value" id="res-lat">—</div>
-                            <div class="stat-box-label">Latitude °N</div>
-                        </div>
-                        <div class="stat-box">
-                            <div class="stat-box-value" id="res-lon">—</div>
-                            <div class="stat-box-label">Longitude °E</div>
-                        </div>
-                        <div class="stat-box" style="grid-column: 1 / -1;">
-                            <div class="stat-box-value" id="res-alt">— m</div>
-                            <div class="stat-box-label">Altitude (AMSL)</div>
-                        </div>
-                    </div>
-                    <div style="margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--border-color);">
-                        <div style="color:var(--text-secondary); font-size:0.75rem; margin-bottom:4px;">Geological Formation</div>
-                        <div id="res-formation" style="color:var(--primary-light); font-weight:600; font-size:0.95rem;">Loading...</div>
-                        <div style="color:var(--text-secondary); font-size:0.75rem; margin-top:10px; margin-bottom:4px;">Rock Type</div>
-                        <div id="res-rock-type" style="color:var(--text-primary); font-weight:500; font-size:0.9rem;">Loading...</div>
-                    </div>
-                </div>
-
-                <!-- Nearest Target Card -->
-                <div class="glass-card" style="margin-bottom:0;">
-                    <div class="glass-card-header">Nearest Mineral Target</div>
-                    <div style="margin-top:16px;">
-                        <div id="nearest-target-card" class="exploration-target-card">
-                            <div style="color:var(--text-secondary); font-size:0.75rem; margin-bottom:5px;">Closest Known Deposit</div>
-                            <div id="res-nearest-target" style="font-weight:700; color:var(--text-primary); font-size:1rem;">Loading...</div>
-                        </div>
-                        <div style="font-size:0.8rem; color:var(--text-muted); padding: 0 4px;">
-                            <i class="fa-solid fa-circle-info" style="color:var(--primary-light); margin-right:5px;"></i>
-                            Distance computed from GSIM mineral occurrence registry (57 known sites).
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- ═══ SECTION 2: Mineral Inventory ═══ -->
-            <section class="glass-card" style="margin-bottom: 28px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                    <h4 style="font-size: 1.15rem; color: var(--text-primary);">
-                        <i class="fa-solid fa-gem" style="color: var(--primary-light); margin-right: 8px;"></i>Detected Mineral Inventory
-                    </h4>
-                    <span style="font-size:0.78rem; color:var(--text-muted); background: rgba(255,255,255,0.04); padding: 4px 10px; border-radius: 20px; border: 1px solid var(--border-color);">
-                        Based on geochemical enrichment thresholds (70th percentile NGCM)
-                    </span>
-                </div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; align-items: start;">
-                    <!-- Mineral Progress Bars -->
-                    <div id="res-minerals-bars">
-                        <p style="color:var(--text-muted); font-size:0.85rem; font-style:italic;">Loading mineral data...</p>
-                    </div>
-                    <!-- Mineral Donut Chart -->
-                    <div style="max-width: 280px; margin: 0 auto;">
-                        <canvas id="mineral-donut-chart" height="200"></canvas>
-                        <div style="text-align:center; font-size:0.75rem; color:var(--text-muted); margin-top:8px;">Relative mineral composition</div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- ═══ SECTION 3: Heatmap + Exploration Targets ═══ -->
-            <section class="glass-card" style="margin-bottom: 28px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                    <h4 style="font-size: 1.15rem; color: var(--text-primary);">
-                        <i class="fa-solid fa-fire" style="color: #f59e0b; margin-right: 8px;"></i>Prospectivity Heatmap &amp; Exploration Targets
-                    </h4>
-                    <div style="display: flex; gap: 14px; font-size: 0.78rem; color: var(--text-secondary);">
-                        <span><span style="display:inline-block;width:10px;height:10px;background:#f59e0b;border-radius:50%;margin-right:5px;"></span>Quarry/Mine</span>
-                        <span><span style="display:inline-block;width:10px;height:10px;background:#ef4444;border-radius:50%;margin-right:5px;"></span>Mineralization</span>
-                        <span><span style="display:inline-block;width:10px;height:10px;background:#38bdf8;border-radius:50%;margin-right:5px;"></span>Target</span>
-                    </div>
-                </div>
-                <p style="color:var(--text-secondary); font-size:0.83rem; margin-bottom: 14px;">
-                    5 km exploration radius overlaid with regional prospectivity density heatmap. Known mineral deposits within 25 km radius are highlighted.
-                </p>
-                <div id="results-explore-map" style="height: 380px; border-radius: 12px; border: 1px solid var(--border-color); overflow: hidden; background: rgba(0,0,0,0.2);"></div>
-                
-                <!-- Nearby Targets List -->
-                <div style="margin-top: 20px;">
-                    <h5 style="color:var(--text-secondary); font-size:0.85rem; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:12px;">Exploration Targets Within 25 km</h5>
-                    <div id="nearby-targets-list" style="display:flex; flex-direction:column; gap:8px;">
-                        <p style="color:var(--text-muted); font-size:0.85rem; font-style:italic;">Loading nearby targets...</p>
-                    </div>
-                </div>
-            </section>
-
-            <!-- ═══ SECTION 4: Core Platform Capabilities ═══ -->
-            <section style="margin-bottom: 28px;">
-                <h4 style="font-size: 1.15rem; margin-bottom: 20px; color: var(--text-primary); border-left: 4px solid var(--primary-light); padding-left: 12px;">Core Platform Capabilities</h4>
-                <div class="card-grid" style="grid-template-columns: repeat(3, 1fr); gap: 18px;">
-                    <div class="glass-card" style="margin-bottom:0; padding:22px; display:flex; gap:14px; align-items:flex-start;">
-                        <div class="capability-icon-wrap" style="background: rgba(56,189,248,0.1);color:var(--primary-light);">
-                            <i class="fa-solid fa-compass-drafting"></i>
-                        </div>
-                        <div>
-                            <h5 style="font-size:0.95rem; margin-bottom:6px; color:var(--text-primary);">Spatial Discovery</h5>
-                            <p style="color:var(--text-secondary); font-size:0.78rem; line-height:1.5;">Interactive GIS map click-to-point and area selection for 5km boundary marking. Real-time coordinate capture auto-feeds the ML pipeline.</p>
-                        </div>
-                    </div>
-                    <div class="glass-card" style="margin-bottom:0; padding:22px; display:flex; gap:14px; align-items:flex-start;">
-                        <div class="capability-icon-wrap" style="background: rgba(168,85,247,0.1);color:#a855f7;">
-                            <i class="fa-solid fa-microchip"></i>
-                        </div>
-                        <div>
-                            <h5 style="font-size:0.95rem; margin-bottom:6px; color:var(--text-primary);">Predictive AI Models</h5>
-                            <p style="color:var(--text-secondary); font-size:0.78rem; line-height:1.5;">Random Forest regressors trained on NGCM geochemical database (10,004 records, 68 elements) for mineral probability and concentration scoring.</p>
-                        </div>
-                    </div>
-                    <div class="glass-card" style="margin-bottom:0; padding:22px; display:flex; gap:14px; align-items:flex-start;">
-                        <div class="capability-icon-wrap" style="background: rgba(16,185,129,0.1);color:var(--success);">
-                            <i class="fa-solid fa-file-pdf"></i>
-                        </div>
-                        <div>
-                            <h5 style="font-size:0.95rem; margin-bottom:6px; color:var(--text-primary);">Automated Reports</h5>
-                            <p style="color:var(--text-secondary); font-size:0.78rem; line-height:1.5;">Instantly compiled PDF reports with mineral inventory, latitude/longitude/altitude, geological zone, nearest deposits, and XAI model interpretation.</p>
-                        </div>
-                    </div>
-                    <div class="glass-card" style="margin-bottom:0; padding:22px; display:flex; gap:14px; align-items:flex-start;">
-                        <div class="capability-icon-wrap" style="background: rgba(245,158,11,0.1);color:var(--warning);">
-                            <i class="fa-solid fa-fire"></i>
-                        </div>
-                        <div>
-                            <h5 style="font-size:0.95rem; margin-bottom:6px; color:var(--text-primary);">Prospectivity Heatmaps</h5>
-                            <p style="color:var(--text-secondary); font-size:0.78rem; line-height:1.5;">Dynamic density heatmaps generated from mineral occurrence registry. Color scale from blue (low) to red (high potential) across the exploration region.</p>
-                        </div>
-                    </div>
-                    <div class="glass-card" style="margin-bottom:0; padding:22px; display:flex; gap:14px; align-items:flex-start;">
-                        <div class="capability-icon-wrap" style="background: rgba(239,68,68,0.1);color:#f87171;">
-                            <i class="fa-solid fa-database"></i>
-                        </div>
-                        <div>
-                            <h5 style="font-size:0.95rem; margin-bottom:6px; color:var(--text-primary);">Geochemical Database</h5>
-                            <p style="color:var(--text-secondary); font-size:0.78rem; line-height:1.5;">Spatial KNN join against NGCM stream sediment records for local background geochemistry. Lithology intersected from 3,599 GSI shapefile polygons.</p>
-                        </div>
-                    </div>
-                    <div class="glass-card" style="margin-bottom:0; padding:22px; display:flex; gap:14px; align-items:flex-start;">
-                        <div class="capability-icon-wrap" style="background: rgba(56,189,248,0.1);color:var(--primary-light);">
-                            <i class="fa-solid fa-brain"></i>
-                        </div>
-                        <div>
-                            <h5 style="font-size:0.95rem; margin-bottom:6px; color:var(--text-primary);">Explainable AI (XAI)</h5>
-                            <p style="color:var(--text-secondary); font-size:0.78rem; line-height:1.5;">Feature importance breakdown showing how regional coordinates, elemental oxides, and lithological units contribute to each prediction score.</p>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- ═══ SECTION 5: XAI Plots ═══ -->
-            <section class="glass-card" style="margin-bottom: 28px;">
-                <h4 style="font-size: 1.15rem; margin-bottom: 20px; color: var(--text-primary);">
-                    <i class="fa-solid fa-brain" style="color: var(--primary-light);"></i> Model Validation &amp; Explainable AI (XAI)
-                </h4>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; align-items: start;">
-                    <div>
-                        <h5 style="color:var(--text-primary); margin-bottom:10px; font-size:1rem;">Feature Importance Breakdown</h5>
-                        <p style="color:var(--text-secondary); font-size:0.83rem; line-height:1.5; margin-bottom:15px;">
-                            Top features driving predictions: regional coordinates (Chitradurga, Kurnool bounds), Cadmium (cd) and Tin (sn) concentration indicators, and local amphibolite-schist lithologies.
-                        </p>
-                        <div style="border: 1px solid var(--border-color); border-radius: 12px; overflow: hidden; background: rgba(0,0,0,0.2);">
-                            <img src="img/feature_importance.png" alt="Feature Importance Chart" style="width: 100%; display: block;" onerror="this.parentElement.innerHTML='<div style=padding:24px;color:var(--text-muted);text-align:center;font-size:0.85rem;><i class=fa-solid fa-chart-bar style=font-size:2rem;margin-bottom:10px;display:block;></i>Feature importance visualization generated during model training.</div>'"/>
-                        </div>
-                    </div>
-                    <div>
-                        <h5 style="color:var(--text-primary); margin-bottom:10px; font-size:1rem;">Correlation Analysis</h5>
-                        <p style="color:var(--text-secondary); font-size:0.83rem; line-height:1.5; margin-bottom:15px;">
-                            Covariance between Mineral Potential Score and elemental oxide concentrations. Positive values identify elements correlated with high-occurrence mineralization outcrops.
-                        </p>
-                        <div style="border: 1px solid var(--border-color); border-radius: 12px; overflow: hidden; background: rgba(0,0,0,0.2);">
-                            <img src="img/correlation_heatmap.png" alt="Correlation Heatmap" style="width: 100%; display: block;" onerror="this.parentElement.innerHTML='<div style=padding:24px;color:var(--text-muted);text-align:center;font-size:0.85rem;><i class=fa-solid fa-table-cells style=font-size:2rem;margin-bottom:10px;display:block;></i>Correlation heatmap generated during model training.</div>'"/>
-                        </div>
-                    </div>
-                </div>
-            </section>
-        </main>
+  <!-- Sidebar Navigation -->
+  <aside class="h-screen w-[280px] fixed left-0 top-0 bg-[#0c0f0f] light:bg-[#eceef0] border-r border-white/10 light:border-black/10 flex flex-col p-6 z-50">
+    <div class="mb-10 flex justify-between items-center">
+      <div>
+        <h1 class="font-display text-2xl font-bold text-white dark:text-white light:text-[#006576]">GeoMiner</h1>
+        <p class="font-label text-[10px] text-[#bac9cc] light:text-[#3d494c] opacity-60">ML Platform v2.0</p>
+      </div>
+      <div class="theme-switch-wrapper">
+        <label class="theme-switch" for="theme-toggle-checkbox">
+          <input type="checkbox" id="theme-toggle-checkbox" />
+          <div class="theme-switch-slider">
+            <i class="fa-solid fa-moon icon-moon"></i>
+            <i class="fa-solid fa-sun icon-sun"></i>
+          </div>
+        </label>
+      </div>
     </div>
-    
-    <div id="toast-container"></div>
-    <!-- Load results logic script -->
-    <script src="js/app.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <script src="js/prediction.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            loadPredictionResults();
-        });
-    </script>
+    <nav class="flex-1 flex flex-col gap-2">
+      <a class="text-[#bac9cc] light:text-[#3d494c] hover:bg-white/5 light:hover:bg-black/5 flex items-center gap-3 px-4 py-3 rounded-lg transition-all" href="index.html">
+        <span class="material-symbols-outlined">home</span>
+        <span class="font-display text-sm font-semibold">Overview</span>
+      </a>
+      <a class="text-[#bac9cc] light:text-[#3d494c] hover:bg-white/5 light:hover:bg-black/5 flex items-center gap-3 px-4 py-3 rounded-lg transition-all" href="dashboard.html">
+        <span class="material-symbols-outlined">dashboard</span>
+        <span class="font-display text-sm font-semibold">Dashboard</span>
+      </a>
+      <a class="bg-[#00daf3] light:bg-[#006576] text-[#00363d] light:text-white rounded-lg font-bold flex items-center gap-3 px-4 py-3 duration-200" href="predict.html">
+        <span class="material-symbols-outlined">map</span>
+        <span class="font-display text-sm font-semibold">Prediction</span>
+      </a>
+      <a class="text-[#bac9cc] light:text-[#3d494c] hover:bg-white/5 light:hover:bg-black/5 flex items-center gap-3 px-4 py-3 rounded-lg transition-all" href="hardware.html">
+        <span class="material-symbols-outlined">memory</span>
+        <span class="font-display text-sm font-semibold">Miner Fleet</span>
+      </a>
+      <a class="text-[#bac9cc] light:text-[#3d494c] hover:bg-white/5 light:hover:bg-black/5 flex items-center gap-3 px-4 py-3 rounded-lg transition-all" href="network.html">
+        <span class="material-symbols-outlined">hub</span>
+        <span class="font-display text-sm font-semibold">Network</span>
+      </a>
+      <a class="text-[#bac9cc] light:text-[#3d494c] hover:bg-white/5 light:hover:bg-black/5 flex items-center gap-3 px-4 py-3 rounded-lg transition-all" href="settings.html">
+        <span class="material-symbols-outlined">settings</span>
+        <span class="font-display text-sm font-semibold">Settings</span>
+      </a>
+    </nav>
+    <div class="mt-auto pt-6 border-t border-white/10 light:border-black/10 text-center text-xs text-[#bac9cc] light:text-[#3d494c] opacity-65">
+      &copy; 2026 GeoMiner AI
+    </div>
+  </aside>
+
+  <!-- Main Content Panel -->
+  <main class="ml-[280px] min-h-screen flex flex-col">
+    <!-- Top App Bar -->
+    <header class="w-full sticky top-0 bg-[#121414]/80 light:bg-[#f7f9fb]/80 backdrop-blur-md border-b border-white/10 light:border-black/10 px-10 py-4 flex justify-between items-center z-40">
+      <div class="flex items-center gap-4">
+        <h2 class="font-display text-2xl font-bold text-white dark:text-white light:text-[#191c1e]">Mineral Prospectivity Report</h2>
+        <div class="flex items-center gap-2 bg-slate-900/50 light:bg-black/5 border border-white/10 light:border-black/10 px-3 py-1 rounded-full">
+          <span class="w-2 h-2 bg-[#10B981] light:bg-[#008094] rounded-full status-pulse"></span>
+          <span class="font-label text-[10px] text-[#10B981] light:text-[#008094]">Server Live</span>
+        </div>
+      </div>
+      <div class="flex items-center gap-4">
+        <a href="predict.html" class="border border-[#00daf3]/50 light:border-[#006576]/50 text-[#00daf3] light:text-[#006576] px-4 py-2 rounded-lg font-bold text-xs hover:bg-[#00daf3]/5 transition-all">
+          <i class="fa-solid fa-arrow-left mr-1"></i> New Prediction
+        </a>
+        <a id="btn-pdf-download" href="#" class="bg-[#00daf3] light:bg-[#006576] text-[#00363d] light:text-white px-5 py-2 rounded-lg font-bold text-xs hover:opacity-90 active:scale-95 transition-all flex items-center gap-1.5 shadow-md">
+          <i class="fa-solid fa-file-pdf"></i> Download PDF
+        </a>
+      </div>
+    </header>
+
+    <!-- Results Workspace -->
+    <div class="p-10 space-y-8 max-w-[1440px] mx-auto w-full flex-grow">
+      
+      <!-- Executive Score + Location Grid -->
+      <section class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        
+        <!-- Potential Score Card -->
+        <div class="glass-card rounded-xl p-6 flex flex-col items-center text-center justify-center bg-slate-900/40 light:bg-white/80 border border-white/10 light:border-black/5">
+          <span class="font-label text-[10px] text-[#bac9cc] light:text-[#3d494c] uppercase tracking-wider mb-4">Mineral Potential Score</span>
+          <div class="score-ring">
+            <svg width="100" height="100" viewBox="0 0 100 100">
+              <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="10"/>
+              <circle cx="50" cy="50" r="42" fill="none" stroke="url(#scoreGrad)" stroke-width="10"
+                stroke-dasharray="264" stroke-dashoffset="264" id="score-circle" stroke-linecap="round"/>
+              <defs>
+                <linearGradient id="scoreGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stop-color="#00daf3"/>
+                  <stop offset="100%" stop-color="#a855f7"/>
+                </linearGradient>
+              </defs>
+            </svg>
+            <div class="score-ring-text">
+              <div id="res-score" class="text-xl font-bold text-[#00daf3]">0%</div>
+            </div>
+          </div>
+          <div class="mt-4">
+            <span id="res-confidence-badge" class="badge">Loading</span>
+          </div>
+          <div class="text-[10px] text-[#bac9cc] light:text-[#3d494c] mt-2">AI confidence level</div>
+        </div>
+
+        <!-- Location Info Card -->
+        <div class="glass-card rounded-xl p-6 bg-slate-900/40 light:bg-white/80 border border-white/10 light:border-black/5">
+          <span class="font-label text-[10px] text-[#bac9cc] light:text-[#3d494c] uppercase tracking-wider">Location & Spatial Data</span>
+          <div class="grid grid-cols-2 gap-4 mt-4 text-center">
+            <div class="bg-black/25 light:bg-black/5 p-3 rounded-lg border border-white/5 text-xs">
+              <div class="font-bold text-white dark:text-white light:text-[#191c1e]" id="res-lat">—</div>
+              <div class="text-[10px] text-[#bac9cc] light:text-[#3d494c] mt-1">Latitude °N</div>
+            </div>
+            <div class="bg-black/25 light:bg-black/5 p-3 rounded-lg border border-white/5 text-xs">
+              <div class="font-bold text-white dark:text-white light:text-[#191c1e]" id="res-lon">—</div>
+              <div class="text-[10px] text-[#bac9cc] light:text-[#3d494c] mt-1">Longitude °E</div>
+            </div>
+            <div class="bg-black/25 light:bg-black/5 p-3 rounded-lg border border-white/5 text-xs col-span-2">
+              <div class="font-bold text-white dark:text-white light:text-[#191c1e]" id="res-alt">— m</div>
+              <div class="text-[10px] text-[#bac9cc] light:text-[#3d494c] mt-1">Altitude (AMSL)</div>
+            </div>
+          </div>
+          <div class="mt-4 pt-4 border-t border-white/10 light:border-black/10 text-xs">
+            <div class="text-[#bac9cc] light:text-[#3d494c]">Geological Zone</div>
+            <div id="res-formation" class="text-[#00daf3] light:text-[#006576] font-semibold text-sm mt-0.5">Loading...</div>
+            <div class="text-[#bac9cc] light:text-[#3d494c] mt-2">Rock Type</div>
+            <div id="res-rock-type" class="font-semibold text-white dark:text-white light:text-[#191c1e] text-sm mt-0.5">Loading...</div>
+          </div>
+        </div>
+
+        <!-- AI Explanation Card -->
+        <div class="glass-card rounded-xl p-6 bg-slate-900/40 light:bg-white/80 border border-white/10 light:border-black/5">
+          <span class="font-label text-[10px] text-[#bac9cc] light:text-[#3d494c] uppercase tracking-wider">AI Explanation</span>
+          <div class="mt-4 bg-[#00daf3]/5 p-4 rounded-lg border border-[#00daf3]/10 h-[146px] overflow-y-auto custom-scrollbar">
+            <div id="res-explanation" class="text-xs text-[#bac9cc] light:text-[#3d494c] leading-relaxed">
+              Loading localized explanation...
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- Mineral Inventory -->
+      <section class="glass-card rounded-xl p-6 bg-slate-900/40 light:bg-white/80 border border-white/10 light:border-black/5">
+        <div class="flex justify-between items-center mb-6 flex-wrap gap-2">
+          <h4 class="font-display text-lg font-bold text-white dark:text-white light:text-[#191c1e] flex items-center gap-2">
+            <i class="fa-solid fa-gem text-[#00daf3] light:text-[#006576]"></i> Detected Mineral Inventory
+          </h4>
+          <span class="text-[10px] text-[#bac9cc] light:text-[#3d494c] bg-black/25 light:bg-black/5 border border-white/10 px-3 py-1 rounded-full">
+            Percentiles based on GSI NGCM geochemical database
+          </span>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+          <div id="res-minerals-bars" class="space-y-4">
+            <p class="text-xs text-[#bac9cc] light:text-[#3d494c] italic">Loading mineral bars...</p>
+          </div>
+          <div class="max-w-[280px] mx-auto w-full flex flex-col items-center">
+            <canvas id="mineral-donut-chart" height="200"></canvas>
+            <div class="text-[10px] text-[#bac9cc] light:text-[#3d494c] mt-2">Relative Mineral Outcrops</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Map Results -->
+      <section class="glass-card rounded-xl p-6 bg-slate-900/40 light:bg-white/80 border border-white/10 light:border-black/5">
+        <h4 class="font-display text-lg font-bold text-white dark:text-white light:text-[#191c1e] flex items-center gap-2 mb-4">
+          <i class="fa-solid fa-map-location-dot text-[#00daf3] light:text-[#006576]"></i> Target Mapping & Buffer Overlay
+        </h4>
+        <div id="results-explore-map" class="rounded-xl overflow-hidden border border-white/10 light:border-black/10" style="height: 400px; z-index: 0;"></div>
+      </section>
+
+      <!-- Platform Capabilities -->
+      <section class="grid grid-cols-1 md:grid-cols-3 gap-6 text-xs text-[#bac9cc] light:text-[#3d494c]">
+        <div class="glass-card rounded-xl p-5 flex gap-4 items-start bg-slate-900/40 light:bg-white/80 border border-white/10 light:border-black/5">
+          <div class="p-2.5 bg-[#00daf3]/10 text-[#00daf3] light:text-[#006576] rounded-lg">
+            <span class="material-symbols-outlined">explore</span>
+          </div>
+          <div>
+            <h5 class="font-bold text-white dark:text-white light:text-[#191c1e] text-sm mb-1">Geospatial Buffering</h5>
+            <p>Target buffers mapped in Leaflet delineate geological bounds dynamically across studied structures.</p>
+          </div>
+        </div>
+        <div class="glass-card rounded-xl p-5 flex gap-4 items-start bg-slate-900/40 light:bg-white/80 border border-white/10 light:border-black/5">
+          <div class="p-2.5 bg-[#00daf3]/10 text-[#00daf3] light:text-[#006576] rounded-lg">
+            <span class="material-symbols-outlined">brain</span>
+          </div>
+          <div>
+            <h5 class="font-bold text-white dark:text-white light:text-[#191c1e] text-sm mb-1">Random Forest Inversion</h5>
+            <p>Our ML regressors parse multi-element chemistry grids to predict local prospectivity probability.</p>
+          </div>
+        </div>
+        <div class="glass-card rounded-xl p-5 flex gap-4 items-start bg-slate-900/40 light:bg-white/80 border border-white/10 light:border-black/5">
+          <div class="p-2.5 bg-[#00daf3]/10 text-[#00daf3] light:text-[#006576] rounded-lg">
+            <span class="material-symbols-outlined">description</span>
+          </div>
+          <div>
+            <h5 class="font-bold text-white dark:text-white light:text-[#191c1e] text-sm mb-1">XAI Reports</h5>
+            <p>Compile custom PDF summaries with coordinate profiles, mineral bars, and models attributes.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- XAI Plots -->
+      <section class="glass-card rounded-xl p-6 bg-slate-900/40 light:bg-white/80 border border-white/10 light:border-black/5">
+        <h4 class="font-display text-lg font-bold text-white dark:text-white light:text-[#191c1e] flex items-center gap-2 mb-6">
+          <i class="fa-solid fa-brain text-[#00daf3] light:text-[#006576]"></i> Explainable AI (XAI) Model Validation
+        </h4>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div class="space-y-4">
+            <h5 class="font-semibold text-white dark:text-white light:text-[#191c1e]">Feature Importance Breakdown</h5>
+            <div class="border border-white/10 light:border-black/10 rounded-xl overflow-hidden bg-black/20">
+              <img src="img/feature_importance.png" alt="Feature Importance" class="w-full" onerror="this.parentElement.innerHTML='<div class=p-6 text-center text-xs opacity-60>Feature Importance visualization generated at model training.</div>'"/>
+            </div>
+          </div>
+          <div class="space-y-4">
+            <h5 class="font-semibold text-white dark:text-white light:text-[#191c1e]">Correlation Heatmap</h5>
+            <div class="border border-white/10 light:border-black/10 rounded-xl overflow-hidden bg-black/20">
+              <img src="img/correlation_heatmap.png" alt="Correlation Heatmap" class="w-full" onerror="this.parentElement.innerHTML='<div class=p-6 text-center text-xs opacity-60>Geochemical elements correlation heatmap.</div>'"/>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- Footer -->
+    <footer class="w-full py-8 mt-auto bg-[#0c0f0f] light:bg-[#eceef0] border-t border-white/10 light:border-black/10">
+      <div class="flex flex-col md:flex-row justify-between items-center px-10 max-w-[1440px] mx-auto gap-4">
+        <div class="flex items-center gap-4">
+          <span class="font-label text-sm font-bold text-[#00daf3] light:text-[#006576]">GeoMiner</span>
+          <span class="font-label text-[10px] text-[#bac9cc] light:text-[#3d494c]">&copy; 2026 GeoMiner Systems. All rights reserved.</span>
+        </div>
+      </div>
+    </footer>
+  </main>
+
+  <script src="js/app.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="js/prediction.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      loadPredictionResults();
+    });
+  </script>
 </body>
 </html>

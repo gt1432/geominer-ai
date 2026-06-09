@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+  <!-- Zero Flash (FOUC) Theme Restorer -->
+  <script>
+    (function() {
+      const theme = localStorage.getItem('theme') || 'dark';
+      if (theme === 'light') {
+        document.documentElement.classList.add('light-theme');
+        document.documentElement.classList.add('light');
+        document.documentElement.classList.remove('dark');
+      } else {
+        document.documentElement.classList.add('dark');
+        document.documentElement.classList.remove('light');
+      }
+    })();
+  </script>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>Network Analytics — GeoMiner AI</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="css/style.css">
+
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "primary": "#006576",
+            "background": "#f7f9fb",
+            "surface": "#f7f9fb",
+            "surface-container": "#eceef0",
+            "surface-container-high": "#e6e8ea",
+            "surface-container-highest": "#e0e3e5",
+            "surface-container-low": "#f2f4f6",
+            "surface-container-lowest": "#ffffff",
+            "secondary": "#555f71",
+            "on-surface": "#191c1e",
+            "on-surface-variant": "#3d494c",
+            "outline": "#6d797c",
+            "outline-variant": "#bcc9cc",
+            "primary-container": "#008094",
+            "on-primary-container": "#f9fdff",
+            "status-success": "#008094",
+            "status-error": "#ba1a1a"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "fontFamily": {
+            "display": ["Space Grotesk"],
+            "body": ["Geist"],
+            "label": ["JetBrains Mono"]
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    .glass-card {
+      background: rgba(30, 41, 59, 0.7);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(240, 240, 240, 0.1);
+    }
+    html.light .glass-card {
+      background: rgba(255, 255, 255, 0.8);
+      border: 1px solid rgba(0, 101, 118, 0.1);
+      box-shadow: 0 4px 24px -1px rgba(0, 0, 0, 0.05);
+    }
+    .glow-cyan {
+      box-shadow: 0 4px 20px rgba(0, 101, 118, 0.08);
+    }
+    html.dark .glow-cyan {
+      box-shadow: 0 0 20px rgba(0, 218, 243, 0.15);
+    }
+    .status-pulse {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 128, 148, 0.7); }
+      70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(0, 128, 148, 0); }
+      100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 128, 148, 0); }
+    }
+    html.dark .status-pulse {
+      animation: pulse-dark 2s infinite;
+    }
+    @keyframes pulse-dark {
+      0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 229, 255, 0.7); }
+      70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(0, 229, 255, 0); }
+      100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 229, 255, 0); }
+    }
+  </style>
+</head>
+<body class="font-body text-body-md transition-colors duration-300 bg-[#121414] text-[#e2e2e2] html[class*='light']:bg-[#f7f9fb] html[class*='light']:text-[#191c1e]">
+
+  <!-- Sidebar Navigation -->
+  <aside class="h-screen w-[280px] fixed left-0 top-0 bg-[#0c0f0f] light:bg-[#eceef0] border-r border-white/10 light:border-black/10 flex flex-col p-6 z-50">
+    <div class="mb-10 flex justify-between items-center">
+      <div>
+        <h1 class="font-display text-2xl font-bold text-white dark:text-white light:text-[#006576]">GeoMiner</h1>
+        <p class="font-label text-[10px] text-[#bac9cc] light:text-[#3d494c] opacity-60">ML Platform v2.0</p>
+      </div>
+      <div class="theme-switch-wrapper">
+        <label class="theme-switch" for="theme-toggle-checkbox">
+          <input type="checkbox" id="theme-toggle-checkbox" />
+          <div class="theme-switch-slider">
+            <i class="fa-solid fa-moon icon-moon"></i>
+            <i class="fa-solid fa-sun icon-sun"></i>
+          </div>
+        </label>
+      </div>
+    </div>
+    <nav class="flex-1 flex flex-col gap-2">
+      <a class="text-[#bac9cc] light:text-[#3d494c] hover:bg-white/5 light:hover:bg-black/5 flex items-center gap-3 px-4 py-3 rounded-lg transition-all" href="index.html">
+        <span class="material-symbols-outlined">home</span>
+        <span class="font-display text-sm font-semibold">Overview</span>
+      </a>
+      <a class="text-[#bac9cc] light:text-[#3d494c] hover:bg-white/5 light:hover:bg-black/5 flex items-center gap-3 px-4 py-3 rounded-lg transition-all" href="dashboard.html">
+        <span class="material-symbols-outlined">dashboard</span>
+        <span class="font-display text-sm font-semibold">Dashboard</span>
+      </a>
+      <a class="text-[#bac9cc] light:text-[#3d494c] hover:bg-white/5 light:hover:bg-black/5 flex items-center gap-3 px-4 py-3 rounded-lg transition-all" href="predict.html">
+        <span class="material-symbols-outlined">map</span>
+        <span class="font-display text-sm font-semibold">Prediction</span>
+      </a>
+      <a class="text-[#bac9cc] light:text-[#3d494c] hover:bg-white/5 light:hover:bg-black/5 flex items-center gap-3 px-4 py-3 rounded-lg transition-all" href="hardware.html">
+        <span class="material-symbols-outlined">memory</span>
+        <span class="font-display text-sm font-semibold">Miner Fleet</span>
+      </a>
+      <a class="bg-[#00daf3] light:bg-[#006576] text-[#00363d] light:text-white rounded-lg font-bold flex items-center gap-3 px-4 py-3 duration-200" href="network.html">
+        <span class="material-symbols-outlined">hub</span>
+        <span class="font-display text-sm font-semibold">Network</span>
+      </a>
+      <a class="text-[#bac9cc] light:text-[#3d494c] hover:bg-white/5 light:hover:bg-black/5 flex items-center gap-3 px-4 py-3 rounded-lg transition-all" href="settings.html">
+        <span class="material-symbols-outlined">settings</span>
+        <span class="font-display text-sm font-semibold">Settings</span>
+      </a>
+    </nav>
+    <div class="mt-auto pt-6 border-t border-white/10 light:border-black/10 text-center text-xs text-[#bac9cc] light:text-[#3d494c] opacity-65">
+      &copy; 2026 GeoMiner AI
+    </div>
+  </aside>
+
+  <!-- Main Content Panel -->
+  <main class="ml-[280px] min-h-screen flex flex-col">
+    <!-- Top App Bar -->
+    <header class="w-full sticky top-0 bg-[#121414]/80 light:bg-[#f7f9fb]/80 backdrop-blur-md border-b border-white/10 light:border-black/10 px-10 py-4 flex justify-between items-center z-40">
+      <div class="flex items-center gap-4">
+        <h2 class="font-display text-2xl font-bold text-white dark:text-white light:text-[#191c1e]">Network Analytics</h2>
+        <div class="flex items-center gap-2 bg-slate-900/50 light:bg-black/5 border border-white/10 light:border-black/10 px-3 py-1 rounded-full">
+          <span class="w-2 h-2 bg-[#10B981] light:bg-[#008094] rounded-full status-pulse"></span>
+          <span class="font-label text-[10px] text-[#10B981] light:text-[#008094]">Server Live</span>
+        </div>
+      </div>
+      <div class="flex items-center gap-6">
+        <a href="predict.html" class="bg-[#00daf3] light:bg-[#006576] text-[#00363d] light:text-white px-6 py-2 rounded-lg font-bold hover:opacity-90 active:scale-95 transition-all text-sm shadow-md">
+          Start Predicting
+        </a>
+      </div>
+    </header>
+
+    <!-- Content Area -->
+    <div class="p-10 space-y-8 max-w-[1440px] mx-auto w-full">
+      <!-- Global Stats Bento Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div class="glass-card p-6 rounded-xl cyan-glow bg-slate-900/40 light:bg-white/80">
+          <p class="font-label text-xs text-[#bac9cc] light:text-[#3d494c] uppercase mb-2">Network Hashrate</p>
+          <div class="flex items-end gap-2">
+            <span class="font-display text-2xl font-bold text-[#00daf3] light:text-[#006576]">428.52 EH/s</span>
+            <span class="text-[#10B981] light:text-[#008094] text-xs mb-1 font-bold">+2.4%</span>
+          </div>
+        </div>
+        <div class="glass-card p-6 rounded-xl bg-slate-900/40 light:bg-white/80">
+          <p class="font-label text-xs text-[#bac9cc] light:text-[#3d494c] uppercase mb-2">Current Difficulty</p>
+          <div class="flex items-end gap-2">
+            <span class="font-display text-2xl font-bold text-white dark:text-white light:text-[#191c1e]">64.68 T</span>
+            <span class="text-[#bac9cc] light:text-[#3d494c] text-xs mb-1">Adj in 4d</span>
+          </div>
+        </div>
+        <div class="glass-card p-6 rounded-xl bg-slate-900/40 light:bg-white/80">
+          <p class="font-label text-xs text-[#bac9cc] light:text-[#3d494c] uppercase mb-2">Nodes Online</p>
+          <div class="flex items-center gap-3">
+            <span class="font-display text-2xl font-bold text-white dark:text-white light:text-[#191c1e]">14,289</span>
+            <div class="w-2.5 h-2.5 bg-[#10B981] rounded-full animate-pulse"></div>
+          </div>
+        </div>
+        <div class="glass-card p-6 rounded-xl bg-slate-900/40 light:bg-white/80">
+          <p class="font-label text-xs text-[#bac9cc] light:text-[#3d494c] uppercase mb-2">Block Height</p>
+          <div class="flex items-center gap-3">
+            <span class="font-display text-2xl font-bold text-white dark:text-white light:text-[#191c1e]">814,922</span>
+            <span class="material-symbols-outlined text-[#00daf3] light:text-[#006576] text-sm">dynamic_feed</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Visualizations -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Hashrate History -->
+        <div class="lg:col-span-2 glass-card rounded-xl overflow-hidden bg-slate-900/40 light:bg-white/80">
+          <div class="px-6 py-4 border-b border-white/10 light:border-black/10 flex justify-between items-center">
+            <h2 class="font-display text-lg font-bold text-white dark:text-white light:text-[#191c1e]">Global Hashrate History</h2>
+          </div>
+          <div class="p-6 h-[320px] relative">
+            <svg class="w-full h-full absolute inset-0 px-6 py-6 overflow-visible" viewBox="0 0 800 300">
+              <path d="M0,250 Q100,220 150,240 T300,180 T450,200 T600,140 T800,100" fill="transparent" stroke="#00daf3" stroke-width="3"></path>
+              <circle cx="800" cy="100" fill="#00daf3" r="6"></circle>
+            </svg>
+            <div class="absolute right-10 top-20 bg-slate-950/80 p-3 rounded-lg border border-[#00daf3]/30 text-white text-xs">
+              <p class="font-bold text-[#00daf3]">428.52 EH/s</p>
+              <p class="opacity-60">Nov 14 UTC</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pool Distribution -->
+        <div class="glass-card rounded-xl overflow-hidden flex flex-col bg-slate-900/40 light:bg-white/80 p-6">
+          <h2 class="font-display text-lg font-bold text-white dark:text-white light:text-[#191c1e] mb-6">Pool Distribution</h2>
+          <div class="flex-grow flex flex-col justify-around">
+            <div class="relative w-40 h-40 mx-auto">
+              <svg class="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                <circle cx="50" cy="50" fill="transparent" r="40" stroke="rgba(255,255,255,0.05)" stroke-width="12"></circle>
+                <circle cx="50" cy="50" fill="transparent" r="40" stroke="#00daf3" stroke-dasharray="251.2" stroke-dashoffset="75" stroke-width="12"></circle>
+              </svg>
+              <div class="absolute inset-0 flex flex-col items-center justify-center">
+                <p class="text-[10px] text-[#bac9cc] light:text-[#3d494c] uppercase">Top Pool</p>
+                <p class="text-xl font-bold text-white dark:text-white light:text-[#191c1e]">32.4%</p>
+              </div>
+            </div>
+            <ul class="space-y-2 text-xs mt-6 text-[#bac9cc] light:text-[#3d494c]">
+              <li class="flex justify-between">
+                <span>GeoPool Alpha</span>
+                <span class="text-white dark:text-white light:text-[#191c1e]">32.4%</span>
+              </li>
+              <li class="flex justify-between">
+                <span>AntMining</span>
+                <span class="text-white dark:text-white light:text-[#191c1e]">24.1%</span>
+              </li>
+              <li class="flex justify-between">
+                <span>Foundry USA</span>
+                <span class="text-white dark:text-white light:text-[#191c1e]">18.5%</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live Block Stream Table -->
+      <div class="glass-card rounded-xl overflow-hidden bg-slate-900/40 light:bg-white/80">
+        <div class="px-6 py-4 border-b border-white/10 light:border-black/10">
+          <h2 class="font-display text-lg font-bold text-white dark:text-white light:text-[#191c1e]">Live Block Stream</h2>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left">
+            <thead>
+              <tr class="border-b border-white/10 light:border-black/10">
+                <th class="px-6 py-4 text-xs font-label uppercase text-[#bac9cc] light:text-[#3d494c]">Height</th>
+                <th class="px-6 py-4 text-xs font-label uppercase text-[#bac9cc] light:text-[#3d494c]">Status</th>
+                <th class="px-6 py-4 text-xs font-label uppercase text-[#bac9cc] light:text-[#3d494c]">Miner</th>
+                <th class="px-6 py-4 text-xs font-label uppercase text-[#bac9cc] light:text-[#3d494c]">Reward</th>
+                <th class="px-6 py-4 text-xs font-label uppercase text-[#bac9cc] light:text-[#3d494c]">Time</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-white/5 light:divide-black/5 text-xs text-[#bac9cc] light:text-[#3d494c]">
+              <tr class="hover:bg-white/5 light:hover:bg-black/5 transition-colors">
+                <td class="px-6 py-4 text-[#00daf3] light:text-[#006576] font-bold">814,922</td>
+                <td class="px-6 py-4">Confirmed</td>
+                <td class="px-6 py-4">GeoPool Alpha</td>
+                <td class="px-6 py-4 text-white dark:text-white light:text-[#191c1e]">6.25 BTC</td>
+                <td class="px-6 py-4">8m 12s</td>
+              </tr>
+              <tr class="hover:bg-white/5 light:hover:bg-black/5 transition-colors">
+                <td class="px-6 py-4 text-[#00daf3] light:text-[#006576] font-bold">814,921</td>
+                <td class="px-6 py-4">Confirmed</td>
+                <td class="px-6 py-4">AntMining</td>
+                <td class="px-6 py-4 text-white dark:text-white light:text-[#191c1e]">6.25 BTC</td>
+                <td class="px-6 py-4">19m 45s</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="w-full py-8 mt-auto bg-[#0c0f0f] light:bg-[#eceef0] border-t border-white/10 light:border-black/10">
+      <div class="flex flex-col md:flex-row justify-between items-center px-10 max-w-[1440px] mx-auto gap-4">
+        <div class="flex items-center gap-4">
+          <span class="font-label text-sm font-bold text-[#00daf3] light:text-[#006576]">GeoMiner</span>
+          <span class="font-label text-[10px] text-[#bac9cc] light:text-[#3d494c]">&copy; 2026 GeoMiner Systems. All rights reserved.</span>
+        </div>
+      </div>
+    </footer>
+  </main>
+
+  <script src="js/app.js"></script>
+</body>
+</html>

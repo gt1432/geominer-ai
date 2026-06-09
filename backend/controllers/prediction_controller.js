@@ -73,7 +73,8 @@ exports.predictMineralPotential = async (req, res) => {
                     confidence: mlResult.confidence,
                     geological_zone: mlResult.geological_zone,
                     nearest_mineral: mlResult.nearest_mineral,
-                    nearest_mineral_dist_km: mlResult.nearest_mineral_dist_km
+                    nearest_mineral_dist_km: mlResult.nearest_mineral_dist_km,
+                    explanation: mlResult.explanation
                 };
                 
                 // Save to database
@@ -92,7 +93,8 @@ exports.predictMineralPotential = async (req, res) => {
                     geological_zone: mlResult.geological_zone,
                     nearest_mineral: mlResult.nearest_mineral,
                     nearest_mineral_dist_km: mlResult.nearest_mineral_dist_km,
-                    rock_type: savedLog.rock_type
+                    rock_type: savedLog.rock_type,
+                    explanation: savedLog.explanation
                 });
             } catch (parseErr) {
                 console.error('Failed to parse Python JSON output. Output was:', stdout);
@@ -233,13 +235,13 @@ exports.downloadPdfReport = async (req, res) => {
         
         // Nearest target box (right)
         drawBox(MARGIN + 325, curY, 185, 80, C_CARD_BG);
-        doc.fillColor(C_GRAY).font('Helvetica').fontSize(8).text('NEAREST KNOWN TARGET', MARGIN + 335, curY + 10);
+        doc.fillColor(C_GRAY).font('Helvetica').fontSize(8).text('DOCUMENTED LOCAL MINERAL', MARGIN + 335, curY + 10);
         doc.fillColor(C_DARK).font('Helvetica-Bold').fontSize(11)
-           .text(record.nearest_mineral || 'Quartzite', MARGIN + 335, curY + 28, { width: 160 });
-        doc.fillColor(C_BLUE).font('Helvetica-Bold').fontSize(14)
-           .text(`${(record.nearest_mineral_dist_km || 0).toFixed(2)} km`, MARGIN + 335, curY + 48);
+           .text(record.nearest_mineral && record.nearest_mineral !== 'None' ? record.nearest_mineral : 'None', MARGIN + 335, curY + 28, { width: 160 });
+        doc.fillColor(C_BLUE).font('Helvetica-Bold').fontSize(11)
+           .text(record.nearest_mineral && record.nearest_mineral !== 'None' ? 'Documented locally' : 'No local occurrence', MARGIN + 335, curY + 48);
         doc.fillColor(C_GRAY).font('Helvetica').fontSize(8)
-           .text('from selected target point', MARGIN + 335, curY + 65);
+           .text('at target coordinate location', MARGIN + 335, curY + 65);
         
         curY += 98;
         drawHRule(curY, '#e2e8f0');
@@ -273,11 +275,11 @@ exports.downloadPdfReport = async (req, res) => {
         const r2Y = curY + 54;
         doc.fillColor(C_GRAY).font('Helvetica').fontSize(8)
            .text('GEOLOGICAL ZONE', col1X, r2Y)
-           .text('NEAREST MINERAL (DIST)', col3X, r2Y);
+           .text('LOCAL MINERAL OCCURRENCE', col3X, r2Y);
         
         doc.fillColor(C_DARK).font('Helvetica-Bold').fontSize(9.5)
            .text(record.geological_zone || 'Vanivilas Formation', col1X, r2Y + 12, { width: 240 })
-           .text(`${record.nearest_mineral || 'Quartzite'} — ${(record.nearest_mineral_dist_km || 0).toFixed(2)} km`, col3X, r2Y + 12, { width: 240 });
+           .text(record.nearest_mineral && record.nearest_mineral !== 'None' ? `${record.nearest_mineral} (Local)` : 'None (No local record)', col3X, r2Y + 12, { width: 240 });
         
         curY += 108;
         drawHRule(curY, '#e2e8f0');
@@ -382,7 +384,9 @@ exports.downloadPdfReport = async (req, res) => {
         
         const geoDesc = `Rock Type: The selected '${record.rock_type}' lithology matches geological units within the '${record.geological_zone || 'identified formation'}', which are known hosts for associated mineral assemblages in the Dharwar Craton of southern India.`;
         
-        const chemDesc = `Geochemistry: Input concentrations (Fe₂O₃: ${record.fe}%, Cu: ${record.cu} ppm, Zn: ${record.zn} ppm) were cross-correlated against 10,004 stream sediment samples from the National Geochemical Campaign Mapping (NGCM) database. The nearest known mineral occurrence ('${record.nearest_mineral}') is located ${(record.nearest_mineral_dist_km || 0).toFixed(2)} km from the prediction target, influencing the spatial proximity score component.`;
+        const chemDesc = record.nearest_mineral && record.nearest_mineral !== 'None'
+            ? `Geochemistry: Input concentrations (Fe₂O₃: ${record.fe}%, Cu: ${record.cu} ppm, Zn: ${record.zn} ppm) were cross-correlated against 10,004 stream sediment samples from the National Geochemical Campaign Mapping (NGCM) database. A known mineral occurrence ('${record.nearest_mineral}') is documented at this exact location.`
+            : `Geochemistry: Input concentrations (Fe₂O₃: ${record.fe}%, Cu: ${record.cu} ppm, Zn: ${record.zn} ppm) were cross-correlated against 10,004 stream sediment samples from the National Geochemical Campaign Mapping (NGCM) database. No documented mineral occurrences exist at these exact coordinates.`;
         
         const methodDesc = `Methodology: Predictions are generated by a trained Random Forest Regressor (scikit-learn) using features: latitude, longitude, Fe₂O₃, Cu_ppm, Zn_ppm, Au_ppb, MnO, Ni_ppm, Cr_ppm, Pb_ppm, geological_unit, and rock_type. The model was trained on joined NGCM + GSI lithology spatial data with KNN proximity weighting.`;
         

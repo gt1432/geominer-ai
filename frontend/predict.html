@@ -1,205 +1,331 @@
 <!DOCTYPE html>
-<html lang="en">
+<html class="dark" lang="en">
 <head>
+  <!-- Zero Flash (FOUC) Theme Restorer -->
+  <script>
+    (function() {
+      const theme = localStorage.getItem('theme') || 'dark';
+      if (theme === 'light') {
+        document.documentElement.classList.add('light-theme');
+        document.documentElement.classList.add('light');
+        document.documentElement.classList.remove('dark');
+      } else {
+        document.documentElement.classList.add('dark');
+        document.documentElement.classList.remove('light');
+      }
+    })();
+  </script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Prediction Map — GeoMiner AI</title>
-  <meta name="description" content="Select a location on the interactive GIS map and predict mineral prospectivity using AI.">
-  <link rel="stylesheet" href="css/style.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
-</head>
-<body>
-<div class="app-container">
+  <link rel="stylesheet" href="css/style.css">
 
-  <!-- ── SIDEBAR ── -->
-  <aside class="sidebar">
-    <div class="logo-container">
-      <div class="logo-icon"><i class="fa-solid fa-mountain-sun" style="color:#fff;font-size:1rem;"></i></div>
-      <div class="logo-title">GeoMiner AI</div>
-      <div class="logo-subtitle">ML Exploration</div>
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "primary": "#006576",
+            "background": "#f7f9fb",
+            "surface": "#f7f9fb",
+            "surface-container": "#eceef0",
+            "surface-container-high": "#e6e8ea",
+            "surface-container-highest": "#e0e3e5",
+            "surface-container-low": "#f2f4f6",
+            "surface-container-lowest": "#ffffff",
+            "secondary": "#555f71",
+            "on-surface": "#191c1e",
+            "on-surface-variant": "#3d494c",
+            "outline": "#6d797c",
+            "outline-variant": "#bcc9cc",
+            "primary-container": "#008094",
+            "on-primary-container": "#f9fdff",
+            "status-success": "#008094",
+            "status-error": "#ba1a1a"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "fontFamily": {
+            "display": ["Space Grotesk"],
+            "body": ["Geist"],
+            "label": ["JetBrains Mono"]
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    .glass-card {
+      background: rgba(30, 41, 59, 0.7);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(240, 240, 240, 0.1);
+    }
+    html.light .glass-card {
+      background: rgba(255, 255, 255, 0.8);
+      border: 1px solid rgba(0, 101, 118, 0.1);
+      box-shadow: 0 4px 24px -1px rgba(0, 0, 0, 0.05);
+    }
+    .glow-cyan {
+      box-shadow: 0 4px 20px rgba(0, 101, 118, 0.08);
+    }
+    html.dark .glow-cyan {
+      box-shadow: 0 0 20px rgba(0, 218, 243, 0.15);
+    }
+    .status-pulse {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 128, 148, 0.7); }
+      70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(0, 128, 148, 0); }
+      100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 128, 148, 0); }
+    }
+    html.dark .status-pulse {
+      animation: pulse-dark 2s infinite;
+    }
+    @keyframes pulse-dark {
+      0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 229, 255, 0.7); }
+      70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(0, 229, 255, 0); }
+      100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 229, 255, 0); }
+    }
+  </style>
+</head>
+<body class="font-body text-body-md transition-colors duration-300 bg-[#121414] text-[#e2e2e2] html[class*='light']:bg-[#f7f9fb] html[class*='light']:text-[#191c1e]">
+
+  <!-- Sidebar Navigation -->
+  <aside class="h-screen w-[280px] fixed left-0 top-0 bg-[#0c0f0f] light:bg-[#eceef0] border-r border-white/10 light:border-black/10 flex flex-col p-6 z-50">
+    <div class="mb-10 flex justify-between items-center">
+      <div>
+        <h1 class="font-display text-2xl font-bold text-white dark:text-white light:text-[#006576]">GeoMiner</h1>
+        <p class="font-label text-[10px] text-[#bac9cc] light:text-[#3d494c] opacity-60">ML Platform v2.0</p>
+      </div>
+      <div class="theme-switch-wrapper">
+        <label class="theme-switch" for="theme-toggle-checkbox">
+          <input type="checkbox" id="theme-toggle-checkbox" />
+          <div class="theme-switch-slider">
+            <i class="fa-solid fa-moon icon-moon"></i>
+            <i class="fa-solid fa-sun icon-sun"></i>
+          </div>
+        </label>
+      </div>
     </div>
-    <nav>
-      <ul class="nav-links">
-        <li class="nav-item"><a href="index.html"><i class="fa-solid fa-house"></i> Overview</a></li>
-        <li class="nav-item"><a href="dashboard.html"><i class="fa-solid fa-chart-line"></i> Dashboard</a></li>
-        <li class="nav-item active"><a href="predict.html"><i class="fa-solid fa-map-location-dot"></i> Prediction</a></li>
-        <li class="nav-item"><a href="settings.html"><i class="fa-solid fa-sliders"></i> Settings</a></li>
-      </ul>
+    <nav class="flex-1 flex flex-col gap-2">
+      <a class="text-[#bac9cc] light:text-[#3d494c] hover:bg-white/5 light:hover:bg-black/5 flex items-center gap-3 px-4 py-3 rounded-lg transition-all" href="index.html">
+        <span class="material-symbols-outlined">home</span>
+        <span class="font-display text-sm font-semibold">Overview</span>
+      </a>
+      <a class="text-[#bac9cc] light:text-[#3d494c] hover:bg-white/5 light:hover:bg-black/5 flex items-center gap-3 px-4 py-3 rounded-lg transition-all" href="dashboard.html">
+        <span class="material-symbols-outlined">dashboard</span>
+        <span class="font-display text-sm font-semibold">Dashboard</span>
+      </a>
+      <a class="bg-[#00daf3] light:bg-[#006576] text-[#00363d] light:text-white rounded-lg font-bold flex items-center gap-3 px-4 py-3 duration-200" href="predict.html">
+        <span class="material-symbols-outlined">map</span>
+        <span class="font-display text-sm font-semibold">Prediction</span>
+      </a>
+      <a class="text-[#bac9cc] light:text-[#3d494c] hover:bg-white/5 light:hover:bg-black/5 flex items-center gap-3 px-4 py-3 rounded-lg transition-all" href="hardware.html">
+        <span class="material-symbols-outlined">memory</span>
+        <span class="font-display text-sm font-semibold">Miner Fleet</span>
+      </a>
+      <a class="text-[#bac9cc] light:text-[#3d494c] hover:bg-white/5 light:hover:bg-black/5 flex items-center gap-3 px-4 py-3 rounded-lg transition-all" href="network.html">
+        <span class="material-symbols-outlined">hub</span>
+        <span class="font-display text-sm font-semibold">Network</span>
+      </a>
+      <a class="text-[#bac9cc] light:text-[#3d494c] hover:bg-white/5 light:hover:bg-black/5 flex items-center gap-3 px-4 py-3 rounded-lg transition-all" href="settings.html">
+        <span class="material-symbols-outlined">settings</span>
+        <span class="font-display text-sm font-semibold">Settings</span>
+      </a>
     </nav>
-    <footer class="sidebar-footer"><p>&copy; 2026 GeoMiner AI</p><p>v2.0.0</p></footer>
+    <div class="mt-auto pt-6 border-t border-white/10 light:border-black/10 text-center text-xs text-[#bac9cc] light:text-[#3d494c] opacity-65">
+      &copy; 2026 GeoMiner AI
+    </div>
   </aside>
 
-  <!-- ── MAIN ── -->
-  <main class="content-wrapper">
-    <header class="page-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px;">
-      <div>
-        <h1 class="page-title">Mineral Target Prediction</h1>
-        <p class="page-description">Select a location on the map or enter coordinates, then run the AI prediction engine.</p>
-      </div>
-      <div style="display:flex; gap:10px; align-items:center;">
-        <div id="status-pill" style="background:rgba(34,197,94,0.1); border:1px solid rgba(34,197,94,0.2); border-radius:30px; padding:6px 14px; font-size:0.75rem; font-weight:700; color:var(--success); display:flex; align-items:center; gap:6px;">
-          <span style="width:7px;height:7px;border-radius:50%;background:var(--success);display:inline-block;animation:pulse 2s infinite;"></span>
-          Server Online
+  <!-- Main Content Panel -->
+  <main class="ml-[280px] min-h-screen flex flex-col">
+    <!-- Top App Bar -->
+    <header class="w-full sticky top-0 bg-[#121414]/80 light:bg-[#f7f9fb]/80 backdrop-blur-md border-b border-white/10 light:border-black/10 px-10 py-4 flex justify-between items-center z-40">
+      <div class="flex items-center gap-4">
+        <h2 class="font-display text-2xl font-bold text-white dark:text-white light:text-[#191c1e]">Mineral Target Prediction</h2>
+        <div class="flex items-center gap-2 bg-slate-900/50 light:bg-black/5 border border-white/10 light:border-black/10 px-3 py-1 rounded-full">
+          <span class="w-2 h-2 bg-[#10B981] light:bg-[#008094] rounded-full status-pulse"></span>
+          <span class="font-label text-[10px] text-[#10B981] light:text-[#008094]">Server Live</span>
         </div>
       </div>
     </header>
 
-    <!-- Grid: Map + Form -->
-    <div style="display:grid; grid-template-columns:1fr 380px; gap:20px; align-items:start;">
+    <!-- Prediction Workspace Canvas -->
+    <div class="p-10 space-y-8 max-w-[1440px] mx-auto w-full flex-grow">
+      
+      <!-- Grid: Map + Form -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        
+        <!-- Map Panel (8 cols) -->
+        <div class="lg:col-span-8 space-y-4">
+          <!-- Layer Controls Row -->
+          <div class="flex gap-4 flex-wrap items-center">
+            <div class="mode-toggle-group flex bg-[#1e2020] light:bg-[#eceef0] rounded-lg p-1 border border-white/10 light:border-black/10">
+              <button class="mode-btn active px-4 py-2 text-xs font-semibold rounded" id="mode-point" onclick="setMode('point')">
+                <i class="fa-solid fa-location-dot mr-1"></i> Point
+              </button>
+              <button class="mode-btn px-4 py-2 text-xs font-semibold rounded" id="mode-area" onclick="setMode('area')">
+                <i class="fa-solid fa-vector-square mr-1"></i> Area
+              </button>
+            </div>
+            <div class="flex gap-2 flex-wrap">
+              <button class="layer-btn active text-xs font-semibold px-4 py-2 border border-white/10 light:border-black/10 rounded hover:bg-white/5 light:hover:bg-black/5 transition-colors" id="layer-osm" onclick="switchTile('osm')"><i class="fa-solid fa-map mr-1"></i> Street</button>
+              <button class="layer-btn text-xs font-semibold px-4 py-2 border border-white/10 light:border-black/10 rounded hover:bg-white/5 light:hover:bg-black/5 transition-colors" id="layer-satellite" onclick="switchTile('satellite')"><i class="fa-solid fa-satellite mr-1"></i> Satellite</button>
+              <button class="layer-btn text-xs font-semibold px-4 py-2 border border-white/10 light:border-black/10 rounded hover:bg-white/5 light:hover:bg-black/5 transition-colors" id="layer-geo" onclick="switchTile('geo')"><i class="fa-solid fa-layer-group mr-1"></i> Terrain</button>
+              <button class="layer-btn text-xs font-semibold px-4 py-2 border border-white/10 light:border-black/10 rounded hover:bg-white/5 light:hover:bg-black/5 transition-colors" id="layer-heat" onclick="toggleHeatmap()"><i class="fa-solid fa-fire mr-1"></i> Heatmap</button>
+            </div>
+          </div>
 
-      <!-- ── MAP PANEL ── -->
-      <div>
-        <!-- Layer Controls Row -->
-        <div style="display:flex; gap:10px; margin-bottom:14px; flex-wrap:wrap; align-items:center;">
-          <div class="mode-toggle-group" style="flex:1; min-width:200px;">
-            <button class="mode-btn active" id="mode-point" onclick="setMode('point')">
-              <i class="fa-solid fa-location-dot"></i> Point
+          <!-- Location Search -->
+          <div class="flex gap-3 items-center">
+            <input type="text" id="loc-search-input" class="form-control flex-1 rounded-lg border border-white/10 light:border-black/10 bg-slate-950/40 light:bg-white p-3 text-sm focus:ring-[#00daf3]" placeholder="🔍  Search location (e.g. Chitradurga, Karnataka)...">
+            <button onclick="handleGeocodeSearch()" id="geocode-btn" class="bg-[#00daf3] light:bg-[#006576] text-[#00363d] light:text-white px-6 py-3 rounded-lg font-bold hover:opacity-90 active:scale-95 transition-all text-sm flex items-center gap-2">
+              <i class="fa-solid fa-magnifying-glass"></i> Search
             </button>
-            <button class="mode-btn" id="mode-area" onclick="setMode('area')">
-              <i class="fa-solid fa-vector-square"></i> Area
-            </button>
           </div>
-          <div style="display:flex; gap:8px; flex-wrap:wrap;">
-            <button class="layer-btn active" id="layer-osm" onclick="switchTile('osm')"><i class="fa-solid fa-map"></i> Street</button>
-            <button class="layer-btn" id="layer-satellite" onclick="switchTile('satellite')"><i class="fa-solid fa-satellite"></i> Satellite</button>
-            <button class="layer-btn" id="layer-geo" onclick="switchTile('geo')"><i class="fa-solid fa-layer-group"></i> Terrain</button>
-            <button class="layer-btn" id="layer-heat" onclick="toggleHeatmap()"><i class="fa-solid fa-fire"></i> Heatmap</button>
+
+          <!-- Map Container -->
+          <div class="relative rounded-2xl overflow-hidden border border-white/10 light:border-black/10">
+            <div id="prediction-map" class="map-container" style="height: 520px; z-index: 0;"></div>
+            <!-- Coordinate Pill -->
+            <div id="coord-pill" class="absolute bottom-4 right-4 z-[1000] bg-slate-950/90 p-3 rounded-lg border border-white/10 text-[10px] font-mono tracking-wider text-[#bac9cc] hidden">
+              <i class="fa-solid fa-location-dot text-[#00daf3] mr-1.5"></i>
+              <span id="coord-display">—</span>
+            </div>
           </div>
-        </div>
 
-        <!-- Location Search -->
-        <div style="margin-bottom:12px; display:flex; gap:8px; align-items:center;">
-          <input type="text" id="loc-search-input" class="form-control" placeholder="🔍  Search location (e.g. Chitradurga, Karnataka)..." style="flex:1; min-width:0;">
-          <button onclick="handleGeocodeSearch()" id="geocode-btn" style="flex-shrink:0; background:var(--primary); border:none; border-radius:9px; padding:0 18px; height:44px; cursor:pointer; color:#fff; font-size:0.85rem; font-weight:600; display:flex; align-items:center; gap:6px; white-space:nowrap; transition:all .2s;">
-            <i class="fa-solid fa-magnifying-glass"></i> Search
-          </button>
-        </div>
-
-        <!-- Map -->
-        <div style="position:relative; z-index:0;">
-          <div id="prediction-map" class="map-container" style="height:500px;"></div>
-          <!-- Coordinate Pill -->
-          <div id="coord-pill" style="position:absolute; bottom:14px; right:14px; z-index:1000; background:rgba(11,18,32,0.92); backdrop-filter:blur(8px); border:1px solid var(--border); border-radius:9px; padding:9px 14px; font-family:var(--mono); font-size:0.78rem; color:var(--text-3); display:none;">
-            <i class="fa-solid fa-location-dot" style="color:var(--primary-light); margin-right:5px;"></i>
-            <span id="coord-display">—</span>
+          <!-- Info Banner -->
+          <div class="info-banner bg-[#00daf3]/10 light:bg-[#006576]/10 p-4 rounded-xl border border-[#00daf3]/20 light:border-[#006576]/20 flex items-center gap-3 text-xs text-[#00daf3] light:text-[#006576]">
+            <i class="fa-solid fa-circle-info text-base"></i>
+            <span id="mode-info-text"><b>Point mode:</b> Click anywhere on the map to select a prediction target. Coordinates auto-fill in the form.</span>
           </div>
         </div>
 
-        <!-- Info Banner -->
-        <div class="info-banner" style="margin-top:12px;">
-          <i class="fa-solid fa-circle-info"></i>
-          <span id="mode-info-text"><b>Point mode:</b> Click anywhere on the map to select a prediction target. Coordinates auto-fill in the form.</span>
+        <!-- Form Panel (4 cols) -->
+        <div class="lg:col-span-4 space-y-6">
+          <div class="glass-card rounded-xl p-6 bg-slate-900/40 light:bg-white/80 border border-white/10 light:border-black/5">
+            <h4 class="font-display text-lg font-bold text-white dark:text-white light:text-[#191c1e] flex items-center gap-2 border-b border-white/10 light:border-black/10 pb-4 mb-6">
+              <i class="fa-solid fa-flask text-[#00daf3] light:text-[#006576]"></i> Prediction Parameters
+            </h4>
+
+            <form id="prediction-form" class="space-y-4">
+              <div class="grid grid-cols-2 gap-4">
+                <div class="form-group">
+                  <label class="form-label text-xs text-[#bac9cc] light:text-[#3d494c] font-semibold mb-2 block">Latitude</label>
+                  <input type="number" id="inp-lat" class="form-control w-full rounded-lg border border-white/10 light:border-black/10 bg-slate-950/40 light:bg-white p-3 text-sm focus:ring-[#00daf3]" placeholder="e.g. 14.231" step="0.00001" required>
+                </div>
+                <div class="form-group">
+                  <label class="form-label text-xs text-[#bac9cc] light:text-[#3d494c] font-semibold mb-2 block">Longitude</label>
+                  <input type="number" id="inp-lon" class="form-control w-full rounded-lg border border-white/10 light:border-black/10 bg-slate-950/40 light:bg-white p-3 text-sm focus:ring-[#00daf3]" placeholder="e.g. 76.406" step="0.00001" required>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label text-xs text-[#bac9cc] light:text-[#3d494c] font-semibold mb-2 block">Altitude (m AMSL)</label>
+                <input type="number" id="inp-alt" class="form-control w-full rounded-lg border border-white/10 light:border-black/10 bg-slate-950/40 light:bg-white p-3 text-sm focus:ring-[#00daf3]" placeholder="450" value="450" min="0" max="3000">
+              </div>
+
+              <div class="border-t border-white/10 light:border-black/10 pt-4 mt-6">
+                <span class="block text-[10px] text-[#bac9cc] light:text-[#3d494c] tracking-wider uppercase font-semibold mb-4">Geochemical Overrides (Optional)</span>
+                
+                <div class="space-y-4">
+                  <div class="grid grid-cols-2 gap-4">
+                    <div class="form-group">
+                      <label class="form-label text-xs text-[#bac9cc] light:text-[#3d494c] mb-2 block">Fe₂O₃ (%)</label>
+                      <input type="number" id="inp-fe" class="form-control w-full rounded-lg border border-white/10 light:border-black/10 bg-slate-950/40 light:bg-white p-3 text-sm focus:ring-[#00daf3]" placeholder="5.0" value="5.0" step="0.1" min="0">
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label text-xs text-[#bac9cc] light:text-[#3d494c] mb-2 block">Cu (ppm)</label>
+                      <input type="number" id="inp-cu" class="form-control w-full rounded-lg border border-white/10 light:border-black/10 bg-slate-950/40 light:bg-white p-3 text-sm focus:ring-[#00daf3]" placeholder="30" value="30" step="1" min="0">
+                    </div>
+                  </div>
+                  <div class="grid grid-cols-2 gap-4">
+                    <div class="form-group">
+                      <label class="form-label text-xs text-[#bac9cc] light:text-[#3d494c] mb-2 block">Zn (ppm)</label>
+                      <input type="number" id="inp-zn" class="form-control w-full rounded-lg border border-white/10 light:border-black/10 bg-slate-950/40 light:bg-white p-3 text-sm focus:ring-[#00daf3]" placeholder="60" value="60" step="1" min="0">
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label text-xs text-[#bac9cc] light:text-[#3d494c] mb-2 block">Rock Type</label>
+                      <select id="sel-rock-type" class="form-control w-full rounded-lg border border-white/10 light:border-black/10 bg-[#121414] dark:bg-[#121414] light:bg-white p-3 text-sm focus:ring-[#00daf3]">
+                        <option value="Granite">Granite</option>
+                        <option value="Basalt">Basalt</option>
+                        <option value="Schist">Schist</option>
+                        <option value="Quartzite">Quartzite</option>
+                        <option value="Gneiss">Gneiss</option>
+                        <option value="Limestone">Limestone</option>
+                        <option value="Sandstone">Sandstone</option>
+                        <option value="Dolerite">Dolerite</option>
+                        <option value="Amphibolite">Amphibolite</option>
+                        <option value="Charnockite">Charnockite</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <button type="submit" class="w-full bg-[#00daf3] light:bg-[#006576] text-[#00363d] light:text-white py-4 rounded-xl font-bold uppercase tracking-wider text-sm hover:opacity-90 active:scale-95 transition-all flex justify-center items-center gap-2 shadow-lg mt-6">
+                <i class="fa-solid fa-bolt"></i> Run AI Prediction
+              </button>
+            </form>
+          </div>
+
+          <!-- Quick Tips -->
+          <div class="glass-card rounded-xl p-6 bg-slate-900/40 light:bg-white/80 border border-white/10 light:border-black/5 text-xs text-[#bac9cc] light:text-[#3d494c] space-y-3">
+            <span class="block text-[10px] tracking-wider uppercase font-semibold">Discovery Tips</span>
+            <ul class="space-y-2">
+              <li class="flex gap-2 items-start"><i class="fa-solid fa-check text-[#10B981] mt-0.5"></i> Click map to target coordinates instantly.</li>
+              <li class="flex gap-2 items-start"><i class="fa-solid fa-check text-[#10B981] mt-0.5"></i> Switch layers to check satellite structures.</li>
+              <li class="flex gap-2 items-start"><i class="fa-solid fa-check text-[#10B981] mt-0.5"></i> Coverage limit: Karnataka & Andhra Pradesh, India.</li>
+            </ul>
+          </div>
         </div>
+
       </div>
 
-      <!-- ── PREDICTION FORM PANEL ── -->
-      <div>
-        <div class="glass-card" style="padding:28px;">
-          <h4 style="font-size:1.05rem; font-weight:700; margin-bottom:20px; color:var(--text); display:flex; align-items:center; gap:9px;">
-            <i class="fa-solid fa-flask" style="color:var(--primary-light);"></i> Prediction Parameters
-          </h4>
-
-          <form id="prediction-form">
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
-              <div class="form-group" style="margin-bottom:0;">
-                <label class="form-label"><i class="fa-solid fa-location-dot" style="color:var(--primary-light);"></i> Latitude</label>
-                <input type="number" id="inp-lat" class="form-control" placeholder="e.g. 14.231" step="0.00001" required>
-              </div>
-              <div class="form-group" style="margin-bottom:0;">
-                <label class="form-label"><i class="fa-solid fa-location-dot" style="color:var(--purple);"></i> Longitude</label>
-                <input type="number" id="inp-lon" class="form-control" placeholder="e.g. 76.406" step="0.00001" required>
-              </div>
-            </div>
-
-            <div class="form-group" style="margin-top:14px;">
-              <label class="form-label"><i class="fa-solid fa-mountain" style="color:var(--warning);"></i> Altitude (m AMSL)</label>
-              <input type="number" id="inp-alt" class="form-control" placeholder="450" value="450" min="0" max="3000">
-            </div>
-
-            <div style="border-top:1px solid var(--border); margin:18px 0 16px; padding-top:16px;">
-              <div style="font-size:0.75rem; font-weight:700; color:var(--text-4); text-transform:uppercase; letter-spacing:0.08em; margin-bottom:14px;">
-                Geochemical Overrides (optional)
-              </div>
-              <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
-                <div class="form-group" style="margin-bottom:0;">
-                  <label class="form-label">Fe₂O₃ (%)</label>
-                  <input type="number" id="inp-fe" class="form-control" placeholder="5.0" value="5.0" step="0.1" min="0">
-                </div>
-                <div class="form-group" style="margin-bottom:0;">
-                  <label class="form-label">Cu (ppm)</label>
-                  <input type="number" id="inp-cu" class="form-control" placeholder="30" value="30" step="1" min="0">
-                </div>
-                <div class="form-group" style="margin-bottom:0;">
-                  <label class="form-label">Zn (ppm)</label>
-                  <input type="number" id="inp-zn" class="form-control" placeholder="60" value="60" step="1" min="0">
-                </div>
-                <div class="form-group" style="margin-bottom:0;">
-                  <label class="form-label">Rock Type</label>
-                  <select id="sel-rock-type" class="form-control">
-                    <option value="Granite">Granite</option>
-                    <option value="Basalt">Basalt</option>
-                    <option value="Schist">Schist</option>
-                    <option value="Quartzite">Quartzite</option>
-                    <option value="Gneiss">Gneiss</option>
-                    <option value="Limestone">Limestone</option>
-                    <option value="Sandstone">Sandstone</option>
-                    <option value="Dolerite">Dolerite</option>
-                    <option value="Amphibolite">Amphibolite</option>
-                    <option value="Charnockite">Charnockite</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-
-            <button type="submit" class="btn-primary" style="width:100%; padding:14px; font-size:1rem; margin-top:4px; justify-content:center;">
-              <i class="fa-solid fa-bolt"></i> Run AI Prediction
-            </button>
-          </form>
-        </div>
-
-        <!-- Quick Tips -->
-        <div class="glass-card" style="padding:20px; margin-top:16px;">
-          <div style="font-size:0.75rem; font-weight:700; color:var(--text-4); text-transform:uppercase; letter-spacing:0.08em; margin-bottom:12px;">Quick Tips</div>
-          <ul style="list-style:none; display:flex; flex-direction:column; gap:8px;">
-            <li style="font-size:0.8rem; color:var(--text-3); display:flex; gap:8px; align-items:flex-start;">
-              <i class="fa-solid fa-check-circle" style="color:var(--success); margin-top:2px; flex-shrink:0;"></i>
-              <span>Click the map to select your target point</span>
-            </li>
-            <li style="font-size:0.8rem; color:var(--text-3); display:flex; gap:8px; align-items:flex-start;">
-              <i class="fa-solid fa-check-circle" style="color:var(--success); margin-top:2px; flex-shrink:0;"></i>
-              <span>Switch to Area mode to draw a rectangle over a region</span>
-            </li>
-            <li style="font-size:0.8rem; color:var(--text-3); display:flex; gap:8px; align-items:flex-start;">
-              <i class="fa-solid fa-check-circle" style="color:var(--success); margin-top:2px; flex-shrink:0;"></i>
-              <span>Toggle Heatmap to see known mineral density</span>
-            </li>
-            <li style="font-size:0.8rem; color:var(--text-3); display:flex; gap:8px; align-items:flex-start;">
-              <i class="fa-solid fa-check-circle" style="color:var(--success); margin-top:2px; flex-shrink:0;"></i>
-              <span>Coverage: Karnataka &amp; Andhra Pradesh (India)</span>
-            </li>
-          </ul>
-        </div>
-      </div>
     </div>
+
+    <!-- Footer -->
+    <footer class="w-full py-8 mt-auto bg-[#0c0f0f] light:bg-[#eceef0] border-t border-white/10 light:border-black/10">
+      <div class="flex flex-col md:flex-row justify-between items-center px-10 max-w-[1440px] mx-auto gap-4">
+        <div class="flex items-center gap-4">
+          <span class="font-label text-sm font-bold text-[#00daf3] light:text-[#006576]">GeoMiner</span>
+          <span class="font-label text-[10px] text-[#bac9cc] light:text-[#3d494c]">&copy; 2026 GeoMiner Systems. All rights reserved.</span>
+        </div>
+      </div>
+    </footer>
   </main>
-</div>
 
-<!-- Loading Overlay -->
-<div class="loading-overlay" id="pred-loading-screen">
-  <div class="spinner-ring"></div>
-  <div style="text-align:center;">
-    <div style="color:var(--text); font-weight:600; font-size:0.95rem; margin-bottom:4px;" id="loader-msg">Running AI prediction...</div>
-    <div style="color:var(--text-4); font-size:0.78rem;">Analyzing geochemistry · Querying geology · Scoring minerals</div>
+  <!-- Loading Overlay -->
+  <div class="loading-overlay" id="pred-loading-screen">
+    <div class="spinner-ring"></div>
+    <div class="text-center space-y-2">
+      <div class="text-white font-bold text-lg" id="loader-msg">Running AI prediction...</div>
+      <div class="text-xs text-[#bac9cc]">Querying geology models · Evaluating geochemical ratios</div>
+    </div>
   </div>
-</div>
 
-<div id="toast-container"></div>
+  <div id="toast-container"></div>
 
-<script src="js/app.js"></script>
-<script src="js/map.js"></script>
-<script src="js/prediction.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/map.js"></script>
+  <script src="js/prediction.js"></script>
 </body>
 </html>

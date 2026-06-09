@@ -15,6 +15,11 @@ let drawStart       = null;
 let tileLayers = {};
 let activeTile = 'osm';
 
+const MAP_THEMES = {
+    dark: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+    light: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png'
+};
+
 const TILE_DEFS = {
     osm: {
         url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
@@ -48,6 +53,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const startLat = 14.2207;
     const startLon = 76.2385;
 
+    // Detect theme
+    const isLight = document.documentElement.classList.contains('light-theme');
+    TILE_DEFS.osm.url = isLight ? MAP_THEMES.light : MAP_THEMES.dark;
+
     // Init map
     exploreMap = L.map(mapId, { zoomControl: true, preferCanvas: true }).setView([startLat, startLon], 10);
 
@@ -56,6 +65,14 @@ document.addEventListener('DOMContentLoaded', () => {
         tileLayers[key] = L.tileLayer(def.url, def.options);
     });
     tileLayers['osm'].addTo(exploreMap);
+
+    // Listen for theme changes to dynamically update map tiles
+    document.addEventListener('themechange', (e) => {
+        const isL = e.detail.theme === 'light';
+        if (tileLayers['osm']) {
+            tileLayers['osm'].setUrl(isL ? MAP_THEMES.light : MAP_THEMES.dark);
+        }
+    });
 
     // Default draggable marker
     activeMarker = L.marker([startLat, startLon], { draggable: true }).addTo(exploreMap);

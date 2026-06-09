@@ -218,10 +218,10 @@ function loadPredictionResults() {
     setTextSafe('res-formation', data.geological_zone || 'Unknown Formation');
     setTextSafe('res-rock-type', data.rock_type       || 'Unknown');
 
-    // ── 4. Nearest deposit ──
-    const nearestEl = document.getElementById('res-nearest-target');
-    if (nearestEl && data.nearest_mineral) {
-        nearestEl.textContent = `${data.nearest_mineral} (${(data.nearest_mineral_dist_km || 0).toFixed(2)} km away)`;
+    // ── 4. AI Explanation ──
+    const explanationEl = document.getElementById('res-explanation');
+    if (explanationEl) {
+        explanationEl.textContent = data.explanation || 'No known mineral occurrence or geological indicators found at the selected location.';
     }
 
     // ── 5. PDF download link ──
@@ -241,10 +241,7 @@ function loadPredictionResults() {
 
     // ── 7. Results map ──
     if (typeof L !== 'undefined' && document.getElementById('results-explore-map')) {
-        fetch(`${API_BASE_URL}/occurrences`)
-            .then(r => r.json())
-            .then(occ => initResultsMap(data.latitude, data.longitude, occ, data))
-            .catch(() => initResultsMap(data.latitude, data.longitude, [], data));
+        initResultsMap(data.latitude, data.longitude, data);
     }
 }
 
@@ -276,6 +273,17 @@ function _fmtPct(pct) {
 // ══════════════════════════════════════════
 // MINERAL BARS + DONUT CHART
 // ══════════════════════════════════════════
+let donutChartInstance = null;
+
+document.addEventListener('themechange', (e) => {
+    const isLight = e.detail.theme === 'light';
+    const textColor = isLight ? '#475569' : '#94a3b8';
+    if (donutChartInstance) {
+        donutChartInstance.options.plugins.legend.labels.color = textColor;
+        donutChartInstance.update();
+    }
+});
+
 function renderMineralInventory(minerals, percentages) {
     const container = document.getElementById('res-minerals-bars');
     if (!container) return;
@@ -321,9 +329,22 @@ function renderMineralInventory(minerals, percentages) {
     // Donut chart
     const canvas = document.getElementById('mineral-donut-chart');
     if (canvas && typeof Chart !== 'undefined') {
+        if (donutChartInstance) {
+            donutChartInstance.destroy();
+            donutChartInstance = null;
+        }
+
+        if (!minerals || minerals.length === 0) {
+            return;
+        }
+
         const donutData   = minerals.map(m => Math.max(percentages[m] || 1.5, 0.0001));
         const donutColors = minerals.map(m => MINERAL_COLORS[m] || MINERAL_COLORS['default']);
-        new Chart(canvas, {
+        
+        const isLight = document.documentElement.classList.contains('light-theme');
+        const legendColor = isLight ? '#475569' : '#94a3b8';
+
+        donutChartInstance = new Chart(canvas, {
             type: 'doughnut',
             data: {
                 labels: minerals,
@@ -333,7 +354,7 @@ function renderMineralInventory(minerals, percentages) {
                 responsive: true,
                 maintainAspectRatio: true,
                 plugins: {
-                    legend: { position: 'bottom', labels: { color: '#94a3b8', font: { size: 11, family: "'Outfit', sans-serif" }, padding: 12, boxWidth: 12 } },
+                    legend: { position: 'bottom', labels: { color: legendColor, font: { size: 11, family: "'Outfit', sans-serif" }, padding: 12, boxWidth: 12 } },
                     tooltip: { callbacks: { label: ctx => ` ${minerals[ctx.dataIndex]}: ${_fmtPct(percentages[minerals[ctx.dataIndex]] || 1.5)}` } }
                 },
                 cutout: '65%'
@@ -345,94 +366,52 @@ function renderMineralInventory(minerals, percentages) {
 // ══════════════════════════════════════════
 // RESULTS MAP (results.html)
 // ══════════════════════════════════════════
-function initResultsMap(lat, lon, occurrences, predData) {
+function initResultsMap(lat, lon, predData) {
     const mapEl = document.getElementById('results-explore-map');
     if (!mapEl) return;
 
     const map = L.map('results-explore-map', { preferCanvas: true }).setView([lat, lon], 11);
 
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    const isLight = document.documentElement.classList.contains('light-theme');
+    const tileUrl = isLight 
+        ? 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png'
+        : 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
+
+    const tileLayer = L.tileLayer(tileUrl, {
         attribution: '&copy; OSM &copy; CARTO', subdomains: 'abcd', maxZoom: 20
     }).addTo(map);
+
+    // Listen for theme changes to dynamically update map tiles
+    document.addEventListener('themechange', (e) => {
+        const isL = e.detail.theme === 'light';
+        const url = isL 
+            ? 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png'
+            : 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
+        tileLayer.setUrl(url);
+    });
 
     // Target marker
     const targetIcon = L.divIcon({
         html: `<div style="background:linear-gradient(135deg,#3B82F6,#a855f7);border:3px solid white;border-radius:50%;width:20px;height:20px;box-shadow:0 0 16px rgba(59,130,246,0.7);"></div>`,
         className: '', iconSize: [20, 20], iconAnchor: [10, 10]
     });
+    
     L.marker([lat, lon], { icon: targetIcon }).addTo(map)
         .bindPopup(`
-            <div style="font-family:sans-serif;min-width:160px;">
-                <b style="color:#60a5fa;">🎯 Prediction Target</b><br/>
-                Lat: <b>${lat.toFixed(5)}</b><br/>
-                Lon: <b>${lon.toFixed(5)}</b><br/>
-                Alt: <b>${(predData?.altitude || 450).toFixed(1)} m</b><br/>
-                Score: <b style="color:#60a5fa;">${predData?.mineral_probability || 0}%</b>
+            <div style="font-family:sans-serif;min-width:180px;">
+                <b style="color:#60a5fa;display:block;margin-bottom:6px;">🎯 Selected Target Coordinate</b>
+                Latitude: <b>${lat.toFixed(5)}°N</b><br/>
+                Longitude: <b>${lon.toFixed(5)}°E</b><br/>
+                Altitude: <b>${(predData?.altitude || 450).toFixed(1)} m</b><br/>
+                Formation: <b>${predData?.geological_zone || 'Unknown'}</b><br/>
+                Rock Type: <b>${predData?.rock_type || 'Unknown'}</b><br/>
+                Potential Score: <b style="color:#3B82F6;">${predData?.mineral_probability || 0}%</b>
             </div>
         `).openPopup();
 
-    // 5km radius
+    // Highlight geological zone centered around target point
     L.circle([lat, lon], {
-        radius: 5000, color: '#3B82F6', fillColor: '#1d4ed8',
-        fillOpacity: 0.08, weight: 2, dashArray: '6, 4'
+        radius: 5000, color: '#38bdf8', fillColor: '#0284c7',
+        fillOpacity: 0.1, weight: 2, dashArray: '6, 4'
     }).addTo(map);
-
-    // Heatmap
-    if (occurrences && occurrences.length > 0) {
-        const heatPoints = occurrences.map(o => [o.y, o.x, 0.9]);
-        heatPoints.push([lat, lon, 1.0]);
-        for (let i = 0; i < 40; i++) {
-            const ref = occurrences[Math.floor(Math.random() * occurrences.length)];
-            if (ref) heatPoints.push([ref.y + (Math.random() - 0.5) * 0.2, ref.x + (Math.random() - 0.5) * 0.2, Math.random() * 0.5 + 0.25]);
-        }
-        L.heatLayer(heatPoints, {
-            radius: 28, blur: 22, maxZoom: 14, max: 1.0,
-            gradient: { 0.0: '#000033', 0.3: '#0000ff', 0.5: '#00ffff', 0.65: '#00ff00', 0.8: '#ffff00', 0.9: '#ff8800', 1.0: '#ff0000' }
-        }).addTo(map);
-
-        // Nearby occurrence markers + list
-        const nearbyTargets = [];
-        occurrences.forEach(occ => {
-            const dist = Math.sqrt((occ.y - lat) ** 2 + (occ.x - lon) ** 2) * 111.0;
-            if (dist <= 25.0) {
-                const isMine = occ.type.toLowerCase().includes('quarry') || occ.type.toLowerCase().includes('mine');
-                const color  = isMine ? '#f59e0b' : '#ef4444';
-                L.circleMarker([occ.y, occ.x], { radius: 7, fillColor: color, color: '#fff', weight: 1.5, opacity: 0.9, fillOpacity: 0.85 })
-                    .addTo(map)
-                    .bindPopup(`
-                        <div style="font-family:sans-serif;min-width:150px;">
-                            <b style="color:${color};">${isMine ? '⛏' : '💎'} ${occ.type}</b><br/>
-                            Commodity: <b>${occ.commodity}</b><br/>
-                            Distance: <b>${dist.toFixed(2)} km</b>
-                        </div>
-                    `);
-                nearbyTargets.push({ occ, dist, color });
-            }
-        });
-
-        const listEl = document.getElementById('nearby-targets-list');
-        if (listEl) {
-            if (nearbyTargets.length > 0) {
-                nearbyTargets.sort((a, b) => a.dist - b.dist);
-                listEl.innerHTML = '';
-                nearbyTargets.slice(0, 6).forEach(({ occ, dist, color }) => {
-                    const item = document.createElement('div');
-                    item.className = 'exploration-target-card';
-                    item.innerHTML = `
-                        <div>
-                            <div style="font-weight:600;color:var(--text);font-size:0.9rem;">${occ.commodity}</div>
-                            <div style="color:var(--text-3);font-size:0.75rem;margin-top:3px;">${occ.type} &bull; ${occ.y.toFixed(4)}°N, ${occ.x.toFixed(4)}°E</div>
-                        </div>
-                        <div style="text-align:right;flex-shrink:0;margin-left:16px;">
-                            <div style="font-size:0.95rem;font-weight:700;color:${color};">${dist.toFixed(2)} km</div>
-                            <div style="font-size:0.7rem;color:var(--text-4);">distance</div>
-                        </div>
-                    `;
-                    listEl.appendChild(item);
-                });
-            } else {
-                listEl.innerHTML = '<p style="color:var(--text-3);font-size:0.85rem;font-style:italic;">No known mineral occurrences found within 25 km radius.</p>';
-            }
-        }
-    }
 }

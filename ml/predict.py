@@ -45,10 +45,12 @@ def main():
 
     # 3. Spatial KNN (K=1) — nearest NGCM sample
     dists       = np.sqrt((df_ngcm['latitude'] - args.latitude)**2 + (df_ngcm['longitude'] - args.longitude)**2)
+    min_dist    = dists.min()
     nearest_idx = dists.idxmin()
     nearest_ngcm_row = df_ngcm.iloc[[nearest_idx]].copy()
 
-    # Merge geology safely
+    # Determine geological zone
+    geo_zone = "Unknown Formation"
     nearest_geo_row = df_geology.iloc[[nearest_idx]].copy() if nearest_idx < len(df_geology) else pd.DataFrame()
     if not nearest_geo_row.empty:
         common_cols = list(set(nearest_ngcm_row.columns) & set(nearest_geo_row.columns))
@@ -64,11 +66,40 @@ def main():
     if full_row.empty:
         full_row = nearest_ngcm_row.copy()
 
-    # 4. Override user inputs
+    if 'geological_unit' in full_row.columns:
+        gz_val = full_row['geological_unit'].values[0]
+        if not pd.isna(gz_val):
+            geo_zone = str(gz_val)
+
+    # 4. Out of bounds verification (e.g. Arabian Sea or outside studied area)
+    if min_dist > 0.02:
+        result = {
+            "mineral_probability": 0,
+            "predicted_minerals": [],
+            "mineral_percentages": {},
+            "confidence": "Low",
+            "geological_zone": "None",
+            "rock_type": "None",
+            "nearest_mineral": "None",
+            "nearest_mineral_dist_km": 0.0,
+            "altitude": args.altitude,
+            "explanation": "No geological data available at this location."
+        }
+        print(json.dumps(result))
+        sys.exit(0)
+
+    # Identify rock type at coordinates from geology dataset
+    db_rock_type = "Granite"
+    if not nearest_geo_row.empty and 'rock_type' in nearest_geo_row.columns:
+        rt_val = nearest_geo_row['rock_type'].values[0]
+        if not pd.isna(rt_val) and str(rt_val).strip() != "":
+            db_rock_type = str(rt_val)
+
+    # 5. Override user inputs
     full_row = full_row.copy()
     full_row['latitude']  = args.latitude
     full_row['longitude'] = args.longitude
-    full_row['rock_type'] = args.rock_type
+    full_row['rock_type'] = db_rock_type
 
     fe_val    = args.fe
     fe2o3_val = fe_val * 1.43 / 10000.0 if fe_val > 100.0 else fe_val
@@ -76,7 +107,7 @@ def main():
     full_row['cu_ppm']  = args.cu
     full_row['zn_ppm']  = args.zn
 
-    # 5. Model prediction
+    # 6. Model prediction
     features_cols    = model.feature_names_in_
     X_input          = full_row.reindex(columns=features_cols, fill_value=0)
     pred_score       = float(model.predict(X_input)[0])
@@ -89,7 +120,7 @@ def main():
             return float(val) if not pd.isna(val) else default
         return default
 
-    # 6. Mineral detection — 60th percentile threshold, all NGCM elements
+    # 7. Mineral detection — 60th percentile threshold, all NGCM elements
     PCTL = 0.60
     predicted_minerals = []
 
@@ -132,10 +163,14 @@ def main():
             if val > thresh:
                 predicted_minerals.append(min_name)
 
-    # Known mineral occurrences within 25 km radius
+    nearest_mineral = "None"
+    # Tight exact-coordinate check for occurrences (within 2 km representing local grid)
     dists_min        = np.sqrt((df_min_occ['y'] - args.latitude)**2 + (df_min_occ['x'] - args.longitude)**2) * 111.0
-    near_min_indices = dists_min[dists_min <= 25.0].index
+    near_min_indices = dists_min[dists_min <= 2.0].index
     if not near_min_indices.empty:
+        nearest_mineral = str(df_min_occ.loc[near_min_indices[0], 'commodity']).strip().title()
+        if any(kw in nearest_mineral.lower() for kw in ['magnetite', 'banded ferruginous']):
+            nearest_mineral = "Iron"
         for idx in near_min_indices:
             commodity = str(df_min_occ.loc[idx, 'commodity']).strip().title()
             if any(kw in commodity.lower() for kw in ['magnetite', 'banded ferruginous']):
@@ -143,10 +178,7 @@ def main():
             if commodity and commodity not in predicted_minerals:
                 predicted_minerals.append(commodity)
 
-    if not predicted_minerals:
-        predicted_minerals = ["Quartzite" if mineral_probability > 0.4 else "Clay"]
-
-    # 7. Confidence
+    # 8. Confidence
     if mineral_probability >= 0.60:
         confidence = "High"
     elif mineral_probability >= 0.20:
@@ -156,7 +188,7 @@ def main():
 
     prob_percent = int(round(mineral_probability * 100))
 
-    # 8. Mineral percentage concentrations
+    # 9. Mineral percentage concentrations
     def pct_for(min_name):
         mapping = {
             "Iron":      lambda: round(fe2o3_val, 4),
@@ -194,24 +226,25 @@ def main():
     # Sort minerals by concentration descending
     predicted_minerals.sort(key=lambda m: mineral_percentages.get(m, 0), reverse=True)
 
-    # 9. Geological zone
-    geo_zone = "Unknown Formation"
-    if 'geological_unit' in full_row.columns:
-        gz_val = full_row['geological_unit'].values[0]
-        if not pd.isna(gz_val):
-            geo_zone = str(gz_val)
+    # 10. Generate AI Explanation
+    if len(predicted_minerals) > 0:
+        min_list = ", ".join(predicted_minerals[:3])
+        explanation = f"Prediction generated using: NGCM Geochemical Data, Mineral Occurrence Data, and Geological/Lithology Data. The selected coordinate lies within a {db_rock_type.lower()}-rich geological zone ({geo_zone}) with elevated {min_list.lower()} indicators."
+    else:
+        explanation = f"Prediction generated using: NGCM Geochemical Data, Mineral Occurrence Data, and Geological/Lithology Data. The selected coordinate lies within a {db_rock_type.lower()}-rich geological zone ({geo_zone}) but shows no significant mineral enrichment indicators."
 
-    # 10. Output JSON
+    # 11. Output JSON
     result = {
         "mineral_probability":     prob_percent,
         "predicted_minerals":      predicted_minerals,
         "mineral_percentages":     mineral_percentages,
         "confidence":              confidence,
         "geological_zone":         geo_zone,
-        "rock_type":               str(full_row['rock_type'].values[0]) if 'rock_type' in full_row.columns else args.rock_type,
-        "nearest_mineral":         str(df_min_occ.loc[dists_min.idxmin(), 'commodity']),
-        "nearest_mineral_dist_km": float(dists_min.min()),
+        "rock_type":               db_rock_type,
+        "nearest_mineral":         nearest_mineral,
+        "nearest_mineral_dist_km": 0.0,
         "altitude":                args.altitude,
+        "explanation":             explanation
     }
 
     print(json.dumps(result))
