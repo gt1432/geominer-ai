@@ -121,23 +121,31 @@ def main():
             records = sf.records()
             lat_pt, lon_pt = args.latitude, args.longitude
             
+            matching_indices = []
             for i in range(len(shapes)):
-                shape = shapes[i]
-                bbox = shape.bbox
+                bbox = shapes[i].bbox
                 if bbox[0] <= lon_pt <= bbox[2] and bbox[1] <= lat_pt <= bbox[3]:
-                    parts = list(shape.parts) + [len(shape.points)]
-                    for p in range(len(shape.parts)):
-                        start = parts[p]
-                        end = parts[p+1]
-                        poly_points = shape.points[start:end]
-                        if point_in_polygon(lon_pt, lat_pt, poly_points):
-                            rec = records[i].as_dict()
-                            db_rock_type = rec.get('lithologic', 'Granite')
-                            db_lithology = rec.get('standard_l', 'Granitic Gneiss')
-                            db_geo_unit = rec.get('major_mine', 'Dharwar Craton')
-                            db_formation = rec.get('formation', 'Unknown Formation')
-                            intersected = True
-                            break
+                    area = (bbox[2] - bbox[0]) * (bbox[3] - bbox[1])
+                    matching_indices.append((area, i))
+            
+            # Sort by bounding box area (smallest first) to check specific features before huge backgrounds
+            matching_indices.sort(key=lambda x: x[0])
+            
+            for area, i in matching_indices:
+                shape = shapes[i]
+                parts = list(shape.parts) + [len(shape.points)]
+                for p in range(len(shape.parts)):
+                    start = parts[p]
+                    end = parts[p+1]
+                    poly_points = shape.points[start:end]
+                    if point_in_polygon(lon_pt, lat_pt, poly_points):
+                        rec = records[i].as_dict()
+                        db_rock_type = rec.get('lithologic', 'Granite')
+                        db_lithology = rec.get('standard_l', 'Granitic Gneiss')
+                        db_geo_unit = rec.get('major_mine', 'Dharwar Craton')
+                        db_formation = rec.get('formation', 'Unknown Formation')
+                        intersected = True
+                        break
                 if intersected:
                     break
         except Exception as ex:
