@@ -408,25 +408,107 @@ elif nav_selection == "Mineral Prediction":
         df_min_occ_temp['dist_km'] = dists_km
         nearest_min_occ = df_min_occ_temp.sort_values('dist_km').iloc[0]
         
-        # Determine likely minerals present (enrichment check + nearest mineralization)
+        # Determine likely minerals present based on geochemical enrichment and regional geology
+        PCTL = 0.60
         predicted_minerals = []
-        if fe_in > df_ngcm['fe2o3__'].quantile(0.70): predicted_minerals.append("Iron")
-        if cu_in > df_ngcm['cu_ppm'].quantile(0.70): predicted_minerals.append("Copper")
-        if zn_in > df_ngcm['zn_ppm'].quantile(0.70): predicted_minerals.append("Zinc")
-        
-        if nearest_min_occ['dist_km'] <= 15.0:
-            comm = nearest_min_occ['commodity'].strip().capitalize()
-            if comm == "Banded magnetite quartzite":
-                comm = "Iron"
-            if comm not in predicted_minerals:
-                predicted_minerals.append(comm)
-                
-        # Fill standard values from background if empty
-        if not predicted_minerals:
-            predicted_minerals = ["Quartzite" if prob > 0.4 else "Clay"]
-            
-        predicted_minerals.sort()
-        predicted_minerals = predicted_minerals[:3]
+
+        # Helper: safe column read from full_row
+        def safe_col(col, default=0.0):
+            if col in full_row.columns:
+                val = full_row[col].values[0]
+                return float(val) if not pd.isna(val) else default
+            return default
+
+        # Primary user-override elements
+        thresh_fe = df_ngcm['fe2o3__'].quantile(PCTL) if 'fe2o3__' in df_ngcm.columns else 5.0
+        thresh_cu = df_ngcm['cu_ppm'].quantile(PCTL)  if 'cu_ppm'  in df_ngcm.columns else 25.0
+        thresh_zn = df_ngcm['zn_ppm'].quantile(PCTL)  if 'zn_ppm'  in df_ngcm.columns else 55.0
+
+        fe2o3_val = fe_in * 1.43 / 10000.0 if fe_in > 100.0 else fe_in
+
+        if fe2o3_val > thresh_fe: predicted_minerals.append("Iron")
+        if cu_in   > thresh_cu: predicted_minerals.append("Copper")
+        if zn_in   > thresh_zn: predicted_minerals.append("Zinc")
+
+        # Extended element → mineral map from all NGCM columns
+        element_to_mineral = {
+            'au_ppb':  'Gold',
+            'mno__':   'Manganese',
+            'ni_ppm':  'Nickel',
+            'cr_ppm':  'Chromium',
+            'pb_ppm':  'Lead',
+            'v_ppm':   'Vanadium',
+            'co_ppm':  'Cobalt',
+            'tio2__':  'Titanium',
+            'mo_ppm':  'Molybdenum',
+            'sn_ppm':  'Tin',
+            'w_ppm':   'Tungsten',
+            'ag_ppm':  'Silver',
+            'as_ppm':  'Arsenic',
+            'bi_ppm':  'Bismuth',
+            'sb_ppm':  'Antimony',
+            'ba_ppm':  'Barite',
+            'u_ppm':   'Uranium',
+            'th_ppm':  'Thorium',
+            'nb_ppm':  'Niobium',
+            'zr_ppm':  'Zirconium',
+        }
+        for col, min_name in element_to_mineral.items():
+            if min_name not in predicted_minerals and col in df_ngcm.columns:
+                val    = safe_col(col)
+                thresh = df_ngcm[col].quantile(PCTL)
+                if val > thresh:
+                    predicted_minerals.append(min_name)
+
+        # Tight exact-coordinate check for occurrences (within 2 km representing local grid)
+        dists_min        = np.sqrt((df_min_occ['y'] - lat_val)**2 + (df_min_occ['x'] - lon_val)**2) * 111.0
+        near_min_indices = dists_min[dists_min <= 2.0].index
+        if not near_min_indices.empty:
+            for idx in near_min_indices:
+                commodity = str(df_min_occ.loc[idx, 'commodity']).strip().title()
+                if any(kw in commodity.lower() for kw in ['magnetite', 'banded ferruginous']):
+                    commodity = "Iron"
+                if commodity and commodity not in predicted_minerals:
+                    predicted_minerals.append(commodity)
+
+        # Ensure a fallback default list if empty and potential is high
+        if not predicted_minerals and prob > 0.5:
+            predicted_minerals = ["Iron", "Quartzite", "Clay"]
+
+        def pct_for(min_name):
+            mapping = {
+                "Iron":      lambda: round(fe2o3_val, 4),
+                "Copper":    lambda: round(cu_in / 10000.0, 6),
+                "Zinc":      lambda: round(zn_in / 10000.0, 6),
+                "Gold":      lambda: round(safe_col('au_ppb') / 1_000_000.0, 8),
+                "Manganese": lambda: round(safe_col('mno__'), 4),
+                "Nickel":    lambda: round(safe_col('ni_ppm') / 10000.0, 6),
+                "Lead":      lambda: round(safe_col('pb_ppm') / 10000.0, 6),
+                "Chromium":  lambda: round(safe_col('cr_ppm') / 10000.0, 6),
+                "Vanadium":  lambda: round(safe_col('v_ppm')  / 10000.0, 6),
+                "Cobalt":    lambda: round(safe_col('co_ppm') / 10000.0, 6),
+                "Titanium":  lambda: round(safe_col('tio2__'), 4),
+                "Molybdenum":lambda: round(safe_col('mo_ppm') / 10000.0, 6),
+                "Tin":       lambda: round(safe_col('sn_ppm') / 10000.0, 6),
+                "Tungsten":  lambda: round(safe_col('w_ppm')  / 10000.0, 6),
+                "Silver":    lambda: round(safe_col('ag_ppm') / 10000.0, 8),
+                "Arsenic":   lambda: round(safe_col('as_ppm') / 10000.0, 6),
+                "Bismuth":   lambda: round(safe_col('bi_ppm') / 10000.0, 6),
+                "Antimony":  lambda: round(safe_col('sb_ppm') / 10000.0, 6),
+                "Barite":    lambda: round(safe_col('ba_ppm') / 10000.0, 6),
+                "Uranium":   lambda: round(safe_col('u_ppm')  / 10000.0, 8),
+                "Thorium":   lambda: round(safe_col('th_ppm') / 10000.0, 8),
+                "Niobium":   lambda: round(safe_col('nb_ppm') / 10000.0, 6),
+                "Zirconium": lambda: round(safe_col('zr_ppm') / 10000.0, 6),
+                "Diamond":   lambda: 0.0001,
+                "Quartzite": lambda: 65.0,
+                "Clay":      lambda: 45.0,
+            }
+            fn = mapping.get(min_name)
+            return fn() if fn else 1.5
+
+        mineral_percentages = {m: pct_for(m) for m in predicted_minerals}
+        predicted_minerals.sort(key=lambda m: mineral_percentages.get(m, 0), reverse=True)
         
         risk_level = "High" if prob >= 0.60 else ("Medium" if prob >= 0.20 else "Low")
         badge_style = "badge-high" if risk_level == "High" else ("badge-medium" if risk_level == "Medium" else "badge-low")
