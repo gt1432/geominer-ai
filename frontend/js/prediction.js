@@ -96,7 +96,6 @@ async function handlePredictionSubmit(e) {
     const feEl       = document.getElementById('inp-fe');
     const cuEl       = document.getElementById('inp-cu');
     const znEl       = document.getElementById('inp-zn');
-    const rockEl     = document.getElementById('sel-rock-type');
 
     const lat      = parseFloat(latEl?.value);
     const lon      = parseFloat(lonEl?.value);
@@ -104,7 +103,6 @@ async function handlePredictionSubmit(e) {
     const fe       = parseFloat(feEl?.value   || 5.0);
     const cu       = parseFloat(cuEl?.value   || 30.0);
     const zn       = parseFloat(znEl?.value   || 60.0);
-    const rock_type = rockEl?.value || 'Granite';
 
     // Validate
     if (isNaN(lat) || isNaN(lon)) {
@@ -118,7 +116,7 @@ async function handlePredictionSubmit(e) {
     // Show loader
     Loader.show('Running AI prediction engine…');
 
-    const payload = { latitude: lat, longitude: lon, altitude: alt, fe, cu, zn, rock_type };
+    const payload = { latitude: lat, longitude: lon, altitude: alt, fe, cu, zn };
 
     try {
         const response = await fetch(`${API_BASE_URL}/predict`, {

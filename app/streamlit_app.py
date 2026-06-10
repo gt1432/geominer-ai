@@ -409,8 +409,12 @@ elif nav_selection == "Mineral Prediction":
         nearest_min_occ = df_min_occ_temp.sort_values('dist_km').iloc[0]
         
         # Determine likely minerals present based on geochemical enrichment and regional geology
-        PCTL = 0.60
-        predicted_minerals = []
+        predicted_minerals = [
+            "Iron", "Copper", "Zinc", "Gold", "Manganese", "Nickel", "Lead", 
+            "Chromium", "Vanadium", "Cobalt", "Titanium", "Molybdenum", "Tin", 
+            "Tungsten", "Silver", "Arsenic", "Bismuth", "Antimony", "Barite", 
+            "Uranium", "Thorium", "Niobium", "Zirconium", "Diamond", "Quartzite", "Clay"
+        ]
 
         # Helper: safe column read from full_row
         def safe_col(col, default=0.0):
@@ -419,61 +423,7 @@ elif nav_selection == "Mineral Prediction":
                 return float(val) if not pd.isna(val) else default
             return default
 
-        # Primary user-override elements
-        thresh_fe = df_ngcm['fe2o3__'].quantile(PCTL) if 'fe2o3__' in df_ngcm.columns else 5.0
-        thresh_cu = df_ngcm['cu_ppm'].quantile(PCTL)  if 'cu_ppm'  in df_ngcm.columns else 25.0
-        thresh_zn = df_ngcm['zn_ppm'].quantile(PCTL)  if 'zn_ppm'  in df_ngcm.columns else 55.0
-
         fe2o3_val = fe_in * 1.43 / 10000.0 if fe_in > 100.0 else fe_in
-
-        if fe2o3_val > thresh_fe: predicted_minerals.append("Iron")
-        if cu_in   > thresh_cu: predicted_minerals.append("Copper")
-        if zn_in   > thresh_zn: predicted_minerals.append("Zinc")
-
-        # Extended element → mineral map from all NGCM columns
-        element_to_mineral = {
-            'au_ppb':  'Gold',
-            'mno__':   'Manganese',
-            'ni_ppm':  'Nickel',
-            'cr_ppm':  'Chromium',
-            'pb_ppm':  'Lead',
-            'v_ppm':   'Vanadium',
-            'co_ppm':  'Cobalt',
-            'tio2__':  'Titanium',
-            'mo_ppm':  'Molybdenum',
-            'sn_ppm':  'Tin',
-            'w_ppm':   'Tungsten',
-            'ag_ppm':  'Silver',
-            'as_ppm':  'Arsenic',
-            'bi_ppm':  'Bismuth',
-            'sb_ppm':  'Antimony',
-            'ba_ppm':  'Barite',
-            'u_ppm':   'Uranium',
-            'th_ppm':  'Thorium',
-            'nb_ppm':  'Niobium',
-            'zr_ppm':  'Zirconium',
-        }
-        for col, min_name in element_to_mineral.items():
-            if min_name not in predicted_minerals and col in df_ngcm.columns:
-                val    = safe_col(col)
-                thresh = df_ngcm[col].quantile(PCTL)
-                if val > thresh:
-                    predicted_minerals.append(min_name)
-
-        # Tight exact-coordinate check for occurrences (within 2 km representing local grid)
-        dists_min        = np.sqrt((df_min_occ['y'] - lat_val)**2 + (df_min_occ['x'] - lon_val)**2) * 111.0
-        near_min_indices = dists_min[dists_min <= 2.0].index
-        if not near_min_indices.empty:
-            for idx in near_min_indices:
-                commodity = str(df_min_occ.loc[idx, 'commodity']).strip().title()
-                if any(kw in commodity.lower() for kw in ['magnetite', 'banded ferruginous']):
-                    commodity = "Iron"
-                if commodity and commodity not in predicted_minerals:
-                    predicted_minerals.append(commodity)
-
-        # Ensure a fallback default list if empty and potential is high
-        if not predicted_minerals and prob > 0.5:
-            predicted_minerals = ["Iron", "Quartzite", "Clay"]
 
         def pct_for(min_name):
             mapping = {

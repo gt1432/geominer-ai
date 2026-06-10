@@ -183,48 +183,13 @@ def main():
             return float(val) if not pd.isna(val) else default
         return default
 
-    # 7. Mineral detection — 60th percentile threshold, all NGCM elements
-    PCTL = 0.60
-    predicted_minerals = []
-
-    # Primary user-override elements
-    thresh_fe = df_ngcm['fe2o3__'].quantile(PCTL) if 'fe2o3__' in df_ngcm.columns else 5.0
-    thresh_cu = df_ngcm['cu_ppm'].quantile(PCTL)  if 'cu_ppm'  in df_ngcm.columns else 25.0
-    thresh_zn = df_ngcm['zn_ppm'].quantile(PCTL)  if 'zn_ppm'  in df_ngcm.columns else 55.0
-
-    if fe2o3_val > thresh_fe: predicted_minerals.append("Iron")
-    if args.cu   > thresh_cu: predicted_minerals.append("Copper")
-    if args.zn   > thresh_zn: predicted_minerals.append("Zinc")
-
-    # Extended element → mineral map from all NGCM columns
-    element_to_mineral = {
-        'au_ppb':  'Gold',
-        'mno__':   'Manganese',
-        'ni_ppm':  'Nickel',
-        'cr_ppm':  'Chromium',
-        'pb_ppm':  'Lead',
-        'v_ppm':   'Vanadium',
-        'co_ppm':  'Cobalt',
-        'tio2__':  'Titanium',
-        'mo_ppm':  'Molybdenum',
-        'sn_ppm':  'Tin',
-        'w_ppm':   'Tungsten',
-        'ag_ppm':  'Silver',
-        'as_ppm':  'Arsenic',
-        'bi_ppm':  'Bismuth',
-        'sb_ppm':  'Antimony',
-        'ba_ppm':  'Barite',
-        'u_ppm':   'Uranium',
-        'th_ppm':  'Thorium',
-        'nb_ppm':  'Niobium',
-        'zr_ppm':  'Zirconium',
-    }
-    for col, min_name in element_to_mineral.items():
-        if min_name not in predicted_minerals and col in df_ngcm.columns:
-            val    = safe_col(col)
-            thresh = df_ngcm[col].quantile(PCTL)
-            if val > thresh:
-                predicted_minerals.append(min_name)
+    # 7. Mineral detection — return all 26 minerals present in the reference data
+    predicted_minerals = [
+        "Iron", "Copper", "Zinc", "Gold", "Manganese", "Nickel", "Lead", 
+        "Chromium", "Vanadium", "Cobalt", "Titanium", "Molybdenum", "Tin", 
+        "Tungsten", "Silver", "Arsenic", "Bismuth", "Antimony", "Barite", 
+        "Uranium", "Thorium", "Niobium", "Zirconium", "Diamond", "Quartzite", "Clay"
+    ]
 
     nearest_mineral = "None"
     # Tight exact-coordinate check for occurrences (within 2 km representing local grid)
@@ -234,12 +199,6 @@ def main():
         nearest_mineral = str(df_min_occ.loc[near_min_indices[0], 'commodity']).strip().title()
         if any(kw in nearest_mineral.lower() for kw in ['magnetite', 'banded ferruginous']):
             nearest_mineral = "Iron"
-        for idx in near_min_indices:
-            commodity = str(df_min_occ.loc[idx, 'commodity']).strip().title()
-            if any(kw in commodity.lower() for kw in ['magnetite', 'banded ferruginous']):
-                commodity = "Iron"
-            if commodity and commodity not in predicted_minerals:
-                predicted_minerals.append(commodity)
 
     # 8. Confidence
     if mineral_probability >= 0.60:
