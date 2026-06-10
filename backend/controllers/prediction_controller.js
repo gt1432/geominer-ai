@@ -58,14 +58,14 @@ exports.predictMineralPotential = async (req, res) => {
                     return res.status(500).json({ error: 'ML script logic error', details: mlResult.error });
                 }
                 
-                // Construct log entry
+                 // Construct log entry
                 const logData = {
                     latitude: parseFloat(latitude),
                     longitude: parseFloat(longitude),
                     fe: cleanFe,
                     cu: cleanCu,
                     zn: cleanZn,
-                    rock_type: cleanRock,
+                    rock_type: mlResult.rock_type || cleanRock,
                     altitude: mlResult.altitude !== undefined ? mlResult.altitude : cleanAlt,
                     mineral_probability: mlResult.mineral_probability,
                     predicted_minerals: mlResult.predicted_minerals,
@@ -74,7 +74,10 @@ exports.predictMineralPotential = async (req, res) => {
                     geological_zone: mlResult.geological_zone,
                     nearest_mineral: mlResult.nearest_mineral,
                     nearest_mineral_dist_km: mlResult.nearest_mineral_dist_km,
-                    explanation: mlResult.explanation
+                    explanation: mlResult.explanation,
+                    lithology: mlResult.lithology || 'Unknown',
+                    geological_unit: mlResult.geological_unit || 'Unknown',
+                    formation: mlResult.formation || 'Unknown'
                 };
                 
                 // Save to database
@@ -94,6 +97,9 @@ exports.predictMineralPotential = async (req, res) => {
                     nearest_mineral: mlResult.nearest_mineral,
                     nearest_mineral_dist_km: mlResult.nearest_mineral_dist_km,
                     rock_type: savedLog.rock_type,
+                    lithology: savedLog.lithology,
+                    geological_unit: savedLog.geological_unit,
+                    formation: savedLog.formation,
                     explanation: savedLog.explanation
                 });
             } catch (parseErr) {
@@ -248,40 +254,47 @@ exports.downloadPdfReport = async (req, res) => {
         curY += 16;
         
         // ═══════════════════════════════════════════
-        // SECTION 2: SPATIAL & GEOGRAPHIC DETAILS
+        // SECTION 2: SPATIAL & GEOLOGICAL DETAILS
         // ═══════════════════════════════════════════
-        curY = sectionHeader('2. Spatial & Geographic Information', curY);
+        curY = sectionHeader('2. Spatial & Geological Information', curY);
         
-        drawBox(MARGIN, curY, CONTENT_W, 90, C_LIGHT_BG);
+        drawBox(MARGIN, curY, CONTENT_W, 100, C_LIGHT_BG);
         
         const col1X = MARGIN + 12;
-        const col2X = MARGIN + 130;
-        const col3X = MARGIN + 290;
-        const col4X = MARGIN + 420;
+        const col2X = MARGIN + 180;
+        const col3X = MARGIN + 350;
         
-        // Row 1
-        const r1Y = curY + 14;
-        doc.fillColor(C_GRAY).font('Helvetica').fontSize(8)
-           .text('LATITUDE', col1X, r1Y).text('LONGITUDE', col2X, r1Y)
-           .text('ALTITUDE (AMSL)', col3X, r1Y).text('ROCK TYPE', col4X, r1Y);
+        // Col 1: Spatial Info
+        doc.fillColor(C_GRAY).font('Helvetica').fontSize(7.5)
+           .text('LATITUDE', col1X, curY + 12)
+           .text('LONGITUDE', col1X, curY + 42)
+           .text('ALTITUDE (AMSL)', col1X, curY + 72);
         
-        doc.fillColor(C_DARK).font('Helvetica-Bold').fontSize(11)
-           .text(`${record.latitude.toFixed(5)}°N`, col1X, r1Y + 12)
-           .text(`${record.longitude.toFixed(5)}°E`, col2X, r1Y + 12)
-           .text(`${(record.altitude || 450.0).toFixed(1)} m`, col3X, r1Y + 12)
-           .text(record.rock_type || 'Granite', col4X, r1Y + 12, { width: 130 });
+        doc.fillColor(C_DARK).font('Helvetica-Bold').fontSize(10)
+           .text(`${record.latitude.toFixed(5)}°N`, col1X + 90, curY + 11)
+           .text(`${record.longitude.toFixed(5)}°E`, col1X + 90, curY + 41)
+           .text(`${(record.altitude || 450.0).toFixed(1)} m`, col1X + 90, curY + 71);
+           
+        // Col 2: Geological Information
+        doc.fillColor(C_GRAY).font('Helvetica').fontSize(7.5)
+           .text('ROCK TYPE:', col2X, curY + 12)
+           .text('LITHOLOGY:', col2X, curY + 32)
+           .text('GEOLOGICAL UNIT:', col2X, curY + 52)
+           .text('FORMATION:', col2X, curY + 72);
+           
+        doc.fillColor(C_DARK).font('Helvetica-Bold').fontSize(8.5)
+           .text(record.rock_type || 'Granite', col2X + 90, curY + 12)
+           .text(record.lithology || 'Granitic Gneiss', col2X + 90, curY + 32)
+           .text(record.geological_unit || 'Dharwar Craton', col2X + 90, curY + 52)
+           .text(record.formation || record.geological_zone || 'Unknown Formation', col2X + 90, curY + 72, { width: 85 });
+           
+        // Col 3: Occurrences
+        doc.fillColor(C_GRAY).font('Helvetica').fontSize(7.5)
+           .text('LOCAL MINERAL OCCURRENCE', col3X, curY + 12);
+        doc.fillColor(C_DARK).font('Helvetica-Bold').fontSize(8.5)
+           .text(record.nearest_mineral && record.nearest_mineral !== 'None' ? `${record.nearest_mineral} (Local)` : 'None (No local record)', col3X, curY + 24, { width: 130 });
         
-        // Row 2
-        const r2Y = curY + 54;
-        doc.fillColor(C_GRAY).font('Helvetica').fontSize(8)
-           .text('GEOLOGICAL ZONE', col1X, r2Y)
-           .text('LOCAL MINERAL OCCURRENCE', col3X, r2Y);
-        
-        doc.fillColor(C_DARK).font('Helvetica-Bold').fontSize(9.5)
-           .text(record.geological_zone || 'Vanivilas Formation', col1X, r2Y + 12, { width: 240 })
-           .text(record.nearest_mineral && record.nearest_mineral !== 'None' ? `${record.nearest_mineral} (Local)` : 'None (No local record)', col3X, r2Y + 12, { width: 240 });
-        
-        curY += 108;
+        curY += 116;
         drawHRule(curY, '#e2e8f0');
         curY += 16;
         

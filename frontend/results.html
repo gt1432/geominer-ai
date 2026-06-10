@@ -146,14 +146,8 @@
         <span class="material-symbols-outlined">map</span>
         <span class="font-display text-sm font-semibold">Prediction</span>
       </a>
-      <a class="text-[#bac9cc] light:text-[#3d494c] hover:bg-white/5 light:hover:bg-black/5 flex items-center gap-3 px-4 py-3 rounded-lg transition-all" href="hardware.html">
-        <span class="material-symbols-outlined">memory</span>
-        <span class="font-display text-sm font-semibold">Miner Fleet</span>
-      </a>
-      <a class="text-[#bac9cc] light:text-[#3d494c] hover:bg-white/5 light:hover:bg-black/5 flex items-center gap-3 px-4 py-3 rounded-lg transition-all" href="network.html">
-        <span class="material-symbols-outlined">hub</span>
-        <span class="font-display text-sm font-semibold">Network</span>
-      </a>
+
+
       <a class="text-[#bac9cc] light:text-[#3d494c] hover:bg-white/5 light:hover:bg-black/5 flex items-center gap-3 px-4 py-3 rounded-lg transition-all" href="settings.html">
         <span class="material-symbols-outlined">settings</span>
         <span class="font-display text-sm font-semibold">Settings</span>
@@ -233,11 +227,23 @@
               <div class="text-[10px] text-[#bac9cc] light:text-[#3d494c] mt-1">Altitude (AMSL)</div>
             </div>
           </div>
-          <div class="mt-4 pt-4 border-t border-white/10 light:border-black/10 text-xs">
-            <div class="text-[#bac9cc] light:text-[#3d494c]">Geological Zone</div>
-            <div id="res-formation" class="text-[#00daf3] light:text-[#006576] font-semibold text-sm mt-0.5">Loading...</div>
-            <div class="text-[#bac9cc] light:text-[#3d494c] mt-2">Rock Type</div>
-            <div id="res-rock-type" class="font-semibold text-white dark:text-white light:text-[#191c1e] text-sm mt-0.5">Loading...</div>
+          <div class="mt-4 pt-4 border-t border-white/10 light:border-black/10 text-xs grid grid-cols-2 gap-x-4 gap-y-3">
+            <div>
+              <div class="text-[#bac9cc] light:text-[#3d494c]">Rock Type</div>
+              <div id="res-rock-type" class="font-semibold text-white dark:text-white light:text-[#191c1e] text-xs mt-0.5 break-words">Loading...</div>
+            </div>
+            <div>
+              <div class="text-[#bac9cc] light:text-[#3d494c]">Lithology</div>
+              <div id="res-lithology" class="font-semibold text-[#00daf3] light:text-[#006576] text-xs mt-0.5 break-words">Loading...</div>
+            </div>
+            <div>
+              <div class="text-[#bac9cc] light:text-[#3d494c]">Geological Unit</div>
+              <div id="res-geological-unit" class="font-semibold text-white dark:text-white light:text-[#191c1e] text-xs mt-0.5 break-words">Loading...</div>
+            </div>
+            <div>
+              <div class="text-[#bac9cc] light:text-[#3d494c]">Formation</div>
+              <div id="res-formation" class="font-semibold text-white dark:text-white light:text-[#191c1e] text-xs mt-0.5 break-words">Loading...</div>
+            </div>
           </div>
         </div>
 

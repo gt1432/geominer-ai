@@ -212,11 +212,13 @@ function loadPredictionResults() {
     }
 
     // ── 3. Location data ──
-    setTextSafe('res-lat',       (data.latitude  || 0).toFixed(5));
-    setTextSafe('res-lon',       (data.longitude || 0).toFixed(5));
-    setTextSafe('res-alt',       data.altitude ? `${parseFloat(data.altitude).toFixed(1)} m` : '450.0 m');
-    setTextSafe('res-formation', data.geological_zone || 'Unknown Formation');
-    setTextSafe('res-rock-type', data.rock_type       || 'Unknown');
+    setTextSafe('res-lat',             (data.latitude  || 0).toFixed(5));
+    setTextSafe('res-lon',             (data.longitude || 0).toFixed(5));
+    setTextSafe('res-alt',             data.altitude ? `${parseFloat(data.altitude).toFixed(1)} m` : '450.0 m');
+    setTextSafe('res-geological-unit', data.geological_unit || 'Unknown');
+    setTextSafe('res-lithology',       data.lithology || 'Unknown');
+    setTextSafe('res-formation',       data.formation || data.geological_zone || 'Unknown Formation');
+    setTextSafe('res-rock-type',       data.rock_type || 'Unknown');
 
     // ── 4. AI Explanation ──
     const explanationEl = document.getElementById('res-explanation');

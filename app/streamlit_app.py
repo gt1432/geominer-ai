@@ -145,6 +145,22 @@ except Exception as e:
     st.error("Error loading preprocessed datasets or models. Please make sure the preprocessing and training scripts have run.")
     st.stop()
 
+def point_in_polygon(x, y, poly_points):
+    n = len(poly_points)
+    inside = False
+    p1x, p1y = poly_points[0]
+    for i in range(n + 1):
+        p2x, p2y = poly_points[i % n]
+        if y > min(p1y, p2y):
+            if y <= max(p1y, p2y):
+                if x <= max(p1x, p2x):
+                    if p1y != p2y:
+                        xinters = (y - p1y) * (p2x - p1x) / (p2y - p1y) + p1x
+                    if p1x == p2x or x <= xinters:
+                        inside = not inside
+        p1x, p1y = p2x, p2y
+    return inside
+
 # Geocoding service
 def geocode_location(query: str, api_key: str = ""):
     # Google Maps Geocoding
@@ -303,10 +319,54 @@ elif nav_selection == "Mineral Prediction":
         cu_in = st.slider("Copper (Cu_ppm):", min_value=1.0, max_value=500.0, value=35.0)
         zn_in = st.slider("Zinc (Zn_ppm):", min_value=1.0, max_value=500.0, value=65.0)
         
-        # Populate rock types from geology database
-        unique_rocks = sorted(df_geology['rock_type'].dropna().unique())
-        default_rock = "Granite" if "Granite" in unique_rocks else unique_rocks[0]
-        rock_type_in = st.selectbox("Geological Rock Type:", unique_rocks, index=unique_rocks.index(default_rock) if default_rock in unique_rocks else 0)
+        # Automatically calculate geological attributes based on region / coordinates
+        db_rock_type = "Granite"
+        db_lithology = "Granitic Gneiss"
+        db_geo_unit = "Dharwar Craton"
+        db_formation = "Unknown Formation"
+        intersected = False
+        
+        shp_path = os.path.join(DATA_DIR, "extracted", "25K", "lithology_25k_ngdr_20250224140917945", "lithology_25k_ngdr")
+        if os.path.exists(shp_path + ".shp"):
+            try:
+                sf = shapefile.Reader(shp_path)
+                shapes = sf.shapes()
+                records = sf.records()
+                for i in range(len(shapes)):
+                    shape = shapes[i]
+                    bbox = shape.bbox
+                    if bbox[0] <= lon_val <= bbox[2] and bbox[1] <= lat_val <= bbox[3]:
+                        parts = list(shape.parts) + [len(shape.points)]
+                        for p in range(len(shape.parts)):
+                            start = parts[p]
+                            end = parts[p+1]
+                            poly_points = shape.points[start:end]
+                            if point_in_polygon(lon_val, lat_val, poly_points):
+                                rec = records[i].as_dict()
+                                db_rock_type = rec.get('lithologic', 'Granite')
+                                db_lithology = rec.get('standard_l', 'Granitic Gneiss')
+                                db_geo_unit = rec.get('major_mine', 'Dharwar Craton')
+                                db_formation = rec.get('formation', 'Unknown Formation')
+                                intersected = True
+                                break
+                        if intersected:
+                            break
+            except Exception as ex:
+                pass
+                
+        if not intersected:
+            dists_geo = np.sqrt((df_geology['latitude'] - lat_val)**2 + (df_geology['longitude'] - lon_val)**2)
+            nearest_geo_idx = dists_geo.idxmin()
+            if nearest_geo_idx < len(df_geology):
+                row = df_geology.iloc[nearest_geo_idx]
+                db_rock_type = str(row['rock_type']) if 'rock_type' in df_geology.columns and not pd.isna(row['rock_type']) else "Granite"
+                db_lithology = str(row['lithology_category']) if 'lithology_category' in df_geology.columns and not pd.isna(row['lithology_category']) else "Granitic Gneiss"
+                db_geo_unit = str(row['geological_unit']) if 'geological_unit' in df_geology.columns and not pd.isna(row['geological_unit']) else "Dharwar Craton"
+                db_formation = str(row['stratigraphy']) if 'stratigraphy' in df_geology.columns and not pd.isna(row['stratigraphy']) else "Unknown Formation"
+                
+        # Display the auto-selected rock type to the user
+        st.info(f"Detected Rock Type: **{db_rock_type}** (automatically selected based on region)")
+        rock_type_in = db_rock_type
         
     with col_res:
         st.markdown("### Prediction Report")
@@ -381,6 +441,28 @@ elif nav_selection == "Mineral Prediction":
                 <div class='metric-label' style='margin-top:20px; margin-bottom:5px;'>Likely Minerals</div>
                 {"".join([f"<p style='margin:3px 0; font-weight:500; color:#f1f5f9;'>✓ {m}</p>" for m in predicted_minerals])}
             </div>
+            
+            <div class='glass-card'>
+                <p class='metric-label'>Geological Information</p>
+                <div style='display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;'>
+                    <div>
+                        <div class='metric-label' style='font-size: 0.75rem;'>Rock Type</div>
+                        <div style='font-weight: 600; font-size: 0.9rem; color: #f1f5f9;'>{db_rock_type}</div>
+                    </div>
+                    <div>
+                        <div class='metric-label' style='font-size: 0.75rem;'>Lithology</div>
+                        <div style='font-weight: 600; font-size: 0.9rem; color: #38bdf8;'>{db_lithology}</div>
+                    </div>
+                    <div>
+                        <div class='metric-label' style='font-size: 0.75rem;'>Geological Unit</div>
+                        <div style='font-weight: 600; font-size: 0.9rem; color: #f1f5f9;'>{db_geo_unit}</div>
+                    </div>
+                    <div>
+                        <div class='metric-label' style='font-size: 0.75rem;'>Formation</div>
+                        <div style='font-weight: 600; font-size: 0.9rem; color: #f1f5f9;'>{db_formation}</div>
+                    </div>
+                </div>
+            </div>
         """, unsafe_allow_html=True)
         
         # Test endpoint block
@@ -394,8 +476,7 @@ payload = {{
     "longitude": {lon_val:.5f},
     "fe": {fe_in:.1f},
     "cu": {cu_in:.1f},
-    "zn": {zn_in:.1f},
-    "rock_type": "{rock_type_in}"
+    "zn": {zn_in:.1f}
 }}
 
 response = requests.post(url, json=payload)

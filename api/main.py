@@ -26,12 +26,17 @@ class PredictionInput(BaseModel):
     fe: float  # Iron concentration
     cu: float  # Copper concentration
     zn: float  # Zinc concentration
-    rock_type: str
+    rock_type: str = "Granite"
 
 class PredictionOutput(BaseModel):
     mineral_probability: float
     predicted_minerals: list[str]
     risk_level: str
+    rock_type: str
+    geological_unit: str
+    lithology: str
+    formation: str
+    explanation: str
 
 @app.on_event("startup")
 def startup_event():
@@ -94,10 +99,72 @@ def predict(payload: PredictionInput):
     # Merge them to reconstruct features expected by preprocessor
     full_row = pd.merge(nearest_ngcm_row, nearest_geo_row, on=['latitude', 'longitude', 'geological_unit'])
     
+    # Identify rock type at coordinates from geology dataset
+    import shapefile
+    
+    def point_in_polygon(x, y, poly_points):
+        n = len(poly_points)
+        inside = False
+        p1x, p1y = poly_points[0]
+        for i in range(n + 1):
+            p2x, p2y = poly_points[i % n]
+            if y > min(p1y, p2y):
+                if y <= max(p1y, p2y):
+                    if x <= max(p1x, p2x):
+                        if p1y != p2y:
+                            xinters = (y - p1y) * (p2x - p1x) / (p2y - p1y) + p1x
+                        if p1x == p2x or x <= xinters:
+                            inside = not inside
+            p1x, p1y = p2x, p2y
+        return inside
+
+    db_rock_type = "Granite"
+    db_lithology = "Granitic Gneiss"
+    db_geo_unit = "Dharwar Craton"
+    db_formation = "Unknown Formation"
+    intersected = False
+
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    shp_path = os.path.join(base_dir, "data", "extracted", "25K", "lithology_25k_ngdr_20250224140917945", "lithology_25k_ngdr")
+    if os.path.exists(shp_path + ".shp"):
+        try:
+            sf = shapefile.Reader(shp_path)
+            shapes = sf.shapes()
+            records = sf.records()
+            
+            for i in range(len(shapes)):
+                shape = shapes[i]
+                bbox = shape.bbox
+                if bbox[0] <= lon_in <= bbox[2] and bbox[1] <= lat_in <= bbox[3]:
+                    parts = list(shape.parts) + [len(shape.points)]
+                    for p in range(len(shape.parts)):
+                        start = parts[p]
+                        end = parts[p+1]
+                        poly_points = shape.points[start:end]
+                        if point_in_polygon(lon_in, lat_in, poly_points):
+                            rec = records[i].as_dict()
+                            db_rock_type = rec.get('lithologic', 'Granite')
+                            db_lithology = rec.get('standard_l', 'Granitic Gneiss')
+                            db_geo_unit = rec.get('major_mine', 'Dharwar Craton')
+                            db_formation = rec.get('formation', 'Unknown Formation')
+                            intersected = True
+                            break
+                if intersected:
+                    break
+        except Exception as ex:
+            pass
+
+    if not intersected:
+        if not nearest_geo_row.empty:
+            db_rock_type = str(nearest_geo_row['rock_type'].values[0]) if 'rock_type' in nearest_geo_row.columns and not pd.isna(nearest_geo_row['rock_type'].values[0]) else "Granite"
+            db_lithology = str(nearest_geo_row['lithology_category'].values[0]) if 'lithology_category' in nearest_geo_row.columns and not pd.isna(nearest_geo_row['lithology_category'].values[0]) else "Granitic Gneiss"
+            db_geo_unit = str(nearest_geo_row['geological_unit'].values[0]) if 'geological_unit' in nearest_geo_row.columns and not pd.isna(nearest_geo_row['geological_unit'].values[0]) else "Dharwar Craton"
+            db_formation = str(nearest_geo_row['stratigraphy'].values[0]) if 'stratigraphy' in nearest_geo_row.columns and not pd.isna(nearest_geo_row['stratigraphy'].values[0]) else "Unknown Formation"
+
     # 2. Override baseline features with user-supplied values
     full_row['latitude'] = lat_in
     full_row['longitude'] = lon_in
-    full_row['rock_type'] = payload.rock_type
+    full_row['rock_type'] = db_rock_type
     
     # Map user input values to corresponding columns with appropriate scaling
     # fe is mapped to fe2o3__ (if > 100, we treat it as ppm and convert to oxide percent, e.g. 1200 ppm -> 0.17%)
@@ -186,8 +253,16 @@ def predict(payload: PredictionInput):
     else:
         risk_level = "Low"
         
+    min_list = ", ".join(predicted_minerals[:3]).lower() if len(predicted_minerals) > 0 else "mineral"
+    explanation = f"The selected coordinate lies within a {db_rock_type.lower()}-rich lithological zone of the {db_geo_unit}. Historical NGCM geochemical signatures and documented mineral occurrences indicate favorable conditions for {min_list} mineralization."
+
     return PredictionOutput(
         mineral_probability=round(mineral_probability, 3),
         predicted_minerals=predicted_minerals,
-        risk_level=risk_level
+        risk_level=risk_level,
+        rock_type=db_rock_type,
+        geological_unit=db_geo_unit,
+        lithology=db_lithology,
+        formation=db_formation,
+        explanation=explanation
     )

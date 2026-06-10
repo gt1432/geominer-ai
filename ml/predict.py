@@ -89,11 +89,66 @@ def main():
         sys.exit(0)
 
     # Identify rock type at coordinates from geology dataset
+    import shapefile
+    
+    def point_in_polygon(x, y, poly_points):
+        n = len(poly_points)
+        inside = False
+        p1x, p1y = poly_points[0]
+        for i in range(n + 1):
+            p2x, p2y = poly_points[i % n]
+            if y > min(p1y, p2y):
+                if y <= max(p1y, p2y):
+                    if x <= max(p1x, p2x):
+                        if p1y != p2y:
+                            xinters = (y - p1y) * (p2x - p1x) / (p2y - p1y) + p1x
+                        if p1x == p2x or x <= xinters:
+                            inside = not inside
+            p1x, p1y = p2x, p2y
+        return inside
+
     db_rock_type = "Granite"
-    if not nearest_geo_row.empty and 'rock_type' in nearest_geo_row.columns:
-        rt_val = nearest_geo_row['rock_type'].values[0]
-        if not pd.isna(rt_val) and str(rt_val).strip() != "":
-            db_rock_type = str(rt_val)
+    db_lithology = "Granitic Gneiss"
+    db_geo_unit = "Dharwar Craton"
+    db_formation = "Unknown Formation"
+    intersected = False
+
+    shp_path = os.path.join(data_dir, "extracted", "25K", "lithology_25k_ngdr_20250224140917945", "lithology_25k_ngdr")
+    if os.path.exists(shp_path + ".shp"):
+        try:
+            sf = shapefile.Reader(shp_path)
+            shapes = sf.shapes()
+            records = sf.records()
+            lat_pt, lon_pt = args.latitude, args.longitude
+            
+            for i in range(len(shapes)):
+                shape = shapes[i]
+                bbox = shape.bbox
+                if bbox[0] <= lon_pt <= bbox[2] and bbox[1] <= lat_pt <= bbox[3]:
+                    parts = list(shape.parts) + [len(shape.points)]
+                    for p in range(len(shape.parts)):
+                        start = parts[p]
+                        end = parts[p+1]
+                        poly_points = shape.points[start:end]
+                        if point_in_polygon(lon_pt, lat_pt, poly_points):
+                            rec = records[i].as_dict()
+                            db_rock_type = rec.get('lithologic', 'Granite')
+                            db_lithology = rec.get('standard_l', 'Granitic Gneiss')
+                            db_geo_unit = rec.get('major_mine', 'Dharwar Craton')
+                            db_formation = rec.get('formation', 'Unknown Formation')
+                            intersected = True
+                            break
+                if intersected:
+                    break
+        except Exception as ex:
+            pass
+
+    if not intersected:
+        if not nearest_geo_row.empty:
+            db_rock_type = str(nearest_geo_row['rock_type'].values[0]) if 'rock_type' in nearest_geo_row.columns and not pd.isna(nearest_geo_row['rock_type'].values[0]) else "Granite"
+            db_lithology = str(nearest_geo_row['lithology_category'].values[0]) if 'lithology_category' in nearest_geo_row.columns and not pd.isna(nearest_geo_row['lithology_category'].values[0]) else "Granitic Gneiss"
+            db_geo_unit = str(nearest_geo_row['geological_unit'].values[0]) if 'geological_unit' in nearest_geo_row.columns and not pd.isna(nearest_geo_row['geological_unit'].values[0]) else "Dharwar Craton"
+            db_formation = str(nearest_geo_row['stratigraphy'].values[0]) if 'stratigraphy' in nearest_geo_row.columns and not pd.isna(nearest_geo_row['stratigraphy'].values[0]) else "Unknown Formation"
 
     # 5. Override user inputs
     full_row = full_row.copy()
@@ -226,12 +281,9 @@ def main():
     # Sort minerals by concentration descending
     predicted_minerals.sort(key=lambda m: mineral_percentages.get(m, 0), reverse=True)
 
-    # 10. Generate AI Explanation
-    if len(predicted_minerals) > 0:
-        min_list = ", ".join(predicted_minerals[:3])
-        explanation = f"Prediction generated using: NGCM Geochemical Data, Mineral Occurrence Data, and Geological/Lithology Data. The selected coordinate lies within a {db_rock_type.lower()}-rich geological zone ({geo_zone}) with elevated {min_list.lower()} indicators."
-    else:
-        explanation = f"Prediction generated using: NGCM Geochemical Data, Mineral Occurrence Data, and Geological/Lithology Data. The selected coordinate lies within a {db_rock_type.lower()}-rich geological zone ({geo_zone}) but shows no significant mineral enrichment indicators."
+    # 10. Generate AI Explanation using detected geology
+    min_list = ", ".join(predicted_minerals[:3]).lower() if len(predicted_minerals) > 0 else "mineral"
+    explanation = f"The selected coordinate lies within a {db_rock_type.lower()}-rich lithological zone of the {db_geo_unit}. Historical NGCM geochemical signatures and documented mineral occurrences indicate favorable conditions for {min_list} mineralization."
 
     # 11. Output JSON
     result = {
@@ -239,8 +291,11 @@ def main():
         "predicted_minerals":      predicted_minerals,
         "mineral_percentages":     mineral_percentages,
         "confidence":              confidence,
-        "geological_zone":         geo_zone,
+        "geological_zone":         db_formation,
         "rock_type":               db_rock_type,
+        "lithology":               db_lithology,
+        "geological_unit":         db_geo_unit,
+        "formation":               db_formation,
         "nearest_mineral":         nearest_mineral,
         "nearest_mineral_dist_km": 0.0,
         "altitude":                args.altitude,

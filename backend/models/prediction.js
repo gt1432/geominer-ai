@@ -49,6 +49,18 @@ const PredictionSchema = new mongoose.Schema({
         type: String,
         default: 'Unknown'
     },
+    lithology: {
+        type: String,
+        default: 'Unknown'
+    },
+    geological_unit: {
+        type: String,
+        default: 'Unknown'
+    },
+    formation: {
+        type: String,
+        default: 'Unknown'
+    },
     nearest_mineral: {
         type: String,
         default: 'Unknown'
