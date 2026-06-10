@@ -20,4 +20,7 @@ router.get('/occurrences', predictionController.getOccurrences);
 // 6. GET /geocode -> Run Nominatim or Google geocoding queries
 router.get('/geocode', predictionController.geocodeLocation);
 
+// 7. GET /diagnose -> Developer pipeline diagnostic for a coordinate
+router.get('/diagnose', predictionController.diagnosePrediction);
+
 module.exports = router;

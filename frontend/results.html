@@ -261,7 +261,7 @@
 
       <!-- Mineral Inventory -->
       <section class="glass-card rounded-xl p-6 bg-slate-900/40 light:bg-white/80 border border-white/10 light:border-black/5">
-        <div class="flex justify-between items-center mb-6 flex-wrap gap-2">
+        <div class="flex justify-between items-center mb-4 flex-wrap gap-2">
           <h4 class="font-display text-lg font-bold text-white dark:text-white light:text-[#191c1e] flex items-center gap-2">
             <i class="fa-solid fa-gem text-[#00daf3] light:text-[#006576]"></i> Detected Mineral Inventory
           </h4>
@@ -269,6 +269,18 @@
             Percentiles based on GSI NGCM geochemical database
           </span>
         </div>
+
+        <!-- Documented Occurrences Banner -->
+        <div id="documented-occ-banner" class="hidden mb-5 p-4 rounded-xl border border-emerald-400/30 bg-emerald-500/10">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="w-2.5 h-2.5 bg-emerald-400 rounded-full animate-pulse"></span>
+            <span class="font-display text-sm font-bold text-emerald-400">✓ Documented Mineral Occurrences</span>
+            <span id="res-belt-badge" class="hidden ml-auto text-[10px] font-bold text-emerald-300 bg-emerald-900/50 border border-emerald-500/40 px-2 py-0.5 rounded-full"></span>
+          </div>
+          <div id="res-documented-minerals" class="flex flex-wrap gap-2 mt-2"></div>
+          <p class="text-[10px] text-emerald-300/70 mt-2">These minerals are officially recorded in the GSI mineral occurrence registry at or near this location.</p>
+        </div>
+
         <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
           <div id="res-minerals-bars" class="space-y-4">
             <p class="text-xs text-[#bac9cc] light:text-[#3d494c] italic">Loading mineral bars...</p>
@@ -279,6 +291,7 @@
           </div>
         </div>
       </section>
+
 
       <!-- Map Results -->
       <section class="glass-card rounded-xl p-6 bg-slate-900/40 light:bg-white/80 border border-white/10 light:border-black/5">

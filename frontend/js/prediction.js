@@ -224,6 +224,34 @@ function loadPredictionResults() {
         explanationEl.textContent = data.explanation || 'No known mineral occurrence or geological indicators found at the selected location.';
     }
 
+    // ── 4b. Documented Occurrences Banner ──
+    const docMinerals = data.documented_minerals || [];
+    const banner      = document.getElementById('documented-occ-banner');
+    const docContainer= document.getElementById('res-documented-minerals');
+    const beltBadge   = document.getElementById('res-belt-badge');
+
+    if (banner && docContainer) {
+        if (docMinerals.length > 0) {
+            banner.classList.remove('hidden');
+            docContainer.innerHTML = '';
+            docMinerals.forEach(mineral => {
+                const color = MINERAL_COLORS[mineral] || MINERAL_COLORS['default'];
+                const icon  = MINERAL_ICONS[mineral]  || MINERAL_ICONS['default'];
+                const chip  = document.createElement('span');
+                chip.className = 'inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-full border';
+                chip.style.cssText = `color:${color};border-color:${color}44;background:${color}18;`;
+                chip.innerHTML = `<i class="${icon}" style="color:${color}"></i> ${mineral}`;
+                docContainer.appendChild(chip);
+            });
+            if (beltBadge && data.belt_name) {
+                beltBadge.textContent = `📍 ${data.belt_name}`;
+                beltBadge.classList.remove('hidden');
+            }
+        } else {
+            banner.classList.add('hidden');
+        }
+    }
+
     // ── 5. PDF download link ──
     const predId  = data._id ? (data._id.$oid || data._id.toString() || data._id) : null;
     const pdfBtn  = document.getElementById('btn-pdf-download');
