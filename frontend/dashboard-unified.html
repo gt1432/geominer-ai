@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Unified Dashboard — GeoSmart Agri</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="css/agrigeo.css"/>
+  <script>tailwind.config={darkMode:'class',theme:{extend:{fontFamily:{display:['Space Grotesk'],body:['Inter'],mono:['JetBrains Mono']}}}}</script>
+  <style>
+    body { background: #080b0c; color: #f1f5f9; }
+    .sidebar { width: 260px; background: #0c0f10; border-right: 1px solid rgba(255,255,255,0.07); }
+    .portal-card {
+      border-radius: 1rem; padding: 1.5rem;
+      transition: all 0.3s ease; text-decoration: none; display: block;
+    }
+    .portal-card-agri {
+      background: rgba(16,185,129,0.06);
+      border: 1px solid rgba(16,185,129,0.2);
+    }
+    .portal-card-agri:hover { background: rgba(16,185,129,0.12); border-color: rgba(16,185,129,0.4); transform:translateY(-3px); }
+    .portal-card-geo {
+      background: rgba(0,218,243,0.05);
+      border: 1px solid rgba(0,218,243,0.18);
+    }
+    .portal-card-geo:hover { background: rgba(0,218,243,0.1); border-color: rgba(0,218,243,0.35); transform:translateY(-3px); }
+    .kpi { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07); border-radius:0.75rem; padding:1.25rem; }
+    .kpi-val { font-family:'Space Grotesk',sans-serif; font-size:2rem; font-weight:700; }
+    .kpi-lbl { font-size:0.72rem; text-transform:uppercase; letter-spacing:0.1em; color:#64748b; margin-top:0.25rem; }
+  </style>
+</head>
+<body class="flex min-h-screen">
+
+<!-- Sidebar -->
+<aside class="sidebar h-screen fixed left-0 top-0 flex flex-col p-6 z-50">
+  <div class="mb-8">
+    <a href="index.html" class="flex items-center gap-2.5 no-underline mb-1">
+      <div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#10B981,#00daf3,#8B5CF6);display:flex;align-items:center;justify-content:center;color:white;font-size:1rem;">
+        <i class="fa-solid fa-seedling"></i>
+      </div>
+      <span style="font-family:'Space Grotesk',sans-serif;font-weight:800;font-size:1.1rem;background:linear-gradient(135deg,#10B981,#00daf3,#8B5CF6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">GeoSmart Agri</span>
+    </a>
+    <p style="font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:#64748b;letter-spacing:0.1em;">UNIFIED PLATFORM v1.0</p>
+  </div>
+
+  <nav class="flex-1 flex flex-col gap-1.5">
+    <a href="index.html" class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-400 hover:bg-white/5 transition-all text-sm font-medium">
+      <span class="material-symbols-outlined text-base">home</span> Platform Home
+    </a>
+    <div class="mt-3 mb-1 px-4 text-xs font-mono text-slate-600 uppercase tracking-widest">Agriculture</div>
+    <a href="agriculture/home.html" class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-400 hover:bg-[#10B981]/10 transition-all text-sm font-medium">
+      <span style="color:#10B981;">🌾</span> AgriSmart Home
+    </a>
+    <a href="agriculture/crop-predictor.html" class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-400 hover:bg-[#10B981]/10 transition-all text-sm font-medium">
+      <span style="color:#84CC16;">🌱</span> Crop Predictor
+    </a>
+    <div class="mt-3 mb-1 px-4 text-xs font-mono text-slate-600 uppercase tracking-widest">Geo Minerals</div>
+    <a href="geominer.html" class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-400 hover:bg-[#00daf3]/10 transition-all text-sm font-medium">
+      <span style="color:#00daf3;">⛏️</span> GeoMiner Home
+    </a>
+    <a href="predict.html" class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-400 hover:bg-[#00daf3]/10 transition-all text-sm font-medium">
+      <span class="material-symbols-outlined text-base text-[#00daf3]">map</span> Mineral Prediction
+    </a>
+    <a href="dashboard.html" class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-400 hover:bg-[#00daf3]/10 transition-all text-sm font-medium">
+      <span class="material-symbols-outlined text-base text-[#00daf3]">dashboard</span> Geo Dashboard
+    </a>
+    <a href="results.html" class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-400 hover:bg-[#00daf3]/10 transition-all text-sm font-medium">
+      <span class="material-symbols-outlined text-base text-[#8B5CF6]">description</span> Results & Reports
+    </a>
+  </nav>
+
+  <div class="mt-auto pt-4 border-t border-white/5 text-xs text-slate-600 text-center">
+    © 2026 GeoSmart Agri
+  </div>
+</aside>
+
+<!-- Main Content -->
+<main class="flex-1" style="margin-left:260px;min-height:100vh;">
+  <!-- Header -->
+  <header class="sticky top-0 z-40 px-8 py-4 flex items-center justify-between" style="background:rgba(8,11,12,0.85);backdrop-filter:blur(16px);border-bottom:1px solid rgba(255,255,255,0.07);">
+    <div>
+      <h1 style="font-family:'Space Grotesk',sans-serif;font-size:1.5rem;font-weight:700;color:#f1f5f9;">Unified Dashboard</h1>
+      <p style="color:#64748b;font-size:0.8rem;">All your AI predictions at a glance</p>
+    </div>
+    <div style="display:flex;align-items:center;gap:0.5rem;background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.2);border-radius:99px;padding:0.35rem 1rem;">
+      <span style="width:7px;height:7px;background:#10B981;border-radius:50%;box-shadow:0 0 8px #10B981;animation:livepulse 2s infinite;"></span>
+      <span style="font-size:0.72rem;color:#10B981;font-weight:600;font-family:'JetBrains Mono',monospace;">BOTH SYSTEMS ACTIVE</span>
+    </div>
+  </header>
+
+  <div class="p-8 space-y-8">
+
+    <!-- Portal Cards -->
+    <section>
+      <h2 style="font-family:'Space Grotesk',sans-serif;font-size:1rem;font-weight:600;color:#64748b;margin-bottom:1rem;text-transform:uppercase;letter-spacing:0.1em;font-family:'JetBrains Mono',monospace;">Quick Access Portals</h2>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;">
+
+        <a href="agriculture/home.html" class="portal-card portal-card-agri">
+          <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:1rem;">
+            <div style="width:44px;height:44px;background:rgba(16,185,129,0.15);border-radius:0.75rem;display:flex;align-items:center;justify-content:center;font-size:1.3rem;">🌾</div>
+            <div>
+              <div style="font-family:'Space Grotesk',sans-serif;font-weight:700;color:#f1f5f9;">Agriculture Portal</div>
+              <div style="font-size:0.75rem;color:#10B981;">AgriSmart · AI Crop Advisor</div>
+            </div>
+          </div>
+          <p style="color:#64748b;font-size:0.85rem;line-height:1.6;margin-bottom:1rem;">AI-powered crop recommendation using soil composition, weather data, and NPK analysis. Supports 22 crop types.</p>
+          <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+            <span style="background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.2);color:#10B981;padding:0.2rem 0.6rem;border-radius:99px;font-size:0.7rem;font-weight:600;">Crop Predictor</span>
+            <span style="background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.2);color:#10B981;padding:0.2rem 0.6rem;border-radius:99px;font-size:0.7rem;font-weight:600;">Multilingual</span>
+            <span style="background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.2);color:#10B981;padding:0.2rem 0.6rem;border-radius:99px;font-size:0.7rem;font-weight:600;">Live Map</span>
+          </div>
+          <div style="margin-top:1.25rem;display:inline-flex;align-items:center;gap:0.4rem;color:#10B981;font-weight:700;font-size:0.875rem;">
+            Open Portal <i class="fa-solid fa-arrow-right"></i>
+          </div>
+        </a>
+
+        <a href="geominer.html" class="portal-card portal-card-geo">
+          <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:1rem;">
+            <div style="width:44px;height:44px;background:rgba(0,218,243,0.1);border-radius:0.75rem;display:flex;align-items:center;justify-content:center;font-size:1.3rem;">⛏️</div>
+            <div>
+              <div style="font-family:'Space Grotesk',sans-serif;font-weight:700;color:#f1f5f9;">Geo Minerals Portal</div>
+              <div style="font-size:0.75rem;color:#00daf3;">GeoMiner AI · ML Prospectivity</div>
+            </div>
+          </div>
+          <p style="color:#64748b;font-size:0.85rem;line-height:1.6;margin-bottom:1rem;">Random Forest mineral prediction using GSI NGCM 10,004 geochemical records. Covers Karnataka & AP. Full XAI PDF reports.</p>
+          <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+            <span style="background:rgba(0,218,243,0.08);border:1px solid rgba(0,218,243,0.2);color:#00daf3;padding:0.2rem 0.6rem;border-radius:99px;font-size:0.7rem;font-weight:600;">26 Minerals</span>
+            <span style="background:rgba(0,218,243,0.08);border:1px solid rgba(0,218,243,0.2);color:#00daf3;padding:0.2rem 0.6rem;border-radius:99px;font-size:0.7rem;font-weight:600;">PDF Reports</span>
+            <span style="background:rgba(0,218,243,0.08);border:1px solid rgba(0,218,243,0.2);color:#00daf3;padding:0.2rem 0.6rem;border-radius:99px;font-size:0.7rem;font-weight:600;">Interactive Map</span>
+          </div>
+          <div style="margin-top:1.25rem;display:inline-flex;align-items:center;gap:0.4rem;color:#00daf3;font-weight:700;font-size:0.875rem;">
+            Open Portal <i class="fa-solid fa-arrow-right"></i>
+          </div>
+        </a>
+
+      </div>
+    </section>
+
+    <!-- KPI Row -->
+    <section>
+      <h2 style="font-family:'JetBrains Mono',monospace;font-size:0.75rem;font-weight:600;color:#64748b;margin-bottom:1rem;text-transform:uppercase;letter-spacing:0.1em;">Platform Statistics</h2>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;">
+        <div class="kpi">
+          <div class="kpi-val" style="color:#10B981;">22</div>
+          <div class="kpi-lbl">Crops Supported</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-val" style="color:#00daf3;">26</div>
+          <div class="kpi-lbl">Minerals Detected</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-val" style="color:#8B5CF6;">94.2%</div>
+          <div class="kpi-lbl">Geo Model Accuracy</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-val" style="color:#F59E0B;" id="dash-pred-count">—</div>
+          <div class="kpi-lbl">Total Geo Predictions</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Quick Links Grid -->
+    <section>
+      <h2 style="font-family:'JetBrains Mono',monospace;font-size:0.75rem;font-weight:600;color:#64748b;margin-bottom:1rem;text-transform:uppercase;letter-spacing:0.1em;">Quick Links</h2>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;">
+        <a href="agriculture/crop-predictor.html" style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:0.75rem;padding:1.25rem;text-decoration:none;transition:all 0.3s;display:flex;align-items:center;gap:0.75rem;" onmouseover="this.style.borderColor='rgba(16,185,129,0.3)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.07)'">
+          <span style="font-size:1.5rem;">🌱</span>
+          <div><div style="color:#f1f5f9;font-weight:600;font-size:0.875rem;">Crop Predictor</div><div style="color:#64748b;font-size:0.75rem;">Run crop recommendation</div></div>
+        </a>
+        <a href="predict.html" style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:0.75rem;padding:1.25rem;text-decoration:none;transition:all 0.3s;display:flex;align-items:center;gap:0.75rem;" onmouseover="this.style.borderColor='rgba(0,218,243,0.3)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.07)'">
+          <span style="font-size:1.5rem;">🗺️</span>
+          <div><div style="color:#f1f5f9;font-weight:600;font-size:0.875rem;">Mineral Prediction</div><div style="color:#64748b;font-size:0.75rem;">Prospectivity analysis</div></div>
+        </a>
+        <a href="results.html" style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:0.75rem;padding:1.25rem;text-decoration:none;transition:all 0.3s;display:flex;align-items:center;gap:0.75rem;" onmouseover="this.style.borderColor='rgba(139,92,246,0.3)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.07)'">
+          <span style="font-size:1.5rem;">📄</span>
+          <div><div style="color:#f1f5f9;font-weight:600;font-size:0.875rem;">Latest Results</div><div style="color:#64748b;font-size:0.75rem;">View prediction report</div></div>
+        </a>
+        <a href="dashboard.html" style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:0.75rem;padding:1.25rem;text-decoration:none;transition:all 0.3s;display:flex;align-items:center;gap:0.75rem;" onmouseover="this.style.borderColor='rgba(0,218,243,0.3)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.07)'">
+          <span class="material-symbols-outlined" style="color:#00daf3;font-size:1.5rem;">dashboard</span>
+          <div><div style="color:#f1f5f9;font-weight:600;font-size:0.875rem;">Geo Analytics</div><div style="color:#64748b;font-size:0.75rem;">Charts & prediction log</div></div>
+        </a>
+        <a href="settings.html" style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:0.75rem;padding:1.25rem;text-decoration:none;transition:all 0.3s;display:flex;align-items:center;gap:0.75rem;" onmouseover="this.style.borderColor='rgba(139,92,246,0.3)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.07)'">
+          <span class="material-symbols-outlined" style="color:#8B5CF6;font-size:1.5rem;">settings</span>
+          <div><div style="color:#f1f5f9;font-weight:600;font-size:0.875rem;">Settings</div><div style="color:#64748b;font-size:0.75rem;">API keys & config</div></div>
+        </a>
+        <a href="index.html" style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:0.75rem;padding:1.25rem;text-decoration:none;transition:all 0.3s;display:flex;align-items:center;gap:0.75rem;" onmouseover="this.style.borderColor='rgba(16,185,129,0.3)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.07)'">
+          <span style="font-size:1.5rem;">🏠</span>
+          <div><div style="color:#f1f5f9;font-weight:600;font-size:0.875rem;">Platform Home</div><div style="color:#64748b;font-size:0.75rem;">GeoSmart Agri landing</div></div>
+        </a>
+      </div>
+    </section>
+
+  </div>
+</main>
+
+<script>
+  // Load prediction count from GeoMiner API
+  fetch('/stats').then(r=>r.json()).then(d=>{
+    const el = document.getElementById('dash-pred-count');
+    if(el) el.textContent = d.totalPredictions || 0;
+  }).catch(()=>{});
+  @keyframes livepulse { 0%,100%{opacity:0.6;transform:scale(0.9)} 50%{opacity:1;transform:scale(1.1)} }
+</script>
+</body>
+</html>

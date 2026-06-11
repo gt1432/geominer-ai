@@ -31,11 +31,19 @@ class PredictionInput(BaseModel):
 class PredictionOutput(BaseModel):
     mineral_probability: float
     predicted_minerals: list[str]
+    mineral_percentages: dict
     risk_level: str
+    confidence: str
     rock_type: str
     geological_unit: str
     lithology: str
     formation: str
+    geological_zone: str
+    belt_name: str
+    occurrence_present: bool
+    documented_minerals: list[str]
+    nearest_mineral: str
+    nearest_mineral_dist_km: float
     explanation: str
 
 @app.on_event("startup")
@@ -65,7 +73,7 @@ def startup_event():
         print("Reference datasets loaded successfully.")
         
         # Precompute 70th percentiles for geochemical elements to identify enrichment
-        geo_cols = [c for c in df_ngcm.columns if c.endswith('_ppm') or c.endswith('_ppb') or c.endswith('__') or c.endswith('_') or c.endswith('loi')]
+        geo_cols = [c for c in df_ngcm.columns if c.endswith('_ppm') or c.endswith('_ppb') or c.endswith('__') or c.endswith('loi')]
         for col in geo_cols:
             element_thresholds[col] = df_ngcm[col].quantile(0.70)
     else:
@@ -94,10 +102,18 @@ def predict(payload: PredictionInput):
     
     # Copy nearest row as a baseline
     nearest_ngcm_row = df_ngcm.iloc[[nearest_idx]].copy()
-    nearest_geo_row = df_geology.iloc[[nearest_idx]].copy()
     
-    # Merge them to reconstruct features expected by preprocessor
-    full_row = pd.merge(nearest_ngcm_row, nearest_geo_row, on=['latitude', 'longitude', 'geological_unit'])
+    # Find nearest row in geology table independently to avoid index mismatch
+    geo_dists = np.sqrt((df_geology['latitude'] - lat_in)**2 + (df_geology['longitude'] - lon_in)**2) if 'latitude' in df_geology.columns and 'longitude' in df_geology.columns else dists
+    nearest_geo_idx = geo_dists.idxmin()
+    nearest_geo_row = df_geology.iloc[[nearest_geo_idx]].copy()
+    
+    # Combine feature rows safely using concat (avoids merge empty-result crash)
+    ngcm_reset = nearest_ngcm_row.reset_index(drop=True)
+    geo_reset = nearest_geo_row.reset_index(drop=True)
+    # Drop overlapping columns from geo except geology-specific ones
+    geo_cols_to_add = [c for c in geo_reset.columns if c not in ngcm_reset.columns]
+    full_row = pd.concat([ngcm_reset, geo_reset[geo_cols_to_add]], axis=1)
     
     # Identify rock type at coordinates from geology dataset
     import shapefile

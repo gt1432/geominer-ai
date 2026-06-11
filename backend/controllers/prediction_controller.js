@@ -58,7 +58,6 @@ exports.predictMineralPotential = async (req, res) => {
                     return res.status(500).json({ error: 'ML script logic error', details: mlResult.error });
                 }
                 
-                 // Construct log entry
                 const logData = {
                     latitude: parseFloat(latitude),
                     longitude: parseFloat(longitude),

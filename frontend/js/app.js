@@ -74,12 +74,7 @@ function formatLatLng(lat, lng) {
     return `${parseFloat(lat).toFixed(5)}, ${parseFloat(lng).toFixed(5)}`;
 }
 
-function getConfidenceBadgeClass(confidence) {
-    const c = (confidence || '').toLowerCase();
-    if (c === 'high')   return 'badge-high';
-    if (c === 'medium') return 'badge-medium';
-    return 'badge-low';
-}
+// getConfidenceBadgeClass is defined in prediction.js (authoritative version with 'badge-medium' default)
 
 function formatDate(dateStr) {
     if (!dateStr) return '—';

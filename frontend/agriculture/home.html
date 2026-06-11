@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Agriculture Portal — GeoSmart Agri</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Space+Grotesk:wght@600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="style.css"/>
+  <style>
+    /* GeoSmart Agri back-link bar */
+    .platform-topbar {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 9999;
+      background: rgba(8,11,12,0.95);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid rgba(16,185,129,0.15);
+      padding: 0.6rem 1.5rem;
+      display: flex; align-items: center; justify-content: space-between;
+      font-family: 'Space Grotesk', sans-serif;
+    }
+    .platform-topbar-logo {
+      display: flex; align-items: center; gap: 0.5rem;
+      text-decoration: none; font-weight: 700; font-size: 0.9rem;
+      background: linear-gradient(135deg,#10B981,#00daf3,#8B5CF6);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .platform-topbar-logo i { -webkit-text-fill-color: #10B981; font-size: 0.9rem; }
+    .platform-topbar-back {
+      display: flex; align-items: center; gap: 0.4rem;
+      color: #10B981; font-size: 0.78rem; font-weight: 600;
+      text-decoration: none; border: 1px solid rgba(16,185,129,0.3);
+      padding: 0.3rem 0.8rem; border-radius: 99px;
+      transition: all 0.2s;
+    }
+    .platform-topbar-back:hover { background: rgba(16,185,129,0.1); }
+    body { padding-top: 48px; }
+  </style>
+</head>
+<body>
+
+<!-- GeoSmart Agri Platform Topbar -->
+<div class="platform-topbar">
+  <a href="../index.html" class="platform-topbar-logo">
+    <i class="fa-solid fa-seedling"></i> GeoSmart Agri
+  </a>
+  <nav style="display:flex;gap:1.5rem;align-items:center;">
+    <a href="../index.html" style="color:#64748b;font-size:0.8rem;text-decoration:none;font-family:'Space Grotesk',sans-serif;">Home</a>
+    <a href="crop-predictor.html" style="color:#64748b;font-size:0.8rem;text-decoration:none;font-family:'Space Grotesk',sans-serif;">Crop Predictor</a>
+    <a href="../geominer.html" style="color:#64748b;font-size:0.8rem;text-decoration:none;font-family:'Space Grotesk',sans-serif;">Geo Minerals</a>
+  </nav>
+  <a href="../index.html" class="platform-topbar-back">
+    <i class="fa-solid fa-arrow-left" style="font-size:0.7rem;"></i> Platform Home
+  </a>
+</div>
+
+<nav class="navbar">
+  <div class="logo">AgriSmart</div>
+  <ul>
+    <li><a href="home.html">Home</a></li>
+    <li><a href="crop-predictor.html">Crop Predictor</a></li>
+    <li>
+      <select id="languageSwitcher" onchange="changeLanguage()">
+        <option value="en">English</option>
+        <option value="hi">हिन्दी</option>
+        <option value="te">తెలుగు</option>
+      </select>
+    </li>
+  </ul>
+</nav>
+
+<section class="hero">
+  <div class="hero-content">
+    <h1 id="heroTitle">Smart Farming For A Better Future</h1>
+    <p id="heroDescription">
+      AgriSmart uses Artificial Intelligence, weather intelligence and soil analysis
+      to help farmers make better crop decisions.
+    </p>
+    <a href="crop-predictor.html" class="hero-btn" id="startBtn">Start Prediction</a>
+  </div>
+</section>
+
+<section class="importance">
+  <h2 id="agriHeading">Why Agriculture Matters</h2>
+  <div class="importance-cards">
+    <div class="importance-card">
+      <div class="importance-icon">🌱</div>
+      <h3 id="foodSecTitle">Food Security</h3>
+      <p id="foodSecDesc">Agriculture feeds billions. Smart crop selection ensures maximum yield and minimal resource waste.</p>
+    </div>
+    <div class="importance-card">
+      <div class="importance-icon">🌍</div>
+      <h3 id="envTitle">Environmental Balance</h3>
+      <p id="envDesc">Sustainable farming practices help preserve soil health, water resources, and biodiversity.</p>
+    </div>
+    <div class="importance-card">
+      <div class="importance-icon">💰</div>
+      <h3 id="econTitle">Economic Growth</h3>
+      <p id="econDesc">Better crop choices lead to higher market value, reducing farmer losses and boosting rural economies.</p>
+    </div>
+  </div>
+</section>
+
+<script src="translator.js"></script>
+</body>
+</html>

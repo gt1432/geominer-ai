@@ -1,0 +1,494 @@
+/* =========================================================
+   GeoSmart Agri — Shared Platform Design System
+   Agriculture: Emerald/Green  |  Geo Minerals: Cyan/Purple
+   ========================================================= */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
+/* ── CSS Custom Properties ── */
+:root {
+  /* Backgrounds */
+  --bg-base:     #080b0c;
+  --bg-surface:  #0e1213;
+  --bg-card:     rgba(255, 255, 255, 0.04);
+  --bg-card-hover: rgba(255, 255, 255, 0.07);
+
+  /* Border */
+  --border-subtle: rgba(255,255,255,0.08);
+  --border-medium: rgba(255,255,255,0.14);
+
+  /* Text */
+  --text-primary:   #f1f5f9;
+  --text-secondary: #94a3b8;
+  --text-muted:     #64748b;
+
+  /* Agriculture Palette */
+  --agri-primary:   #10B981;
+  --agri-secondary: #34D399;
+  --agri-accent:    #84CC16;
+  --agri-glow:      rgba(16,185,129,0.18);
+  --agri-subtle:    rgba(16,185,129,0.08);
+
+  /* Geo Minerals Palette */
+  --geo-primary:    #00daf3;
+  --geo-secondary:  #8B5CF6;
+  --geo-accent:     #F59E0B;
+  --geo-glow:       rgba(0,218,243,0.18);
+  --geo-subtle:     rgba(0,218,243,0.08);
+
+  /* Shared */
+  --radius-sm:  0.5rem;
+  --radius-md:  0.75rem;
+  --radius-lg:  1rem;
+  --radius-xl:  1.5rem;
+  --radius-2xl: 2rem;
+
+  /* Transitions */
+  --transition-fast:   150ms ease;
+  --transition-normal: 250ms ease;
+  --transition-slow:   400ms ease;
+}
+
+/* ── Reset & Base ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  background: var(--bg-base);
+  color: var(--text-primary);
+  min-height: 100vh;
+  line-height: 1.6;
+}
+
+/* ── Typography Utilities ── */
+.font-display { font-family: 'Space Grotesk', sans-serif; }
+.font-mono    { font-family: 'JetBrains Mono', monospace; }
+
+/* ── Glassmorphism Cards ── */
+.glass-card {
+  background: var(--bg-card);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  transition: background var(--transition-normal), border-color var(--transition-normal), transform var(--transition-normal);
+}
+.glass-card:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--border-medium);
+}
+
+.glass-card-agri {
+  background: rgba(16, 185, 129, 0.05);
+  border: 1px solid rgba(16, 185, 129, 0.15);
+  border-radius: var(--radius-lg);
+  backdrop-filter: blur(16px);
+  transition: all var(--transition-normal);
+}
+.glass-card-agri:hover {
+  background: rgba(16, 185, 129, 0.1);
+  border-color: rgba(16, 185, 129, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(16,185,129,0.15);
+}
+
+.glass-card-geo {
+  background: rgba(0, 218, 243, 0.04);
+  border: 1px solid rgba(0, 218, 243, 0.15);
+  border-radius: var(--radius-lg);
+  backdrop-filter: blur(16px);
+  transition: all var(--transition-normal);
+}
+.glass-card-geo:hover {
+  background: rgba(0, 218, 243, 0.09);
+  border-color: rgba(0, 218, 243, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(0,218,243,0.12);
+}
+
+/* ── Gradient Text ── */
+.gradient-text-agri {
+  background: linear-gradient(135deg, #10B981 0%, #84CC16 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.gradient-text-geo {
+  background: linear-gradient(135deg, #00daf3 0%, #8B5CF6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.gradient-text-platform {
+  background: linear-gradient(135deg, #10B981 0%, #00daf3 50%, #8B5CF6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Glow Effects ── */
+.glow-agri  { box-shadow: 0 0 24px rgba(16,185,129,0.25); }
+.glow-geo   { box-shadow: 0 0 24px rgba(0,218,243,0.20); }
+
+/* ── Animated Gradient Border ── */
+.module-card-agri {
+  position: relative;
+  border-radius: var(--radius-xl);
+  background: linear-gradient(145deg, rgba(16,185,129,0.08) 0%, rgba(132,204,22,0.04) 100%);
+  border: 1px solid rgba(16,185,129,0.2);
+  overflow: hidden;
+  transition: all var(--transition-slow);
+  cursor: pointer;
+}
+.module-card-agri::before {
+  content: '';
+  position: absolute; inset: -2px;
+  background: linear-gradient(135deg, #10B981, #84CC16, #10B981);
+  background-size: 300% 300%;
+  border-radius: inherit;
+  z-index: -1;
+  opacity: 0;
+  animation: gradientShift 3s ease infinite;
+  transition: opacity var(--transition-normal);
+}
+.module-card-agri:hover::before { opacity: 1; }
+.module-card-agri:hover {
+  transform: translateY(-6px) scale(1.01);
+  box-shadow: 0 20px 60px rgba(16,185,129,0.2), 0 0 0 1px rgba(16,185,129,0.3);
+}
+
+.module-card-geo {
+  position: relative;
+  border-radius: var(--radius-xl);
+  background: linear-gradient(145deg, rgba(0,218,243,0.07) 0%, rgba(139,92,246,0.04) 100%);
+  border: 1px solid rgba(0,218,243,0.2);
+  overflow: hidden;
+  transition: all var(--transition-slow);
+  cursor: pointer;
+}
+.module-card-geo::before {
+  content: '';
+  position: absolute; inset: -2px;
+  background: linear-gradient(135deg, #00daf3, #8B5CF6, #00daf3);
+  background-size: 300% 300%;
+  border-radius: inherit;
+  z-index: -1;
+  opacity: 0;
+  animation: gradientShift 3s ease infinite;
+  transition: opacity var(--transition-normal);
+}
+.module-card-geo:hover::before { opacity: 1; }
+.module-card-geo:hover {
+  transform: translateY(-6px) scale(1.01);
+  box-shadow: 0 20px 60px rgba(0,218,243,0.15), 0 0 0 1px rgba(0,218,243,0.3);
+}
+
+@keyframes gradientShift {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* ── Buttons ── */
+.btn-agri {
+  display: inline-flex; align-items: center; gap: 0.5rem;
+  background: linear-gradient(135deg, #10B981, #059669);
+  color: #fff;
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  padding: 0.875rem 2rem;
+  border-radius: var(--radius-md);
+  border: none; cursor: pointer;
+  text-decoration: none;
+  transition: all var(--transition-normal);
+  box-shadow: 0 4px 16px rgba(16,185,129,0.3);
+  font-size: 0.95rem;
+}
+.btn-agri:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 28px rgba(16,185,129,0.45);
+  background: linear-gradient(135deg, #34D399, #10B981);
+}
+
+.btn-geo {
+  display: inline-flex; align-items: center; gap: 0.5rem;
+  background: linear-gradient(135deg, #00daf3, #0891b2);
+  color: #001a1f;
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  padding: 0.875rem 2rem;
+  border-radius: var(--radius-md);
+  border: none; cursor: pointer;
+  text-decoration: none;
+  transition: all var(--transition-normal);
+  box-shadow: 0 4px 16px rgba(0,218,243,0.3);
+  font-size: 0.95rem;
+}
+.btn-geo:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 28px rgba(0,218,243,0.4);
+}
+
+.btn-outline-agri {
+  display: inline-flex; align-items: center; gap: 0.5rem;
+  background: transparent;
+  color: var(--agri-primary);
+  font-weight: 700;
+  padding: 0.875rem 2rem;
+  border-radius: var(--radius-md);
+  border: 1.5px solid var(--agri-primary);
+  cursor: pointer;
+  text-decoration: none;
+  transition: all var(--transition-normal);
+  font-size: 0.95rem;
+}
+.btn-outline-agri:hover {
+  background: var(--agri-subtle);
+  transform: translateY(-1px);
+}
+
+.btn-outline-geo {
+  display: inline-flex; align-items: center; gap: 0.5rem;
+  background: transparent;
+  color: var(--geo-primary);
+  font-weight: 700;
+  padding: 0.875rem 2rem;
+  border-radius: var(--radius-md);
+  border: 1.5px solid var(--geo-primary);
+  cursor: pointer;
+  text-decoration: none;
+  transition: all var(--transition-normal);
+  font-size: 0.95rem;
+}
+.btn-outline-geo:hover {
+  background: var(--geo-subtle);
+  transform: translateY(-1px);
+}
+
+/* ── Navbar ── */
+.platform-nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+  padding: 1rem 2rem;
+  background: rgba(8,11,12,0.85);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex; align-items: center; justify-content: space-between;
+  transition: background var(--transition-normal);
+}
+.platform-nav.scrolled {
+  background: rgba(8,11,12,0.97);
+}
+.nav-logo {
+  display: flex; align-items: center; gap: 0.75rem;
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 800;
+  font-size: 1.25rem;
+  text-decoration: none;
+  color: var(--text-primary);
+}
+.nav-logo-icon {
+  width: 36px; height: 36px;
+  background: linear-gradient(135deg, #10B981, #00daf3, #8B5CF6);
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  color: #fff;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+.nav-links {
+  display: flex; align-items: center; gap: 2rem;
+  list-style: none;
+}
+.nav-links a {
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: color var(--transition-fast);
+  position: relative;
+}
+.nav-links a:hover { color: var(--text-primary); }
+.nav-links a.active { color: var(--text-primary); }
+.nav-links a.active::after {
+  content: '';
+  position: absolute; bottom: -4px; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #10B981, #00daf3);
+  border-radius: 2px;
+}
+
+/* ── Status Badge ── */
+.status-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  display: inline-block;
+  background: var(--agri-primary);
+  box-shadow: 0 0 8px var(--agri-primary);
+  animation: pulse-status 2s ease-in-out infinite;
+}
+@keyframes pulse-status {
+  0%, 100% { transform: scale(0.9); opacity: 0.7; }
+  50%       { transform: scale(1.1); opacity: 1; }
+}
+
+/* ── Tag / Badge ── */
+.tag-agri {
+  display: inline-flex; align-items: center; gap: 0.35rem;
+  background: var(--agri-subtle);
+  border: 1px solid rgba(16,185,129,0.2);
+  color: var(--agri-primary);
+  padding: 0.25rem 0.75rem;
+  border-radius: 99px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.tag-geo {
+  display: inline-flex; align-items: center; gap: 0.35rem;
+  background: var(--geo-subtle);
+  border: 1px solid rgba(0,218,243,0.2);
+  color: var(--geo-primary);
+  padding: 0.25rem 0.75rem;
+  border-radius: 99px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+/* ── Feature List ── */
+.feature-item {
+  display: flex; align-items: flex-start; gap: 0.75rem;
+  padding: 0.6rem 0;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+.feature-item i { margin-top: 2px; flex-shrink: 0; }
+.feature-item span { flex: 1; }
+
+/* ── Section Heading ── */
+.section-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+}
+.section-heading {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: clamp(1.8rem, 4vw, 2.8rem);
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--text-primary);
+}
+
+/* ── Canvas particle background ── */
+#hero-canvas-main {
+  position: absolute; inset: 0;
+  pointer-events: none; z-index: 0;
+  opacity: 0.45;
+}
+
+/* ── Grid dot background ── */
+.dot-grid {
+  background-image: radial-gradient(rgba(255,255,255,0.04) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-base); }
+::-webkit-scrollbar-thumb { background: #1e2d2f; border-radius: 6px; }
+::-webkit-scrollbar-thumb:hover { background: #2a3f41; }
+
+/* ── Animations ── */
+@keyframes float-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.animate-float-up  { animation: float-up  0.6s ease both; }
+.animate-fade-in   { animation: fade-in   0.5s ease both; }
+.delay-100 { animation-delay: 100ms; }
+.delay-200 { animation-delay: 200ms; }
+.delay-300 { animation-delay: 300ms; }
+.delay-400 { animation-delay: 400ms; }
+.delay-500 { animation-delay: 500ms; }
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .platform-nav { padding: 0.875rem 1.25rem; }
+  .nav-links { display: none; }
+  .nav-mobile-open .nav-links {
+    display: flex; flex-direction: column;
+    position: absolute; top: 100%; left: 0; right: 0;
+    background: rgba(8,11,12,0.98);
+    padding: 1.5rem;
+    gap: 1rem;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+}
+
+/* ── Form Controls (shared auth/contact) ── */
+.form-field {
+  width: 100%;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  padding: 0.8rem 1rem;
+  font-size: 0.95rem;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  outline: none;
+}
+.form-field:focus {
+  border-color: var(--agri-primary);
+  box-shadow: 0 0 0 3px rgba(16,185,129,0.12);
+}
+.form-field::placeholder { color: var(--text-muted); }
+.form-label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 0.5rem;
+}
+
+/* ── Dashboard stat cards ── */
+.stat-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 1.5rem;
+  transition: all var(--transition-normal);
+}
+.stat-card:hover {
+  border-color: var(--border-medium);
+  transform: translateY(-2px);
+}
+.stat-value {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1;
+  margin: 0.5rem 0;
+}
+.stat-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+}
