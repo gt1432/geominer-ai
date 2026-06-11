@@ -206,7 +206,7 @@ map.on('click', async function (e) {
         let rainfallValue = 1000; // default fallback
         if (district) {
             try {
-                const rainfallRes = await fetch(`http://${window.location.hostname || 'localhost'}:5000/rainfall?city=${encodeURIComponent(district)}`);
+                const rainfallRes = await fetch(`/rainfall?city=${encodeURIComponent(district)}`);
                 if (rainfallRes.ok) {
                     const rainfallData = await rainfallRes.json();
                     if (rainfallData.rainfall) {
@@ -304,7 +304,7 @@ async function predictCrop() {
             rainfall: parseFloat(document.getElementById("rainfall").value)
         };
 
-        const response = await fetch(`http://${window.location.hostname || 'localhost'}:5000/predict`, {
+        const response = await fetch(`/crop-predict`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload)
@@ -458,7 +458,7 @@ async function handleSoilImage(event) {
     formData.append("image", file);
 
     try {
-        const response = await fetch(`http://${window.location.hostname || 'localhost'}:5001/predict-soil`, {
+        const response = await fetch(`/predict-soil`, {
             method: "POST",
             body: formData
         });

@@ -1,8 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const predictionController = require('../controllers/prediction_controller');
+const agriController = require('../controllers/agri_controller');
 
-// 1. POST /predict -> Invoke model prediction and log search
+// 1. POST /predict -> Invoke model prediction and log search (GeoMiner)
 router.post('/predict', predictionController.predictMineralPotential);
 
 // 2. GET /predictions -> Get list of all logged predictions
@@ -32,4 +33,16 @@ router.get('/geocode', predictionController.geocodeLocation);
 // 7. GET /diagnose -> Developer pipeline diagnostic for a coordinate
 router.get('/diagnose', predictionController.diagnosePrediction);
 
+// --- Agriculture Routes ---
+// 8. GET /rainfall -> Fetch historical rainfall data
+router.get('/rainfall', agriController.getRainfall);
+router.get('/rainfall/:state', agriController.getRainfallByState);
+
+// 9. POST /crop-predict -> Run ML crop recommendation classification
+router.post('/crop-predict', agriController.predictCrop);
+
+// 10. POST /predict-soil -> Run ML soil type image classification
+router.post('/predict-soil', agriController.predictSoil);
+
 module.exports = router;
+
