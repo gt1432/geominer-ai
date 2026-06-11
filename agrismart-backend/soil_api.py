@@ -18,7 +18,9 @@ classes = [
     "Yellow Soil"
 ]
 
-UPLOAD_FOLDER = "C:/Users/Pressi/Desktop/PyCharm 2025.3.3/AgriSmart/backend/uploads"
+UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), "uploads")
+if not os.path.exists(UPLOAD_FOLDER):
+    os.makedirs(UPLOAD_FOLDER)
 
 @app.route("/predict-soil", methods=["POST"])
 def predict_soil():

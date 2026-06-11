@@ -20,6 +20,61 @@ df_min_occ = None
 # Percentiles for element enrichment check
 element_thresholds = {}
 
+COMMODITY_MAP = {
+    'banded magnetite quartzite': 'Iron',
+    'magnetite':                  'Iron',
+    'banded ferruginous':         'Iron',
+    'iron ore':                   'Iron',
+    'ironore':                    'Iron',
+    'gold':                       'Gold',
+    'diamond':                    'Diamond',
+    'copper':                     'Copper',
+    'lead':                       'Lead',
+    'zinc':                       'Zinc',
+    'manganese':                  'Manganese',
+    'chromite':                   'Chromium',
+    'chrome':                     'Chromium',
+    'nickel':                     'Nickel',
+    'silver':                     'Silver',
+    'tin':                        'Tin',
+    'tungsten':                   'Tungsten',
+    'molybdenum':                 'Molybdenum',
+    'uranium':                    'Uranium',
+    'thorium':                    'Thorium',
+    'barite':                     'Barite',
+    'baryte':                     'Barite',
+    'vanadium':                   'Vanadium',
+    'cobalt':                     'Cobalt',
+    'titanium':                   'Titanium',
+    'niobium':                    'Niobium',
+    'zirconium':                  'Zirconium',
+    'arsenic':                    'Arsenic',
+    'bismuth':                    'Bismuth',
+    'antimony':                   'Antimony',
+}
+
+def normalize_commodity(raw):
+    key = str(raw).strip().lower()
+    for k, v in COMMODITY_MAP.items():
+        if k in key:
+            return v
+    return str(raw).strip().title()
+
+MINERAL_BELTS = [
+    (12.8, 13.3, 77.9, 78.4, ['Gold', 'Silver', 'Copper'], 'Kolar Gold Field'),
+    (14.8, 15.5, 76.1, 76.6, ['Iron', 'Manganese', 'Chromium'], 'Bellary Iron Belt'),
+    (14.9, 15.3, 76.3, 76.7, ['Iron', 'Chromium', 'Vanadium'], 'Sandur Schist Belt'),
+    (13.9, 14.4, 76.2, 76.8, ['Iron', 'Copper', 'Gold'], 'Chitradurga Schist Belt'),
+    (15.0, 15.6, 77.4, 77.9, ['Diamond', 'Gold'], 'Kurnool Diamond Zone'),
+    (14.5, 16.0, 79.0, 80.5, ['Niobium', 'Zirconium', 'Thorium', 'Uranium'], 'Eastern Ghats Belt'),
+]
+
+def get_belt_for_point(lat, lon):
+    for (lat_min, lat_max, lon_min, lon_max, minerals, belt_name) in MINERAL_BELTS:
+        if lat_min <= lat <= lat_max and lon_min <= lon <= lon_max:
+            return belt_name, minerals
+    return None, []
+
 class PredictionInput(BaseModel):
     latitude: float
     longitude: float
@@ -260,24 +315,111 @@ def predict(payload: PredictionInput):
     mineral_percentages = {m: pct_for(m) for m in predicted_minerals}
     predicted_minerals.sort(key=lambda m: mineral_percentages.get(m, 0), reverse=True)
     
-    # 5. Determine risk level
-    if mineral_probability >= 0.60:
-        risk_level = "High"
-    elif mineral_probability >= 0.20:
-        risk_level = "Medium"
+    # 5. Spatial Mineral Occurrences & Belt checks
+    dists_km = np.sqrt(
+        (df_min_occ['y'] - lat_in)**2 + (df_min_occ['x'] - lon_in)**2
+    ) * 111.0
+    primary_mask = dists_km <= 5.0
+    secondary_mask = dists_km <= 25.0
+    
+    documented_minerals = []
+    nearest_mineral = "None"
+    nearest_mineral_dist_km = float(dists_km.min()) if not dists_km.empty else 999.0
+    occurrence_present = False
+    
+    if primary_mask.any():
+        occurrence_present = True
+        commodities = df_min_occ.loc[primary_mask, 'commodity'].tolist()
+        for c in commodities:
+            norm = normalize_commodity(c)
+            if norm not in documented_minerals:
+                documented_minerals.append(norm)
+        nearest_mineral = documented_minerals[0] if documented_minerals else "None"
+    elif secondary_mask.any():
+        commodities = df_min_occ.loc[secondary_mask, 'commodity'].tolist()
+        for c in commodities:
+            norm = normalize_commodity(c)
+            if norm not in documented_minerals:
+                documented_minerals.append(norm)
+        nearest_mineral = documented_minerals[0] if documented_minerals else "None"
+
+    # Belt inheritance
+    belt_name, belt_minerals = get_belt_for_point(lat_in, lon_in)
+    if belt_minerals:
+        for bm in belt_minerals:
+            if bm not in documented_minerals:
+                documented_minerals.append(bm)
+        if nearest_mineral == "None":
+            nearest_mineral = belt_minerals[0]
+        occurrence_present = True
+    
+    # Floor adjustment and confidence determination
+    if occurrence_present and primary_mask.any():
+        mineral_probability = max(mineral_probability, 0.65)
+        confidence = "High"
+    elif occurrence_present:
+        mineral_probability = max(mineral_probability, 0.40)
+        confidence = "Medium"
+    elif mineral_probability >= 0.60:
+        confidence = "High"
+    elif mineral_probability >= 0.30:
+        confidence = "Medium"
     else:
-        risk_level = "Low"
-        
-    min_list = ", ".join(predicted_minerals[:3]).lower() if len(predicted_minerals) > 0 else "mineral"
-    explanation = f"The selected coordinate lies within a {db_rock_type.lower()}-rich lithological zone of the {db_geo_unit}. Historical NGCM geochemical signatures and documented mineral occurrences indicate favorable conditions for {min_list} mineralization."
+        confidence = "Low"
+
+    risk_level = confidence
+
+    # Re-apply occurrence premiums to percentages if documented
+    for bm in documented_minerals:
+        if bm in mineral_percentages:
+            mineral_percentages[bm] = round(mineral_percentages[bm] * 1.5, 6)
+    
+    predicted_minerals.sort(key=lambda m: mineral_percentages.get(m, 0), reverse=True)
+
+    # Explanation construction
+    occ_str = ", ".join(documented_minerals[:3]) if documented_minerals else None
+    pred_top = ", ".join(predicted_minerals[:3]).lower()
+    
+    if occ_str and belt_name:
+        explanation = (
+            f"This coordinate lies within the {belt_name} ({db_geo_unit}), a documented "
+            f"mineralized zone. Recorded occurrences include: {occ_str}. "
+            f"NGCM geochemical data also indicates favorable conditions for {pred_top} mineralization."
+        )
+    elif occ_str:
+        explanation = (
+            f"A documented mineral occurrence ({occ_str}) exists within the vicinity of this coordinate. "
+            f"The location lies within the {db_geo_unit} ({db_rock_type} lithology). "
+            f"Geochemical signatures from the NGCM dataset indicate favorable conditions for {pred_top} mineralization."
+        )
+    elif belt_name:
+        explanation = (
+            f"This coordinate falls within the {belt_name}, a well-documented geological belt. "
+            f"The {db_geo_unit} hosts characteristic mineralization including {pred_top}. "
+            f"NGCM geochemical survey data confirms elevated element signatures in this zone."
+        )
+    else:
+        explanation = (
+            f"The selected coordinate lies within a {db_rock_type.lower()}-rich lithological zone of the "
+            f"{db_geo_unit}. Historical NGCM geochemical signatures indicate favorable conditions for "
+            f"{pred_top} mineralization. No specific occurrence is documented at this exact location."
+        )
 
     return PredictionOutput(
         mineral_probability=round(mineral_probability, 3),
         predicted_minerals=predicted_minerals,
+        mineral_percentages=mineral_percentages,
         risk_level=risk_level,
+        confidence=confidence,
         rock_type=db_rock_type,
         geological_unit=db_geo_unit,
         lithology=db_lithology,
         formation=db_formation,
+        geological_zone=db_formation,
+        belt_name=belt_name or "",
+        occurrence_present=occurrence_present,
+        documented_minerals=documented_minerals,
+        nearest_mineral=nearest_mineral,
+        nearest_mineral_dist_km=round(nearest_mineral_dist_km, 2),
         explanation=explanation
     )

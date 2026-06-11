@@ -144,7 +144,7 @@ map.on('click', async function (e) {
             await response.json();
         console.log(weather);
 
-        document.getElementById("temp").value =
+        document.getElementById("temperature").value =
             weather.main.temp;
 
         document.getElementById("humidity").value =
@@ -200,7 +200,7 @@ async function predictCrop() {
             ),
 
             temperature: parseFloat(
-                document.getElementById("temp").value
+                document.getElementById("temperature").value
             ),
 
             humidity: parseFloat(
@@ -217,7 +217,7 @@ async function predictCrop() {
         };
 
         const response = await fetch(
-    "http://192.168.0.105:5000/predict",
+    `http://${window.location.hostname || 'localhost'}:5000/predict`,
             {
                 method: "POST",
                 headers: {
@@ -354,7 +354,7 @@ formData.append(
 
 
 fetch(
-    "http://192.168.0.105:5001/predict-soil",
+    `http://${window.location.hostname || 'localhost'}:5001/predict-soil`,
     {
         method: "POST",
         body: formData
