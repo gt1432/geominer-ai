@@ -54,13 +54,13 @@
       box-shadow: 0 24px 64px rgba(16,185,129,0.2), 0 0 0 1px rgba(16,185,129,0.3);
     }
     .module-card-geo-main {
-      background: linear-gradient(145deg, rgba(0,218,243,0.07), rgba(139,92,246,0.04));
-      border-color: rgba(0,218,243,0.2);
+      background: linear-gradient(145deg, rgba(217,160,91,0.07), rgba(139,92,246,0.04));
+      border-color: rgba(217,160,91,0.2);
     }
     .module-card-geo-main:hover {
-      border-color: rgba(0,218,243,0.5);
+      border-color: rgba(217,160,91,0.5);
       transform: translateY(-8px);
-      box-shadow: 0 24px 64px rgba(0,218,243,0.15), 0 0 0 1px rgba(0,218,243,0.3);
+      box-shadow: 0 24px 64px rgba(217,160,91,0.15), 0 0 0 1px rgba(217,160,91,0.3);
     }
     .module-icon {
       width: 72px; height: 72px; border-radius: 1.25rem;
@@ -68,7 +68,7 @@
       font-size: 2rem; margin-bottom: 1.5rem;
     }
     .module-icon-agri { background: rgba(16,185,129,0.15); }
-    .module-icon-geo  { background: rgba(0,218,243,0.12); }
+    .module-icon-geo  { background: rgba(217,160,91,0.12); }
     .module-title {
       font-family: 'Space Grotesk', sans-serif;
       font-size: 1.6rem; font-weight: 700;
@@ -94,10 +94,10 @@
     }
     .module-cta-agri:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(16,185,129,0.45); }
     .module-cta-geo {
-      background: linear-gradient(135deg,#00daf3,#0891b2);
-      color: #001a1f; box-shadow: 0 4px 16px rgba(0,218,243,0.3);
+      background: linear-gradient(135deg,#D9A05B,#B8843E);
+      color: #1a0e00; box-shadow: 0 4px 16px rgba(217,160,91,0.3);
     }
-    .module-cta-geo:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(0,218,243,0.4); }
+    .module-cta-geo:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(217,160,91,0.4); }
 
     /* ── Decorative BG blobs inside cards ── */
     .card-blob {
@@ -214,11 +214,12 @@
   <ul class="nav-links" id="nav-links-list">
     <li><a href="index.html" class="active">Home</a></li>
     <li><a href="agriculture/home.html">Agriculture</a></li>
-    <li><a href="https://geominer-ai-4379.onrender.com">Geo Minerals</a></li>
+    <li><a href="geominer.html">Geo Minerals</a></li>
     <li><a href="dashboard-unified.html">Dashboard</a></li>
     <li><a href="about.html">About</a></li>
   </ul>
-  <div style="display:flex;align-items:center;gap:1rem;">
+  <div style="display:flex;align-items:center;gap:0.75rem;">
+    <button class="nav-hamburger" id="nav-hamburger" aria-label="Toggle menu" onclick="toggleMobileNav()">☰</button>
     <span class="live-badge"><span class="live-dot"></span>AI Live</span>
     <a href="agriculture/home.html" class="module-cta module-cta-agri" style="padding:0.6rem 1.2rem;font-size:0.82rem;">
       Get Started
@@ -245,7 +246,7 @@
       <span class="gradient-text-platform">Two AI Powers.</span>
     </h1>
     <p class="animate-float-up delay-200" style="color:#94a3b8;font-size:1.15rem;max-width:600px;line-height:1.8;margin-bottom:2.5rem;">
-      GeoSmart Agri brings together <strong style="color:#10B981;">AI-powered crop recommendation</strong> and <strong style="color:#00daf3;">mineral prospectivity prediction</strong> under one intelligent, enterprise-grade roof.
+      GeoSmart Agri brings together <strong style="color:#10B981;">AI-powered crop recommendation</strong> and <strong style="color:#D9A05B;">mineral prospectivity prediction</strong> under one intelligent, enterprise-grade roof.
     </p>
 
     <!-- Stats bar -->
@@ -292,8 +293,8 @@
       </a>
 
       <!-- Geo Minerals Card -->
-      <a href="https://geominer-ai-4379.onrender.com" class="module-card module-card-geo-main">
-        <div class="card-blob" style="width:200px;height:200px;background:#00daf3;top:-60px;right:-40px;"></div>
+      <a href="geominer.html" class="module-card module-card-geo-main">
+        <div class="card-blob" style="width:200px;height:200px;background:#D9A05B;top:-60px;right:-40px;"></div>
         <div class="module-icon module-icon-geo">⛏️</div>
         <span class="tag-geo" style="margin-bottom:1rem;display:inline-flex;">GeoMiner Portal</span>
         <div class="module-title">Geo Minerals AI</div>
@@ -301,10 +302,10 @@
           Institutional-grade mineral prospectivity prediction using geochemical mapping, Random Forest ML, and GSI occurrence data for Karnataka & AP.
         </p>
         <ul class="module-features">
-          <li><i class="fa-solid fa-check" style="color:#00daf3;"></i> 26-mineral inventory prediction</li>
-          <li><i class="fa-solid fa-check" style="color:#00daf3;"></i> Interactive Leaflet exploration map</li>
-          <li><i class="fa-solid fa-check" style="color:#00daf3;"></i> Downloadable XAI PDF reports</li>
-          <li><i class="fa-solid fa-check" style="color:#00daf3;"></i> GSI NGCM 10,004-point dataset</li>
+          <li><i class="fa-solid fa-check" style="color:#D9A05B;"></i> 26-mineral inventory prediction</li>
+          <li><i class="fa-solid fa-check" style="color:#D9A05B;"></i> Interactive Leaflet exploration map</li>
+          <li><i class="fa-solid fa-check" style="color:#D9A05B;"></i> Downloadable XAI PDF reports</li>
+          <li><i class="fa-solid fa-check" style="color:#D9A05B;"></i> GSI NGCM 10,004-point dataset</li>
         </ul>
         <span class="module-cta module-cta-geo">
           Open Geo Minerals Portal <i class="fa-solid fa-arrow-right"></i>
@@ -335,7 +336,7 @@
         <p>Two purpose-built AI models — scikit-learn Random Forest for minerals, and crop recommendation model trained on 2,200 samples — both running live.</p>
       </div>
       <div class="feature-card">
-        <div class="feature-card-icon" style="background:rgba(0,218,243,0.1);color:#00daf3;">
+        <div class="feature-card-icon" style="background:rgba(217,160,91,0.1);color:#D9A05B;">
           <i class="fa-solid fa-map-location-dot"></i>
         </div>
         <h3>Interactive Maps</h3>
@@ -363,7 +364,7 @@
         <p>GSI NGCM 10,004 geochemical samples, lithology shapefiles, mineral occurrence registry, and crop soil data — all real government datasets.</p>
       </div>
       <div class="feature-card">
-        <div class="feature-card-icon" style="background:rgba(0,218,243,0.1);color:#00daf3;">
+        <div class="feature-card-icon" style="background:rgba(217,160,91,0.1);color:#D9A05B;">
           <i class="fa-solid fa-chart-line"></i>
         </div>
         <h3>Live Dashboard</h3>
@@ -383,7 +384,7 @@
         <a href="agriculture/home.html" class="module-cta module-cta-agri">
           <i class="fa-solid fa-seedling"></i> Agriculture Portal
         </a>
-        <a href="https://geominer-ai-4379.onrender.com" class="module-cta module-cta-geo">
+        <a href="geominer.html" class="module-cta module-cta-geo">
           <i class="fa-solid fa-mountain"></i> Geo Minerals Portal
         </a>
         <a href="dashboard-unified.html" style="display:inline-flex;align-items:center;gap:0.5rem;padding:0.85rem 1.75rem;border-radius:0.75rem;border:1.5px solid rgba(255,255,255,0.15);color:#94a3b8;text-decoration:none;font-weight:600;font-size:0.9rem;transition:all 0.25s;">
@@ -407,7 +408,7 @@
       <p style="color:#64748b;font-size:0.8rem;">© 2026 GeoSmart Agri. Powered by GeoMiner AI + AgriSmart.</p>
     </div>
     <div class="footer-links">
-      <a href="https://geominer-ai-4379.onrender.com">GeoMiner</a>
+      <a href="geominer.html">GeoMiner</a>
       <a href="agriculture/home.html">AgriSmart</a>
       <a href="dashboard-unified.html">Dashboard</a>
       <a href="about.html">About</a>
@@ -416,6 +417,21 @@
 </footer>
 
 <script>
+// ── Mobile nav toggle
+function toggleMobileNav() {
+  const nav = document.getElementById('main-nav');
+  const hamburger = document.getElementById('nav-hamburger');
+  const isOpen = nav.classList.toggle('nav-mobile-open');
+  hamburger.textContent = isOpen ? '✕' : '☰';
+}
+// Close mobile nav when clicking a link
+document.querySelectorAll('.nav-links a').forEach(link => {
+  link.addEventListener('click', () => {
+    document.getElementById('main-nav').classList.remove('nav-mobile-open');
+    document.getElementById('nav-hamburger').textContent = '☰';
+  });
+});
+
 // ── Sticky nav scroll effect
 window.addEventListener('scroll', () => {
   document.getElementById('main-nav').classList.toggle('scrolled', window.scrollY > 50);

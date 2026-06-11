@@ -92,7 +92,7 @@
 <body class="font-body text-body-md transition-colors duration-300 bg-[#121414] text-[#e2e2e2] html[class*='light']:bg-[#f7f9fb] html[class*='light']:text-[#191c1e]">
 
   <!-- Sidebar Navigation -->
-  <aside class="h-screen w-[280px] fixed left-0 top-0 bg-[#0c0f0f] light:bg-[#eceef0] border-r border-white/10 light:border-black/10 flex flex-col p-6 z-50">
+  <aside class="h-screen w-[280px] fixed left-0 top-0 bg-[#0c0f0f] light:bg-[#eceef0] border-r border-white/10 light:border-black/10 flex flex-col p-6 z-50 lg:translate-x-0 -translate-x-full transition-transform duration-300">
     <div class="mb-10 flex justify-between items-center">
       <div>
         <h1 class="font-display text-2xl font-bold text-white dark:text-white light:text-[#006576]">GeoMiner</h1>
@@ -109,9 +109,9 @@
       </div>
     </div>
     <nav class="flex-1 flex flex-col gap-2">
-      <a class="text-[#bac9cc] light:text-[#3d494c] hover:bg-[#00daf3]/10 flex items-center gap-3 px-4 py-3 rounded-lg transition-all border border-[#00daf3]/20 mb-2" href="index.html">
-        <span class="material-symbols-outlined text-[#00daf3]">arrow_back</span>
-        <span class="font-display text-sm font-semibold text-[#00daf3]">Platform Home</span>
+      <a class="text-[#bac9cc] light:text-[#3d494c] hover:bg-[#D9A05B]/10 flex items-center gap-3 px-4 py-3 rounded-lg transition-all border border-[#D9A05B]/20 mb-2" href="index.html">
+        <span class="material-symbols-outlined text-[#D9A05B]">arrow_back</span>
+        <span class="font-display text-sm font-semibold text-[#D9A05B]">Platform Home</span>
       </a>
       <a class="text-[#bac9cc] light:text-[#3d494c] hover:bg-white/5 light:hover:bg-black/5 flex items-center gap-3 px-4 py-3 rounded-lg transition-all" href="geominer.html">
         <span class="material-symbols-outlined">home</span>
@@ -127,7 +127,7 @@
       </a>
 
 
-      <a class="bg-[#00daf3] light:bg-[#006576] text-[#00363d] light:text-white rounded-lg font-bold flex items-center gap-3 px-4 py-3 duration-200" href="settings.html">
+      <a class="bg-[#D9A05B] text-[#1a0e00] rounded-lg font-bold flex items-center gap-3 px-4 py-3 duration-200" href="settings.html">
         <span class="material-symbols-outlined">settings</span>
         <span class="font-display text-sm font-semibold">Settings</span>
       </a>
@@ -137,8 +137,39 @@
     </div>
   </aside>
 
+  <!-- Mobile Header Bar -->
+  <div class="lg:hidden w-full bg-[#0c0f0f] light:bg-[#eceef0] border-b border-white/10 light:border-black/10 px-6 py-4 flex justify-between items-center z-40 sticky top-0">
+    <div class="flex items-center gap-2">
+      <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-[#D9A05B] to-[#8B5CF6] flex items-center justify-center text-white">
+        <i class="fa-solid fa-mountain-sun text-sm"></i>
+      </div>
+      <span class="font-display text-lg font-bold text-white dark:text-white light:text-[#006576]">GeoMiner</span>
+    </div>
+    <button id="mobile-sidebar-toggle" class="text-white dark:text-white light:text-[#006576] hover:opacity-80 focus:outline-none">
+      <i class="fa-solid fa-bars text-xl"></i>
+    </button>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const toggleBtn = document.getElementById('mobile-sidebar-toggle');
+      const sidebar = document.querySelector('aside');
+      if (toggleBtn && sidebar) {
+        toggleBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          sidebar.classList.toggle('-translate-x-full');
+        });
+        document.addEventListener('click', (e) => {
+          if (!sidebar.contains(e.target) && !toggleBtn.contains(e.target)) {
+            sidebar.classList.add('-translate-x-full');
+          }
+        });
+      }
+    });
+  </script>
+
   <!-- Main Content Panel -->
-  <main class="ml-[280px] min-h-screen flex flex-col">
+  <main class="lg:ml-[280px] ml-0 min-h-screen flex flex-col">
     <!-- Top App Bar -->
     <header class="w-full sticky top-0 bg-[#121414]/80 light:bg-[#f7f9fb]/80 backdrop-blur-md border-b border-white/10 light:border-black/10 px-10 py-4 flex justify-between items-center z-40">
       <div class="flex items-center gap-4">
@@ -156,7 +187,7 @@
       <div class="max-w-[600px] space-y-6">
         <!-- Geocoding API Key configuration card -->
         <div class="glass-card rounded-xl p-6 bg-slate-900/40 light:bg-white/80 border border-white/10 light:border-black/5">
-          <h4 class="font-display text-lg font-bold text-[#00daf3] light:text-[#006576] flex items-center gap-2 mb-4">
+          <h4 class="font-display text-lg font-bold flex items-center gap-2 mb-4" style="color:#D9A05B;">
             <i class="fa-solid fa-map"></i> Geocoding API Keys
           </h4>
           <p class="text-[#bac9cc] light:text-[#3d494c] text-xs leading-relaxed mb-6">
@@ -166,11 +197,11 @@
           <form id="settings-form" class="space-y-4">
             <div class="form-group">
               <label class="form-label text-xs text-[#bac9cc] light:text-[#3d494c] font-semibold mb-2 block" for="gmaps-api-key">Google Maps API Key</label>
-              <input type="password" id="gmaps-api-key" class="form-control w-full rounded-lg border border-white/10 light:border-black/10 bg-slate-950/40 light:bg-white p-3 text-sm focus:ring-[#00daf3]" placeholder="Enter API Key here...">
+              <input type="password" id="gmaps-api-key" class="form-control w-full rounded-lg border border-white/10 light:border-black/10 bg-slate-950/40 light:bg-white p-3 text-sm focus:ring-[#D9A05B]" placeholder="Enter API Key here...">
               <small class="text-[10px] text-[#bac9cc] light:text-[#3d494c] opacity-60 mt-1 block">Key will be saved locally inside the browser configuration cache.</small>
             </div>
 
-            <button type="submit" class="bg-[#00daf3] light:bg-[#006576] text-[#00363d] light:text-white px-6 py-3 rounded-lg font-bold hover:opacity-90 active:scale-95 transition-all text-xs flex items-center gap-1.5 shadow-md">
+            <button type="submit" class="btn-gold px-6 py-2.5 rounded-lg text-xs flex items-center gap-1.5">
               <i class="fa-solid fa-save"></i> Save Configuration
             </button>
           </form>
@@ -178,7 +209,7 @@
 
         <!-- System Environment card -->
         <div class="glass-card rounded-xl p-6 bg-slate-900/40 light:bg-white/80 border border-white/10 light:border-black/5">
-          <h4 class="font-display text-lg font-bold text-[#eedcff] light:text-[#7C3AED] flex items-center gap-2 mb-4">
+          <h4 class="font-display text-lg font-bold flex items-center gap-2 mb-4" style="color:#8B5CF6;">
             <i class="fa-solid fa-server"></i> System Environment Status
           </h4>
           <div class="space-y-3 text-xs text-[#bac9cc] light:text-[#3d494c]">
@@ -204,7 +235,7 @@
     <footer class="w-full py-8 mt-auto bg-[#0c0f0f] light:bg-[#eceef0] border-t border-white/10 light:border-black/10">
       <div class="flex flex-col md:flex-row justify-between items-center px-10 max-w-[1440px] mx-auto gap-4">
         <div class="flex items-center gap-4">
-          <span class="font-label text-sm font-bold text-[#00daf3] light:text-[#006576]">GeoMiner</span>
+          <span class="font-label text-sm font-bold" style="color:#D9A05B;">GeoMiner</span>
           <span class="font-label text-[10px] text-[#bac9cc] light:text-[#3d494c]">&copy; 2026 GeoMiner Systems. All rights reserved.</span>
         </div>
       </div>

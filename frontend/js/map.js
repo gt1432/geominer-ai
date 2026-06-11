@@ -41,7 +41,26 @@ const TILE_DEFS = {
             attribution: '&copy; <a href="https://opentopomap.org">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)',
             maxZoom: 17
         }
+    },
+    elevation: {
+        url: 'https://server.arcgisonline.com/ArcGIS/rest/services/Elevation/World_Hillshade/MapServer/tile/{z}/{y}/{x}',
+        options: {
+            attribution: '&copy; Esri, USGS, NOAA',
+            maxZoom: 18
+        }
     }
+};
+
+let overlays = {
+    geology: null,
+    soil: null,
+    landcover: null
+};
+
+let activeOverlays = {
+    geology: false,
+    soil: false,
+    landcover: false
 };
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -81,8 +100,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Exploration radius circle
     explorationArea = L.circle([startLat, startLon], {
         radius: 5000,
-        color: '#3B82F6',
-        fillColor: '#1d4ed8',
+        color: '#D9A05B',
+        fillColor: '#B8843E',
         fillOpacity: 0.10,
         weight: 1.8,
         dashArray: '6, 4'
@@ -143,6 +162,35 @@ document.addEventListener('DOMContentLoaded', () => {
         drawStart = null;
     });
 
+    // Initialize GIS Overlays
+    const geologyPolygons = [
+        L.polygon([[15.5, 76.1], [15.2, 76.6], [14.8, 76.3], [15.1, 75.9]], {color: '#ef4444', fillColor: '#ef4444', fillOpacity: 0.25, weight: 1.5})
+         .bindPopup('<b>Bellary Iron Belt</b><br>Precambrian metasediments, rich in hematite & magnetite.'),
+        L.polygon([[13.2, 78.1], [13.1, 78.3], [12.9, 78.2], [13.0, 78.0]], {color: '#fbbf24', fillColor: '#fbbf24', fillOpacity: 0.3, weight: 1.5})
+         .bindPopup('<b>Kolar Gold Field Zone</b><br>Archaean greenstone belt, metabasalts & gold quartz veins.'),
+        L.polygon([[14.4, 76.2], [14.2, 76.4], [13.9, 76.3], [14.1, 76.1]], {color: '#8b5cf6', fillColor: '#8b5cf6', fillOpacity: 0.25, weight: 1.5})
+         .bindPopup('<b>Chitradurga Schist Belt</b><br>Orogenic metavolcanic suite hosting gold and copper prospects.')
+    ];
+    overlays.geology = L.layerGroup(geologyPolygons);
+
+    const soilPolygons = [
+        L.polygon([[14.6, 76.3], [14.4, 76.8], [14.0, 76.5], [14.2, 76.1]], {color: '#8B5CF6', fillColor: '#8B5CF6', fillOpacity: 0.15, weight: 1})
+         .bindPopup('<b>Clayey Soil Zone</b><br>Fine-textured soil with high moisture retention.'),
+        L.polygon([[13.5, 77.0], [13.2, 77.4], [12.9, 77.1], [13.1, 76.8]], {color: '#f59e0b', fillColor: '#f59e0b', fillOpacity: 0.15, weight: 1})
+         .bindPopup('<b>Sandy Loam Outcrops</b><br>Coarse textured, highly draining sand.'),
+        L.polygon([[15.1, 76.8], [14.9, 77.2], [14.6, 76.9], [14.8, 76.5]], {color: '#ef4444', fillColor: '#ef4444', fillOpacity: 0.15, weight: 1})
+         .bindPopup('<b>Lateritic Iron Crusts</b><br>Aluminium and iron-enriched weathered capping.'),
+        L.polygon([[15.9, 77.2], [15.6, 77.6], [15.3, 77.3], [15.5, 76.9]], {color: '#10b981', fillColor: '#10b981', fillOpacity: 0.15, weight: 1})
+         .bindPopup('<b>Riverine Alluvial Silts</b><br>Rich sedimentary beds adjacent to Tungabhadra basin.')
+    ];
+    overlays.soil = L.layerGroup(soilPolygons);
+
+    const landcoverPolygons = [
+        L.polygon([[15.0, 76.0], [15.8, 77.5], [13.0, 78.5], [12.8, 77.0]], {color: '#10b981', fillColor: '#10b981', fillOpacity: 0.08, weight: 1, dashArray: '4, 4'})
+         .bindPopup('<b>Karnataka Craton Land Cover</b><br>Deciduous scrub forest, agricultural plains, and rocky outcrops.')
+    ];
+    overlays.landcover = L.layerGroup(landcoverPolygons);
+
     // ── Occurrence layer ──
     occurrencesLayer = L.layerGroup().addTo(exploreMap);
     loadOccurrencesAndHeatmap();
@@ -160,11 +208,49 @@ function switchTile(key) {
     tileLayers[key].addTo(exploreMap);
     activeTile = key;
 
-    // Update button states
-    document.querySelectorAll('.layer-btn[id^="layer-"]').forEach(btn => btn.classList.remove('active'));
-    const btn = document.getElementById(`layer-${key}`);
-    if (btn) btn.classList.add('active');
+    // Update tile button states without affecting toggle layers
+    ['osm', 'satellite', 'geo', 'elevation'].forEach(k => {
+        const btn = document.getElementById(`layer-${k}`);
+        if (btn) {
+            if (k === key) btn.classList.add('active');
+            else btn.classList.remove('active');
+        }
+    });
+
+    // Update elevation legend visibility
+    const elevLegend = document.getElementById('legend-elevation');
+    if (elevLegend) {
+        if (key === 'elevation') {
+            elevLegend.classList.remove('hidden');
+        } else {
+            elevLegend.classList.add('hidden');
+        }
+    }
 }
+window.switchTile = switchTile;
+
+// ══════════════════════════════════
+// PUBLIC: Toggle GIS map overlay
+// ══════════════════════════════════
+function toggleOverlay(key) {
+    if (!exploreMap || !overlays[key]) return;
+    const btn = document.getElementById(`layer-${key}`);
+    const legendEl = document.getElementById(`legend-${key}`);
+    
+    if (activeOverlays[key]) {
+        exploreMap.removeLayer(overlays[key]);
+        activeOverlays[key] = false;
+        if (btn) btn.classList.remove('active');
+        if (legendEl) legendEl.classList.add('hidden');
+    } else {
+        exploreMap.addLayer(overlays[key]);
+        activeOverlays[key] = true;
+        if (btn) btn.classList.add('active');
+        if (legendEl) legendEl.classList.remove('hidden');
+    }
+}
+window.toggleOverlay = toggleOverlay;
+
 
 // ══════════════════════════════════
 // PUBLIC: Toggle heatmap
@@ -213,7 +299,7 @@ function setMode(mode) {
 function makePopup(lat, lng) {
     return `
         <div style="font-family:sans-serif;min-width:150px;">
-            <b style="color:#60a5fa;">📍 Exploration Target</b><br/>
+            <b style="color:#D9A05B;">📍 Exploration Target</b><br/>
             <span>Lat: ${parseFloat(lat).toFixed(5)}</span><br/>
             <span>Lon: ${parseFloat(lng).toFixed(5)}</span>
         </div>
@@ -293,3 +379,7 @@ function recenterMap(lat, lon) {
     if (explorationArea) explorationArea.setLatLng(target);
     updateCoords(lat, lon);
 }
+window.recenterMap = recenterMap;
+window.toggleHeatmap = toggleHeatmap;
+window.setMode = setMode;
+

@@ -14,6 +14,15 @@ router.get('/stats', predictionController.getDashboardStats);
 // 4. GET /predictions/:id/pdf -> Download PDF Report document
 router.get('/predictions/:id/pdf', predictionController.downloadPdfReport);
 
+// 4a. POST /predictions/:id/save -> Toggle saved state
+router.post('/predictions/:id/save', predictionController.savePredictionToggle);
+
+// 4b. GET /predictions/:id/csv -> Download CSV Report document
+router.get('/predictions/:id/csv', predictionController.downloadCsvReport);
+
+// 4c. GET /predictions/:id/json -> Download JSON Report document
+router.get('/predictions/:id/json', predictionController.downloadJsonReport);
+
 // 5. GET /occurrences -> Fetch known mineral occurrences from CSV database
 router.get('/occurrences', predictionController.getOccurrences);
 

@@ -32,6 +32,39 @@
     .platform-topbar-back:hover { background: rgba(16,185,129,0.1); }
     body { padding-top: 48px; }
     @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&display=swap');
+
+    /* Crop predictor layout */
+    .container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 2rem;
+      align-items: flex-start;
+      max-width: 1300px;
+      margin: 0 auto;
+      padding: 20px 16px;
+    }
+    .form-section { flex: 1 1 420px; min-width: 0; }
+    .map-section  { flex: 1 1 420px; min-width: 0; }
+    .form-row {
+      display: flex;
+      gap: 1rem;
+    }
+    .form-row .form-group { flex: 1 1 0; min-width: 0; }
+
+    @media (max-width: 860px) {
+      .container { flex-direction: column; gap: 1.25rem; }
+      .form-section, .map-section { width: 100%; flex: none; }
+      .form-row { flex-direction: column; gap: 0; }
+      .form-row .form-group { width: 100%; }
+      #map { height: 260px !important; }
+    }
+    @media (max-width: 480px) {
+      body { padding-top: 44px; }
+      .container { padding: 10px 8px; gap: 1rem; }
+      #map { height: 210px !important; }
+      .platform-topbar { padding: 0.4rem 0.75rem; }
+      .platform-topbar nav { display: none !important; }
+    }
   </style>
 </head>
 <body>
@@ -43,7 +76,7 @@
   </a>
   <nav style="display:flex;gap:1.5rem;align-items:center;">
     <a href="home.html" style="color:#64748b;font-size:0.8rem;text-decoration:none;font-family:'Space Grotesk',sans-serif;">Agri Home</a>
-    <a href="https://geominer-ai-4379.onrender.com" style="color:#64748b;font-size:0.8rem;text-decoration:none;font-family:'Space Grotesk',sans-serif;">Geo Minerals</a>
+    <a href="../geominer.html" style="color:#64748b;font-size:0.8rem;text-decoration:none;font-family:'Space Grotesk',sans-serif;">Geo Minerals</a>
     <a href="../dashboard-unified.html" style="color:#64748b;font-size:0.8rem;text-decoration:none;font-family:'Space Grotesk',sans-serif;">Dashboard</a>
   </nav>
   <a href="../index.html" class="platform-topbar-back">
@@ -89,8 +122,33 @@
           <option value="red">Red Soil</option>
           <option value="laterite">Laterite Soil</option>
           <option value="peat">Peat Soil</option>
-          <option value="saline">Saline Soil</option>
+          <option value="sandy">Sandy Soil</option>
+          <option value="clay">Clay Soil</option>
+          <option value="loamy">Loamy Soil</option>
+          <option value="silt">Silt Soil</option>
+          <option value="chalky">Chalky Soil</option>
+          <option value="yellow">Yellow Soil</option>
+          <option value="cinder">Cinder Soil</option>
         </select>
+      </div>
+
+      <!-- AI Soil Camera Upload Section -->
+      <div class="camera-section" style="margin: 1.25rem 0; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); padding: 1.25rem; border-radius: 1rem;">
+        <label style="font-weight: 600; color: #f1f5f9; display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem; font-size: 0.9rem;">
+          📷 AI Soil Detection (Camera / Gallery)
+        </label>
+        <div class="upload-buttons" style="display: flex; gap: 0.75rem;">
+          <button type="button" onclick="document.getElementById('galleryInput').click()" style="flex: 1; background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3); color: #10B981; padding: 0.6rem; border-radius: 0.5rem; font-size: 0.85rem; font-weight: 600; cursor: pointer; text-align: center;">
+            📁 Gallery Upload
+          </button>
+          <button type="button" onclick="document.getElementById('cameraInput').click()" style="flex: 1; background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3); color: #10B981; padding: 0.6rem; border-radius: 0.5rem; font-size: 0.85rem; font-weight: 600; cursor: pointer; text-align: center;">
+            📸 Open Camera
+          </button>
+        </div>
+        <input type="file" id="galleryInput" accept="image/*" style="display: none;" />
+        <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display: none;" />
+        <img id="preview" style="display: none; width: 100%; max-height: 150px; object-fit: cover; border-radius: 0.5rem; margin-top: 0.75rem; border: 1px solid rgba(255,255,255,0.1);" />
+        <div id="soilResult" style="margin-top: 0.75rem;"></div>
       </div>
 
       <div class="form-row">
@@ -141,6 +199,9 @@
     <h3 id="mapTitle">📍 Select Your Location</h3>
     <p id="mapDesc">Click on the map to auto-fill temperature, humidity, and rainfall</p>
     <div id="map"></div>
+    <div id="coords" style="margin-top: 1rem; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255,255,255,0.08); padding: 1rem; border-radius: 1rem; font-size: 0.85rem; color: #cbd5e1; line-height: 1.6;">
+      <i>No location selected. Click on the map to choose a point.</i>
+    </div>
   </div>
 </div>
 
@@ -148,79 +209,9 @@
 <script src="script.js"></script>
 <script src="translator.js"></script>
 <script>
-// Override crop form to call AgriSmart backend on port 5000
-document.getElementById('cropForm').addEventListener('submit', async function(e) {
+document.getElementById('cropForm').addEventListener('submit', function(e) {
   e.preventDefault();
-  const resultBox = document.getElementById('result');
-  resultBox.style.display = 'block';
-  resultBox.innerHTML = '<p style="color:#10B981;">⏳ Running AI model...</p>';
-
-  const payload = {
-    N: parseFloat(document.getElementById('n').value),
-    P: parseFloat(document.getElementById('p').value),
-    K: parseFloat(document.getElementById('k').value),
-    temperature: parseFloat(document.getElementById('temperature').value),
-    humidity: parseFloat(document.getElementById('humidity').value),
-    ph: parseFloat(document.getElementById('ph').value),
-    rainfall: parseFloat(document.getElementById('rainfall').value)
-  };
-
-  try {
-    const res = await fetch(`http://${window.location.hostname || 'localhost'}:5000/predict`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-    const data = await res.json();
-    if (data.best_crop && data.best_crop.crop) {
-      const bestCrop = data.best_crop.crop;
-      const confidence = data.best_crop.confidence;
-      const cropInfo = {
-        rice: { desc: 'Requires high rainfall and warm temperatures.', season: 'Kharif', market: 'High' },
-        coffee: { desc: 'Grows best in tropical climates with moderate rainfall.', season: 'Perennial', market: 'Very High' },
-        maize: { desc: 'Requires fertile soil and moderate rainfall.', season: 'Kharif/Rabi', market: 'High' },
-        cotton: { desc: 'Needs warm weather and black soil.', season: 'Kharif', market: 'High' },
-        chickpea: { desc: 'Thrives in cool climates with low rainfall.', season: 'Rabi', market: 'High' },
-        jute: { desc: 'Needs warm humid climate and alluvial soil.', season: 'Kharif', market: 'Medium' },
-      };
-      const info = cropInfo[bestCrop.toLowerCase()] || { desc: 'Suitable for your soil and climate conditions.', season: 'Varies', market: 'Moderate' };
-      
-      let top3Html = '';
-      if (data.top3 && data.top3.length > 0) {
-        top3Html = `
-          <div style="margin-top: 1rem; text-align: left; background: rgba(255, 255, 255, 0.03); padding: 0.75rem; border-radius: 0.5rem; border: 1px solid rgba(255,255,255,0.05);">
-            <div style="font-size: 0.72rem; color: #64748b; text-transform: uppercase; font-weight: 600; margin-bottom: 0.4rem;">Top 3 Recommendations</div>
-            <ol style="font-size: 0.82rem; color: #cbd5e1; list-style-type: decimal; margin-left: 1.25rem;">
-              ${data.top3.map(item => `<li><b style="color:#10B981;">${item.crop.charAt(0).toUpperCase() + item.crop.slice(1)}</b> (${item.confidence}%)</li>`).join('')}
-            </ol>
-          </div>
-        `;
-      }
-
-      resultBox.innerHTML = `
-        <div style="text-align:center;padding:1rem;">
-          <div style="font-size:3.5rem;margin-bottom:0.5rem;">🌿</div>
-          <h3 style="color:#10B981;font-size:1.6rem;font-weight:700;margin-bottom:0.25rem;">${bestCrop.charAt(0).toUpperCase()+bestCrop.slice(1)}</h3>
-          <div style="font-size:0.8rem;color:#84CC16;font-weight:600;margin-bottom:1rem;">Confidence: ${confidence}%</div>
-          <p style="color:#94a3b8;font-size:0.875rem;margin-bottom:1.25rem;line-height:1.5;">${info.desc}</p>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;text-align:left;">
-            <div style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.2);border-radius:0.5rem;padding:0.75rem;">
-              <div style="font-size:0.7rem;color:#64748b;text-transform:uppercase;letter-spacing:0.1em;">Season</div>
-              <div style="font-weight:600;color:#f1f5f9;margin-top:0.25rem;">${info.season}</div>
-            </div>
-            <div style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.2);border-radius:0.5rem;padding:0.75rem;">
-              <div style="font-size:0.7rem;color:#64748b;text-transform:uppercase;letter-spacing:0.1em;">Market Value</div>
-              <div style="font-weight:600;color:#f1f5f9;margin-top:0.25rem;">${info.market}</div>
-            </div>
-          </div>
-          ${top3Html}
-        </div>`;
-    } else {
-      resultBox.innerHTML = `<p style="color:#ef4444;">❌ ${data.error || 'Prediction failed. Is the AgriSmart backend running on port 5000?'}</p>`;
-    }
-  } catch(err) {
-    resultBox.innerHTML = `<p style="color:#f59e0b;">⚠️ Could not connect to AgriSmart backend (port 5000). Please run: <code>cd agrismart-backend && python app.py</code></p>`;
-  }
+  predictCrop();
 });
 </script>
 </body>

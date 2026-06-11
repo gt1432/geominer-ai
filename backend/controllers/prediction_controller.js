@@ -79,7 +79,17 @@ exports.predictMineralPotential = async (req, res) => {
                     explanation: mlResult.explanation,
                     lithology: mlResult.lithology || 'Unknown',
                     geological_unit: mlResult.geological_unit || 'Unknown',
-                    formation: mlResult.formation || 'Unknown'
+                    formation: mlResult.formation || 'Unknown',
+                    rock_type_probabilities: mlResult.rock_type_probabilities || {},
+                    rock_type_class: mlResult.rock_type_class || 'Unknown',
+                    rock_type_confidence: mlResult.rock_type_confidence || 0.0,
+                    rock_formation_description: mlResult.rock_formation_description || '',
+                    associated_minerals: mlResult.associated_minerals || [],
+                    suitability_score: mlResult.suitability_score || 0.0,
+                    suitability_category: mlResult.suitability_category || 'Poor',
+                    correlation_details: mlResult.correlation_details || {},
+                    ai_insights: mlResult.ai_insights || {},
+                    image_path: req.body.image_path || ''
                 };
                 
                 // Save to database
@@ -105,7 +115,18 @@ exports.predictMineralPotential = async (req, res) => {
                     lithology: savedLog.lithology,
                     geological_unit: savedLog.geological_unit,
                     formation: savedLog.formation,
-                    explanation: savedLog.explanation
+                    explanation: savedLog.explanation,
+                    rock_type_probabilities: savedLog.rock_type_probabilities,
+                    rock_type_class: savedLog.rock_type_class,
+                    rock_type_confidence: savedLog.rock_type_confidence,
+                    rock_formation_description: savedLog.rock_formation_description,
+                    associated_minerals: savedLog.associated_minerals,
+                    suitability_score: savedLog.suitability_score,
+                    suitability_category: savedLog.suitability_category,
+                    correlation_details: savedLog.correlation_details,
+                    ai_insights: savedLog.ai_insights,
+                    saved_project: savedLog.saved_project,
+                    image_path: savedLog.image_path
                 });
 
             } catch (parseErr) {
@@ -232,35 +253,43 @@ exports.downloadPdfReport = async (req, res) => {
         const docMins    = Array.isArray(record.documented_minerals) ? record.documented_minerals : [];
         const beltName   = record.belt_name || '';
 
-        // Three KPI boxes
-        box(MARGIN,       y, 158, 76, C_CBG);
-        box(MARGIN + 168, y, 148, 76, C_CBG);
-        box(MARGIN + 326, y, 188, 76, C_CBG);
+        // Four KPI boxes
+        box(MARGIN,       y, 115, 76, C_CBG);
+        box(MARGIN + 120, y, 115, 76, C_CBG);
+        box(MARGIN + 240, y, 105, 76, C_CBG);
+        box(MARGIN + 350, y, 145, 76, C_CBG);
 
-        doc.fillColor(C_GRAY).font('Helvetica').fontSize(7.5)
-           .text('MINERAL POTENTIAL', MARGIN + 8, y + 8, { lineBreak: false });
-        doc.fillColor(C_BLUE).font('Helvetica-Bold').fontSize(30)
-           .text(`${record.mineral_probability}%`, MARGIN + 8, y + 22, { lineBreak: false });
         doc.fillColor(C_GRAY).font('Helvetica').fontSize(7)
-           .text('AI probability score', MARGIN + 8, y + 60, { lineBreak: false });
+           .text('MINERAL POTENTIAL', MARGIN + 6, y + 8, { lineBreak: false });
+        doc.fillColor(C_BLUE).font('Helvetica-Bold').fontSize(22)
+           .text(`${record.mineral_probability}%`, MARGIN + 6, y + 22, { lineBreak: false });
+        doc.fillColor(C_GRAY).font('Helvetica').fontSize(6.5)
+           .text('AI probability score', MARGIN + 6, y + 60, { lineBreak: false });
 
-        doc.fillColor(C_GRAY).font('Helvetica').fontSize(7.5)
-           .text('CONFIDENCE', MARGIN + 178, y + 8, { lineBreak: false });
-        doc.fillColor(confColor).font('Helvetica-Bold').fontSize(24)
-           .text(record.confidence || 'Low', MARGIN + 178, y + 26, { lineBreak: false });
         doc.fillColor(C_GRAY).font('Helvetica').fontSize(7)
-           .text('Risk classification', MARGIN + 178, y + 60, { lineBreak: false });
+           .text('SUITABILITY SCORE', MARGIN + 126, y + 8, { lineBreak: false });
+        doc.fillColor(C_BLUE).font('Helvetica-Bold').fontSize(22)
+           .text(`${record.suitability_score || 0}`, MARGIN + 126, y + 22, { lineBreak: false });
+        doc.fillColor(C_GRAY).font('Helvetica').fontSize(6.5)
+           .text(record.suitability_category || 'Poor', MARGIN + 126, y + 60, { lineBreak: false });
 
-        doc.fillColor(C_GRAY).font('Helvetica').fontSize(7.5)
-           .text('DOCUMENTED OCCURRENCES', MARGIN + 336, y + 8, { lineBreak: false });
+        doc.fillColor(C_GRAY).font('Helvetica').fontSize(7)
+           .text('CONFIDENCE', MARGIN + 246, y + 8, { lineBreak: false });
+        doc.fillColor(confColor).font('Helvetica-Bold').fontSize(18)
+           .text(record.confidence || 'Low', MARGIN + 246, y + 26, { lineBreak: false });
+        doc.fillColor(C_GRAY).font('Helvetica').fontSize(6.5)
+           .text('Risk classification', MARGIN + 246, y + 60, { lineBreak: false });
+
+        doc.fillColor(C_GRAY).font('Helvetica').fontSize(7)
+           .text('DOCUMENTED MINERALS', MARGIN + 356, y + 8, { lineBreak: false });
         if (docMins.length > 0) {
-            doc.fillColor(C_GREEN).font('Helvetica-Bold').fontSize(9)
-               .text(docMins.slice(0, 3).join(', '), MARGIN + 336, y + 26, { width: 170, lineBreak: false });
-            doc.fillColor(C_GRAY).font('Helvetica').fontSize(7)
-               .text(beltName || 'GSI registry', MARGIN + 336, y + 50, { width: 170, lineBreak: false });
+            doc.fillColor(C_GREEN).font('Helvetica-Bold').fontSize(8)
+               .text(docMins.slice(0, 2).join(', '), MARGIN + 356, y + 24, { width: 130, lineBreak: false });
+            doc.fillColor(C_GRAY).font('Helvetica').fontSize(6.5)
+               .text(beltName || 'GSI registry', MARGIN + 356, y + 60, { width: 130, lineBreak: false });
         } else {
-            doc.fillColor(C_GRAY).font('Helvetica-Bold').fontSize(9)
-               .text('None documented', MARGIN + 336, y + 26, { lineBreak: false });
+            doc.fillColor(C_GRAY).font('Helvetica-Bold').fontSize(8)
+               .text('None documented', MARGIN + 356, y + 26, { lineBreak: false });
         }
 
         doc.y = y + 84;
@@ -273,7 +302,7 @@ exports.downloadPdfReport = async (req, res) => {
         y = sectionLabel('2. Spatial & Geological Information', doc.y);
         box(MARGIN, y, CONTENT_W, 108, C_LBG);
 
-        const c1 = MARGIN + 10, c2 = MARGIN + 175, c3 = MARGIN + 355;
+        const c1 = MARGIN + 10, c2 = MARGIN + 165, c3 = MARGIN + 340;
         // Column 1: coordinates
         [['LATITUDE',  `${record.latitude.toFixed(5)}°N`],
          ['LONGITUDE', `${record.longitude.toFixed(5)}°E`],
@@ -284,23 +313,24 @@ exports.downloadPdfReport = async (req, res) => {
         });
         // Column 2: geology
         [['ROCK TYPE',  record.rock_type||'Granite'],
-         ['LITHOLOGY',  record.lithology||'—'],
-         ['GEO UNIT',   (record.geological_unit||'—').substring(0,22)],
-         ['BELT / ZONE',beltName||'General Survey']
+         ['ROCK CLASS',  record.rock_type_class||'Unknown'],
+         ['LITHOLOGY',  (record.lithology||'—').substring(0, 32)],
+         ['GEO UNIT',   (record.geological_unit||'—').substring(0, 32)]
         ].forEach(([lbl, val], i) => {
-            doc.fillColor(C_GRAY).font('Helvetica').fontSize(7).text(lbl, c2, y+10+i*24, {lineBreak:false});
-            doc.fillColor(C_DARK).font('Helvetica-Bold').fontSize(8).text(val, c2+72, y+10+i*24, {width:145, lineBreak:false});
+            doc.fillColor(C_GRAY).font('Helvetica').fontSize(7).text(lbl, c2, y+10+i*22, {lineBreak:false});
+            doc.fillColor(C_DARK).font('Helvetica-Bold').fontSize(8).text(val, c2+72, y+10+i*22, {width:105, lineBreak:false});
         });
-        // Column 3: documented minerals
-        doc.fillColor(C_GRAY).font('Helvetica').fontSize(7).text('DOCUMENTED MINERALS', c3, y+10, {lineBreak:false});
-        if (docMins.length > 0) {
-            docMins.slice(0, 5).forEach((m, i) =>
-                doc.fillColor(C_GREEN).font('Helvetica-Bold').fontSize(8)
-                   .text(`• ${m}`, c3, y+24+i*16, {lineBreak:false})
-            );
-        } else {
-            doc.fillColor(C_GRAY).font('Helvetica').fontSize(8).text('None recorded', c3, y+24, {lineBreak:false});
-        }
+        // Column 3: rock type probabilities
+        const pIgn = record.rock_type_probabilities?.igneous !== undefined ? record.rock_type_probabilities.igneous : 0.0;
+        const pSed = record.rock_type_probabilities?.sedimentary !== undefined ? record.rock_type_probabilities.sedimentary : 0.0;
+        const pMet = record.rock_type_probabilities?.metamorphic !== undefined ? record.rock_type_probabilities.metamorphic : 0.0;
+        
+        doc.fillColor(C_GRAY).font('Helvetica').fontSize(7).text('ROCK PROBABILITIES', c3, y+10, {lineBreak:false});
+        doc.fillColor(C_DARK).font('Helvetica').fontSize(7.5)
+           .text(`• Igneous: ${Math.round(pIgn*100)}%`, c3, y+24, {lineBreak:false})
+           .text(`• Sedimentary: ${Math.round(pSed*100)}%`, c3, y+38, {lineBreak:false})
+           .text(`• Metamorphic: ${Math.round(pMet*100)}%`, c3, y+52, {lineBreak:false})
+           .text(`• Rock AI Conf: ${record.rock_type_confidence || 85}%`, c3, y+66, {lineBreak:false});
 
         doc.y = y + 116;
         hRule(doc.y); doc.y += 14;
@@ -392,55 +422,77 @@ exports.downloadPdfReport = async (req, res) => {
         doc.y = y + 64;
 
         // ═══════════════════════════════════════════════════════════════════
-        // SECTION 5 — AI EXPLANATION
+        // SECTION 5 — AI GEOLOGICAL INSIGHTS & EXPLANATION
         // ═══════════════════════════════════════════════════════════════════
-        need(50);
-        sectionLabel('5. AI Interpretation & Explanation', doc.y);
-        doc.y += 26;
+        need(160);
+        y = sectionLabel('5. AI Geological Insights & Explanation', doc.y);
+        
+        const insights = record.ai_insights || {};
+        const summary = insights.geological_summary || record.explanation || '';
+        const minZones = insights.predicted_mineral_zones || '';
+        const potential = insights.exploration_potential || '';
+        const risks = insights.risk_factors || '';
+        const survey = insights.recommended_survey_type || '';
+        
+        doc.fillColor(C_DARK).font('Helvetica-Bold').fontSize(8).text('Geological Summary:', MARGIN, y);
+        doc.fillColor(C_DARK).font('Helvetica').fontSize(8).lineGap(1.5)
+           .text(summary, MARGIN + 10, y + 12, { width: CONTENT_W - 10 });
+           
+        let currY = doc.y + 8;
+        doc.fillColor(C_DARK).font('Helvetica-Bold').fontSize(8).text('Mineral Outcrop Zones:', MARGIN, currY);
+        doc.fillColor(C_DARK).font('Helvetica').fontSize(8).lineGap(1.5)
+           .text(minZones, MARGIN + 10, currY + 12, { width: CONTENT_W - 10 });
+           
+        currY = doc.y + 8;
+        doc.fillColor(C_DARK).font('Helvetica-Bold').fontSize(8).text('Exploration Potential & Hazards:', MARGIN, currY);
+        doc.fillColor(C_DARK).font('Helvetica').fontSize(8).lineGap(1.5)
+           .text(`${potential} ${risks}`, MARGIN + 10, currY + 12, { width: CONTENT_W - 10 });
 
-        const scoreDesc = record.mineral_probability > 60
-            ? `HIGH potential (${record.mineral_probability}%): strongly enriched geochemical signatures consistent with documented mineral belts and known quarry activity.`
-            : record.mineral_probability > 20
-            ? `MODERATE potential (${record.mineral_probability}%): measurable geochemical anomalies above crustal background. Further prospecting recommended.`
-            : `LOW potential (${record.mineral_probability}%): geochemical values within normal crustal background ranges relative to NGCM baseline.`;
-
-        const explText = record.explanation || `Located within ${record.geological_unit || 'the study area'}. NGCM geochemical data used for mineral concentration estimates.`;
-        const methText = `Methodology: Two-stage hybrid engine — (1) documented occurrence lookup within 25 km radius against GSI mineral registry, (2) Random Forest Regressor trained on NGCM (10,004 samples, 68 elements). Known mineral belts (Kolar Gold Field, Bellary Iron Belt, Kurnool Diamond Zone, etc.) are recognized independently of NGCM spatial coverage.`;
-
-        need(40);
-        doc.fillColor(C_DARK).font('Helvetica').fontSize(9).lineGap(2.5)
-           .text(scoreDesc, MARGIN, doc.y, {width: CONTENT_W, align:'justify'});
-        doc.y += 10;
-
-        need(50);
-        doc.fillColor(C_GRAY).font('Helvetica-Bold').fontSize(7.5).text('Geological AI Explanation:', MARGIN, doc.y);
-        doc.y = doc.y + 2;
-        doc.fillColor(C_DARK).font('Helvetica').fontSize(8.5).lineGap(2)
-           .text(explText, MARGIN + 10, doc.y, {width: CONTENT_W - 10, align:'justify'});
-        doc.y += 8;
-
-        need(50);
-        doc.fillColor(C_GRAY).font('Helvetica-Bold').fontSize(7.5).text('Methodology:', MARGIN, doc.y);
-        doc.y = doc.y + 2;
-        doc.fillColor(C_DARK).font('Helvetica').fontSize(8.5).lineGap(2)
-           .text(methText, MARGIN + 10, doc.y, {width: CONTENT_W - 10, align:'justify'});
-        doc.y += 14;
+        doc.y = doc.y + 14;
+        hRule(doc.y); doc.y += 14;
 
         // ═══════════════════════════════════════════════════════════════════
-        // SECTION 6 — PLATFORM CAPABILITIES
+        // SECTION 6 — MINERAL-ROCK CORRELATION & RECOMMENDATIONS
+        // ═══════════════════════════════════════════════════════════════════
+        need(140);
+        y = sectionLabel('6. Mineral-Rock Correlation & Recommendations', doc.y);
+        
+        const correlation = record.correlation_details || {};
+        const assocRocks = Array.isArray(correlation.associated_rocks) ? correlation.associated_rocks.join(', ') : '';
+        const geoEnv = correlation.geological_environment || '';
+        const formProcess = correlation.formation_process || '';
+        
+        box(MARGIN, y, CONTENT_W, 76, C_LBG);
+        doc.fillColor(C_BLUE).font('Helvetica-Bold').fontSize(8.5).text('Target Correlation:', MARGIN + 10, y + 8);
+        doc.fillColor(C_GRAY).font('Helvetica').fontSize(7.5).text('Associated Rocks:', MARGIN + 10, y + 22);
+        doc.fillColor(C_DARK).font('Helvetica-Bold').fontSize(8).text(assocRocks, MARGIN + 100, y + 22, { width: CONTENT_W - 120 });
+        
+        doc.fillColor(C_GRAY).font('Helvetica').fontSize(7.5).text('Geologic Setting:', MARGIN + 10, y + 36);
+        doc.fillColor(C_DARK).font('Helvetica-Bold').fontSize(8).text(geoEnv, MARGIN + 100, y + 36, { width: CONTENT_W - 120 });
+        
+        doc.fillColor(C_GRAY).font('Helvetica').fontSize(7.5).text('Formation Process:', MARGIN + 10, y + 50);
+        doc.fillColor(C_DARK).font('Helvetica-Bold').fontSize(8).text(formProcess, MARGIN + 100, y + 50, { width: CONTENT_W - 120 });
+
+        currY = y + 88;
+        doc.fillColor(C_DARK).font('Helvetica-Bold').fontSize(8).text('Recommended Survey Method:', MARGIN, currY);
+        doc.fillColor(C_BLUE).font('Helvetica-Bold').fontSize(8).text(survey, MARGIN + 130, currY, { width: CONTENT_W - 140 });
+
+        doc.y = currY + 20;
+        hRule(doc.y); doc.y += 14;
+
+        // ═══════════════════════════════════════════════════════════════════
+        // SECTION 7 — PLATFORM CAPABILITIES
         // ═══════════════════════════════════════════════════════════════════
         need(120);
-        hRule(doc.y); doc.y += 12;
-        sectionLabel('6. GeoMiner AI Platform Capabilities', doc.y);
+        sectionLabel('7. GeoMiner AI Platform Capabilities', doc.y);
         doc.y += 26;
 
         const caps = [
-            ['GIS Map Selection',     'Interactive map with click-to-point and coordinate search. 5 km exploration zone auto-plotted.'],
-            ['Hybrid ML Engine',      '25 km occurrence buffer + Random Forest on NGCM (10,004 records). Belt detection independent of NGCM coverage.'],
-            ['Belt Recognition',      'Kolar Gold Field, Bellary Iron Belt, Sandur Schist Belt, Chitradurga Belt, Kurnool Diamond Zone.'],
-            ['PDF Reports',           'Full geological report: mineral inventory, concentrations, XAI interpretation, documented occurrences.'],
+            ['GIS Map Selection',     'Interactive map with layer selections: satellite, topography, elevation, land cover, soil.'],
+            ['Hybrid ML Engine',      '25 km occurrence buffer + Random Forest on NGCM. Calculates rock classifications & suitability scores.'],
+            ['XAI Predictions',      'Outcrops, geological indicators, exploration risk metrics, and mineral correlation tables.'],
+            ['Saved Projects',       'Save target locations, generate and download PDF, CSV, and JSON exploration report hubs.'],
         ];
-        need(110);
         caps.forEach(([title, desc], i) => {
             const cx = i % 2 === 0 ? MARGIN : MARGIN + CONTENT_W / 2 + 5;
             const cy = doc.y + Math.floor(i / 2) * 50;
@@ -637,4 +689,92 @@ exports.diagnosePrediction = async (req, res) => {
         return res.status(500).json({ error: 'Diagnostic failed: ' + err.message });
     }
 };
+
+// 8. Toggle saved_project field
+exports.savePredictionToggle = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const record = await dbService.getPredictionById(id);
+        if (!record) return res.status(404).json({ error: 'Prediction not found.' });
+        
+        record.saved_project = !record.saved_project;
+        
+        if (dbService.isFallback()) {
+            const fs = require('fs');
+            const dbPath = path.join(__dirname, '..', 'database', 'local_db.json');
+            if (fs.existsSync(dbPath)) {
+                const db = JSON.parse(fs.readFileSync(dbPath, 'utf8'));
+                const idx = db.findIndex(item => item._id === id);
+                if (idx !== -1) {
+                    db[idx].saved_project = record.saved_project;
+                    fs.writeFileSync(dbPath, JSON.stringify(db, null, 2));
+                }
+            }
+        } else {
+            // MongoDB update
+            const Prediction = require('mongoose').model('Prediction');
+            await Prediction.updateOne({ _id: id }, { $set: { saved_project: record.saved_project } });
+        }
+        
+        return res.status(200).json({ success: true, saved_project: record.saved_project });
+    } catch (err) {
+        console.error('Error toggling saved state:', err);
+        return res.status(500).json({ error: 'Internal server error.' });
+    }
+};
+
+// 9. Download CSV Report
+exports.downloadCsvReport = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const record = await dbService.getPredictionById(id);
+        if (!record) return res.status(404).json({ error: 'Prediction not found.' });
+        
+        const csvRows = [
+            ['Field', 'Value'],
+            ['Latitude', record.latitude],
+            ['Longitude', record.longitude],
+            ['Altitude', record.altitude || 450],
+            ['Mineral Potential Score', `${record.mineral_probability}%`],
+            ['Confidence', record.confidence],
+            ['Suitability Score', record.suitability_score || 0],
+            ['Suitability Category', record.suitability_category || 'Poor'],
+            ['Rock Type', record.rock_type],
+            ['Rock Class', record.rock_type_class || 'Unknown'],
+            ['Lithology', record.lithology || 'Unknown'],
+            ['Formation', record.formation || 'Unknown'],
+            ['Nearest Mineral Occurrence', record.nearest_mineral || 'None'],
+            ['Occurrence Distance (km)', record.nearest_mineral_dist_km || 0],
+            ['Top Predicted Mineral', record.predicted_minerals[0] || ''],
+            ['Associated Minerals', (record.associated_minerals || []).join('; ')],
+            ['AI Explanation', (record.explanation || '').replace(/"/g, '""')]
+        ];
+        
+        const csvContent = csvRows.map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
+        
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', `attachment; filename=geominer-report-${id.substring(0,8)}.csv`);
+        return res.status(200).send(csvContent);
+    } catch (err) {
+        console.error('CSV export failed:', err);
+        return res.status(500).json({ error: 'Failed to generate CSV report.' });
+    }
+};
+
+// 10. Download JSON Report
+exports.downloadJsonReport = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const record = await dbService.getPredictionById(id);
+        if (!record) return res.status(404).json({ error: 'Prediction not found.' });
+        
+        res.setHeader('Content-Type', 'application/json');
+        res.setHeader('Content-Disposition', `attachment; filename=geominer-report-${id.substring(0,8)}.json`);
+        return res.status(200).json(record);
+    } catch (err) {
+        console.error('JSON export failed:', err);
+        return res.status(500).json({ error: 'Failed to generate JSON report.' });
+    }
+};
+
 

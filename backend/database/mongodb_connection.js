@@ -137,18 +137,27 @@ const dbService = {
         const count = list.length;
         
         let avgProb = 0.0;
+        let avgSuit = 0.0;
         let highCount = 0;
+        let savedCount = 0;
         if (count > 0) {
             const sumProb = list.reduce((sum, item) => sum + (item.mineral_probability || 0), 0);
             avgProb = sumProb / count;
+            
+            const sumSuit = list.reduce((sum, item) => sum + (item.suitability_score || 0), 0);
+            avgSuit = sumSuit / count;
+            
             highCount = list.filter(item => item.confidence === 'High' || item.risk_level === 'High').length;
+            savedCount = list.filter(item => item.saved_project === true).length;
         }
         
         return {
             totalPredictions: count,
             averageProbability: Math.round(avgProb * 100) / 100,
+            averageSuitability: Math.round(avgSuit * 10) / 10,
             highConfidenceCount: highCount,
-            predictionsList: list.slice(0, 10) // return top 10 recent
+            savedProjectsCount: savedCount,
+            predictionsList: list
         };
     }
 };

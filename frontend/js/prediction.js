@@ -84,6 +84,54 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
+let selectedRockImageBase64 = '';
+let selectedRockImageName = '';
+
+function handleRockImageSelect(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    if (file.size > 2 * 1024 * 1024) {
+        Toast.warning('Image size must be less than 2MB.');
+        event.target.value = '';
+        return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        selectedRockImageBase64 = e.target.result;
+        selectedRockImageName = file.name;
+        
+        const preview = document.getElementById('rock-image-preview');
+        const container = document.getElementById('rock-image-preview-container');
+        const prompt = document.getElementById('rock-dropzone-prompt');
+        
+        if (preview) preview.src = selectedRockImageBase64;
+        if (container) container.classList.remove('hidden');
+        if (prompt) prompt.classList.add('hidden');
+    };
+    reader.readAsDataURL(file);
+}
+window.handleRockImageSelect = handleRockImageSelect;
+
+function clearRockImage(event) {
+    if (event) event.stopPropagation();
+    selectedRockImageBase64 = '';
+    selectedRockImageName = '';
+    
+    const fileInput = document.getElementById('rock-image-input');
+    if (fileInput) fileInput.value = '';
+    
+    const preview = document.getElementById('rock-image-preview');
+    const container = document.getElementById('rock-image-preview-container');
+    const prompt = document.getElementById('rock-dropzone-prompt');
+    
+    if (preview) preview.src = '';
+    if (container) container.classList.add('hidden');
+    if (prompt) prompt.classList.remove('hidden');
+}
+window.clearRockImage = clearRockImage;
+
 // ══════════════════════════════════════════
 // PREDICTION SUBMIT (predict.html)
 // ══════════════════════════════════════════
@@ -116,7 +164,7 @@ async function handlePredictionSubmit(e) {
     // Show loader
     Loader.show('Running AI prediction engine…');
 
-    const payload = { latitude: lat, longitude: lon, altitude: alt, fe, cu, zn };
+    const payload = { latitude: lat, longitude: lon, altitude: alt, fe, cu, zn, image_path: selectedRockImageBase64 };
 
     try {
         const response = await fetch(`${API_BASE_URL}/predict`, {
@@ -137,6 +185,11 @@ async function handlePredictionSubmit(e) {
         sessionStorage.setItem('input_fe', fe);
         sessionStorage.setItem('input_cu', cu);
         sessionStorage.setItem('input_zn', zn);
+        if (selectedRockImageName) {
+            sessionStorage.setItem('latest_prediction_image_name', selectedRockImageName);
+        } else {
+            sessionStorage.removeItem('latest_prediction_image_name');
+        }
 
         Toast.success('Prediction complete! Redirecting to results…');
         setTimeout(() => { window.location.href = 'results.html'; }, 800);
@@ -155,6 +208,23 @@ async function handleGeocodeSearch() {
     const searchEl = document.getElementById('loc-search-input');
     const query    = searchEl?.value?.trim();
     if (!query) { Toast.info('Enter a location name to search.'); return; }
+
+    // Check if query matches coordinates pattern: "lat, lon"
+    const coordRegex = /^\s*(-?\d+(\.\d+)?)\s*,\s*(-?\d+(\.\d+)?)\s*$/;
+    const match = query.match(coordRegex);
+    if (match) {
+        const lat = parseFloat(match[1]);
+        const lon = parseFloat(match[3]);
+        if (!isNaN(lat) && !isNaN(lon)) {
+            const latInput = document.getElementById('inp-lat');
+            const lonInput = document.getElementById('inp-lon');
+            if (latInput) latInput.value = lat.toFixed(5);
+            if (lonInput) lonInput.value = lon.toFixed(5);
+            if (typeof recenterMap === 'function') recenterMap(lat, lon);
+            Toast.success(`Recentered map to: ${lat.toFixed(5)}, ${lon.toFixed(5)}`);
+            return;
+        }
+    }
 
     const savedKey = localStorage.getItem('google_maps_key') || '';
     try {
@@ -187,7 +257,7 @@ function loadPredictionResults() {
 
     const data = JSON.parse(rawData);
 
-    // ── 1. Score ring ──
+    // ── 1. Potential Score ring ──
     const scoreVal = data.mineral_probability || 0;
     const scoreEl  = document.getElementById('res-score');
     if (scoreEl) scoreEl.textContent = `${scoreVal}%`;
@@ -200,6 +270,26 @@ function loadPredictionResults() {
             circle.style.transition    = 'stroke-dashoffset 1.4s cubic-bezier(0.4,0,0.2,1)';
             circle.style.strokeDashoffset = offset;
         }, 200);
+    }
+
+    // ── 1b. Suitability Score ring ──
+    const suitabilityVal = data.suitability_score || 0;
+    const suitabilityEl  = document.getElementById('res-suitability-score');
+    if (suitabilityEl) suitabilityEl.textContent = `${suitabilityVal}`;
+
+    const suitabilityCircle = document.getElementById('suitability-circle');
+    if (suitabilityCircle) {
+        const circ   = 2 * Math.PI * 42;
+        const offset = circ * (1 - suitabilityVal / 100);
+        setTimeout(() => {
+            suitabilityCircle.style.transition    = 'stroke-dashoffset 1.4s cubic-bezier(0.4,0,0.2,1)';
+            suitabilityCircle.style.strokeDashoffset = offset;
+        }, 200);
+    }
+
+    const suitCategoryBadge = document.getElementById('res-suitability-category-badge');
+    if (suitCategoryBadge) {
+        suitCategoryBadge.textContent = data.suitability_category || 'Poor';
     }
 
     // ── 2. Confidence badge ──
@@ -217,12 +307,47 @@ function loadPredictionResults() {
     setTextSafe('res-lithology',       data.lithology || 'Unknown');
     setTextSafe('res-formation',       data.formation || data.geological_zone || 'Unknown Formation');
     setTextSafe('res-rock-type',       data.rock_type || 'Unknown');
+    setTextSafe('res-rock-description', data.rock_formation_description || data.formation || 'No formation description available.');
 
-    // ── 4. AI Explanation ──
+    // ── 3b. Rock Probabilities and classes ──
+    const pIgn = data.rock_type_probabilities?.igneous !== undefined ? data.rock_type_probabilities.igneous : 0.0;
+    const pSed = data.rock_type_probabilities?.sedimentary !== undefined ? data.rock_type_probabilities.sedimentary : 0.0;
+    const pMet = data.rock_type_probabilities?.metamorphic !== undefined ? data.rock_type_probabilities.metamorphic : 0.0;
+
+    setTextSafe('res-pct-igneous',     `${Math.round(pIgn * 100)}%`);
+    setTextSafe('res-pct-sedimentary', `${Math.round(pSed * 100)}%`);
+    setTextSafe('res-pct-metamorphic', `${Math.round(pMet * 100)}%`);
+
+    const barIgn = document.getElementById('bar-igneous');
+    if (barIgn) barIgn.style.width = `${Math.round(pIgn * 100)}%`;
+    const barSed = document.getElementById('bar-sedimentary');
+    if (barSed) barSed.style.width = `${Math.round(pSed * 100)}%`;
+    const barMet = document.getElementById('bar-metamorphic');
+    if (barMet) barMet.style.width = `${Math.round(pMet * 100)}%`;
+
+    // ── 3c. Geological image preview ──
+    const imgContainer = document.getElementById('res-rock-img-container');
+    const imgPreview = document.getElementById('res-rock-img');
+    const imgName = document.getElementById('res-rock-img-name');
+    if (imgContainer && imgPreview && data.image_path) {
+        imgPreview.src = data.image_path;
+        if (imgName) {
+            imgName.textContent = sessionStorage.getItem('latest_prediction_image_name') || 'uploaded_sample.png';
+        }
+        imgContainer.classList.remove('hidden');
+    }
+
+    // ── 4. AI Explanation & Insights ──
     const explanationEl = document.getElementById('res-explanation');
     if (explanationEl) {
         explanationEl.textContent = data.explanation || 'No known mineral occurrence or geological indicators found at the selected location.';
     }
+
+    const insights = data.ai_insights || {};
+    setTextSafe('res-insight-summary',   insights.geological_summary || data.explanation || 'No AI summary available.');
+    setTextSafe('res-insight-zones',     insights.predicted_mineral_zones || 'No mineral zones identified.');
+    setTextSafe('res-insight-potential', insights.exploration_potential || 'No potential analysis available.');
+    setTextSafe('res-insight-risks',     insights.risk_factors || 'Low geological hazard.');
 
     // ── 4b. Documented Occurrences Banner ──
     const docMinerals = data.documented_minerals || [];
@@ -252,17 +377,44 @@ function loadPredictionResults() {
         }
     }
 
-    // ── 5. PDF download link ──
-    const predId  = data._id ? (data._id.$oid || data._id.toString() || data._id) : null;
-    const pdfBtn  = document.getElementById('btn-pdf-download');
-    if (pdfBtn) {
-        if (predId) {
-            pdfBtn.href = `${API_BASE_URL}/predictions/${predId}/pdf`;
-            pdfBtn.style.display = '';
-        } else {
-            pdfBtn.style.display = 'none';
-        }
+    // ── 4c. Exploration Recommendations ──
+    const priorityEl = document.getElementById('res-rec-priority');
+    if (priorityEl) {
+        priorityEl.textContent = `${(data.suitability_category || 'Poor').toUpperCase()} PRIORITY`;
     }
+    setTextSafe('res-rec-surveys', insights.recommended_survey_type || 'Geological reconnaissance mapping & geophysical profiling.');
+    setTextSafe('res-rec-data',    insights.additional_data_required || 'Core drilling profiles & high-resolution magnetic grids.');
+    
+    const nearbyEl = document.getElementById('res-rec-nearby');
+    if (nearbyEl) {
+        nearbyEl.innerHTML = `Nearest documented mineral occurrence: <b>${data.nearest_mineral || 'None'}</b> located <b>${(data.nearest_mineral_dist_km || 0).toFixed(1)} km</b> away.`;
+    }
+
+    // ── 4d. Mineral-Rock Correlation ──
+    const correlation = data.correlation_details || {};
+    const topMineral = data.predicted_minerals?.[0] || 'Unknown';
+    setTextSafe('res-corr-mineral', topMineral);
+    
+    const assocRocks = Array.isArray(correlation.associated_rocks) ? correlation.associated_rocks.join(', ') : 'Unknown';
+    setTextSafe('res-corr-rocks', assocRocks);
+    setTextSafe('res-corr-env', correlation.geological_environment || 'Unknown');
+    setTextSafe('res-corr-process', correlation.formation_process || 'Unknown');
+    setTextSafe('res-corr-significance', correlation.exploration_significance || `Target anomalies matching ${topMineral} concentrations.`);
+
+    // ── 5. Action and download links ──
+    const predId  = data._id ? (data._id.$oid || data._id.toString() || data._id) : null;
+    
+    const csvBtn  = document.getElementById('btn-csv-download');
+    if (csvBtn && predId) csvBtn.href = `${API_BASE_URL}/predictions/${predId}/csv`;
+    
+    const jsonBtn = document.getElementById('btn-json-download');
+    if (jsonBtn && predId) jsonBtn.href = `${API_BASE_URL}/predictions/${predId}/json`;
+
+    const pdfBtn  = document.getElementById('btn-pdf-download');
+    if (pdfBtn && predId) pdfBtn.href = `${API_BASE_URL}/predictions/${predId}/pdf`;
+
+    // Render Saved Toggle initial UI state
+    renderSaveButton(data.saved_project);
 
     // ── 6. Mineral bars + donut ──
     renderMineralInventory(data.predicted_minerals || [], data.mineral_percentages || {});
@@ -420,26 +572,93 @@ function initResultsMap(lat, lon, predData) {
 
     // Target marker
     const targetIcon = L.divIcon({
-        html: `<div style="background:linear-gradient(135deg,#3B82F6,#a855f7);border:3px solid white;border-radius:50%;width:20px;height:20px;box-shadow:0 0 16px rgba(59,130,246,0.7);"></div>`,
+        html: `<div style="background:linear-gradient(135deg,#D9A05B,#B8843E);border:3px solid white;border-radius:50%;width:20px;height:20px;box-shadow:0 0 16px rgba(217, 160, 91, 0.7);"></div>`,
         className: '', iconSize: [20, 20], iconAnchor: [10, 10]
     });
     
     L.marker([lat, lon], { icon: targetIcon }).addTo(map)
         .bindPopup(`
             <div style="font-family:sans-serif;min-width:180px;">
-                <b style="color:#60a5fa;display:block;margin-bottom:6px;">🎯 Selected Target Coordinate</b>
+                <b style="color:#D9A05B;display:block;margin-bottom:6px;">🎯 Selected Target Coordinate</b>
                 Latitude: <b>${lat.toFixed(5)}°N</b><br/>
                 Longitude: <b>${lon.toFixed(5)}°E</b><br/>
                 Altitude: <b>${(predData?.altitude || 450).toFixed(1)} m</b><br/>
                 Formation: <b>${predData?.geological_zone || 'Unknown'}</b><br/>
                 Rock Type: <b>${predData?.rock_type || 'Unknown'}</b><br/>
-                Potential Score: <b style="color:#3B82F6;">${predData?.mineral_probability || 0}%</b>
+                Potential Score: <b style="color:#D9A05B;">${predData?.mineral_probability || 0}%</b>
             </div>
         `).openPopup();
 
     // Highlight geological zone centered around target point
     L.circle([lat, lon], {
-        radius: 5000, color: '#38bdf8', fillColor: '#0284c7',
+        radius: 5000, color: '#D9A05B', fillColor: '#B8843E',
         fillOpacity: 0.1, weight: 2, dashArray: '6, 4'
     }).addTo(map);
 }
+
+// ══════════════════════════════════════════
+// TOGGLE SAVE PROJECT STATE
+// ══════════════════════════════════════════
+async function toggleSaveProject() {
+    const rawData = sessionStorage.getItem('latest_prediction');
+    if (!rawData) return;
+    const data = JSON.parse(rawData);
+    const predId = data._id ? (data._id.$oid || data._id.toString() || data._id) : null;
+    if (!predId) {
+        Toast.warning('Cannot save this project: No database ID found.');
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/predictions/${predId}/save`, {
+            method: 'POST'
+        });
+        if (!response.ok) throw new Error(`Status ${response.status}`);
+        const result = await response.json();
+        
+        // Update cached session data
+        data.saved_project = result.saved_project;
+        sessionStorage.setItem('latest_prediction', JSON.stringify(data));
+        
+        // Update button UI
+        renderSaveButton(result.saved_project);
+        
+        if (result.saved_project) {
+            Toast.success('Project saved successfully!');
+        } else {
+            Toast.info('Project removed from saved list.');
+        }
+    } catch (err) {
+        Toast.error(`Failed to save project: ${err.message}`);
+    }
+}
+window.toggleSaveProject = toggleSaveProject;
+
+function renderSaveButton(isSaved) {
+    const starIcon = document.getElementById('btn-save-star');
+    const textEl = document.getElementById('btn-save-text');
+    const btn = document.getElementById('btn-save-project');
+    
+    if (!btn) return;
+    
+    if (isSaved) {
+        if (starIcon) {
+            starIcon.className = 'fa-solid fa-star';
+        }
+        if (textEl) {
+            textEl.textContent = 'Project Saved';
+        }
+        btn.classList.add('bg-[#F59E0B]/20');
+        btn.classList.remove('hover:bg-[#F59E0B]/10');
+    } else {
+        if (starIcon) {
+            starIcon.className = 'fa-regular fa-star';
+        }
+        if (textEl) {
+            textEl.textContent = 'Save Project';
+        }
+        btn.classList.remove('bg-[#F59E0B]/20');
+        btn.classList.add('hover:bg-[#F59E0B]/10');
+    }
+}
+

@@ -96,26 +96,29 @@
 <body class="font-body text-body-md transition-colors duration-300 bg-[#121414] text-[#e2e2e2] html[class*='light']:bg-[#f7f9fb] html[class*='light']:text-[#191c1e]">
 
   <!-- Top Navigation Bar -->
-  <nav class="w-full sticky top-0 z-50 bg-[#121414]/80 dark:bg-[#121414]/80 light:bg-[#f7f9fb]/80 backdrop-blur-md border-b border-white/10 dark:border-white/10 light:border-black/10">
+  <nav class="w-full sticky top-0 z-50 bg-[#0D1117]/90 backdrop-blur-md border-b border-[rgba(217,160,91,0.15)]">
     <div class="flex justify-between items-center px-8 md:px-12 py-4 max-w-[1440px] mx-auto">
       <div class="flex items-center gap-3">
-        <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-[#00daf3] to-[#8A05FF] flex items-center justify-center text-white">
+        <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-[#D9A05B] to-[#8B5CF6] flex items-center justify-center text-white">
           <i class="fa-solid fa-mountain-sun text-sm"></i>
         </div>
-        <span class="font-display text-xl font-bold tracking-tight text-white dark:text-white light:text-[#006576]">GeoMiner AI</span>
+        <span class="font-display text-xl font-bold tracking-tight text-white">GeoMiner AI</span>
+        <span class="hidden sm:flex items-center gap-1.5 ml-2 px-2.5 py-1 bg-[rgba(16,185,129,0.1)] border border-[rgba(16,185,129,0.25)] rounded-full">
+          <span class="w-1.5 h-1.5 rounded-full bg-[#10B981] status-pulse"></span>
+          <span class="font-label text-[9px] text-[#10B981] tracking-wider uppercase">SYSTEM: GPU</span>
+        </span>
       </div>
       <div class="hidden md:flex items-center gap-8">
-        <a href="index.html" class="flex items-center gap-1.5 text-[#00daf3] light:text-[#006576] text-xs font-bold hover:opacity-80 transition-opacity border border-[#00daf3]/30 light:border-[#006576]/30 px-3 py-1.5 rounded-full">
+        <a href="index.html" class="flex items-center gap-1.5 text-[#D9A05B] text-xs font-bold hover:opacity-80 transition-opacity border border-[rgba(217,160,91,0.3)] px-3 py-1.5 rounded-full">
           <span class="material-symbols-outlined text-base">arrow_back</span>
           Platform Home
         </a>
-        <a class="text-white dark:text-white light:text-[#006576] font-semibold border-b-2 border-[#00daf3] light:border-[#006576] pb-1 cursor-pointer transition-colors" href="geominer.html">Overview</a>
-        <a class="text-[#bac9cc] light:text-[#555f71] hover:text-[#00daf3] light:hover:text-[#006576] transition-colors cursor-pointer" href="dashboard.html">Dashboard</a>
-        <a class="text-[#bac9cc] light:text-[#555f71] hover:text-[#00daf3] light:hover:text-[#006576] transition-colors cursor-pointer" href="predict.html">Prediction</a>
-        <a class="text-[#bac9cc] light:text-[#555f71] hover:text-[#00daf3] light:hover:text-[#006576] transition-colors cursor-pointer" href="settings.html">Settings</a>
+        <a class="text-white font-semibold border-b-2 border-[#D9A05B] pb-1 cursor-pointer transition-colors" href="geominer.html">Overview</a>
+        <a class="text-[#bac9cc] hover:text-[#D9A05B] transition-colors cursor-pointer" href="dashboard.html">Dashboard</a>
+        <a class="text-[#bac9cc] hover:text-[#D9A05B] transition-colors cursor-pointer" href="predict.html">Prediction</a>
+        <a class="text-[#bac9cc] hover:text-[#D9A05B] transition-colors cursor-pointer" href="settings.html">Settings</a>
       </div>
-      <div class="flex items-center gap-6">
-        <!-- Theme switcher toggle slider -->
+      <div class="flex items-center gap-4">
         <div class="theme-switch-wrapper">
           <label class="theme-switch" for="theme-toggle-checkbox">
             <input type="checkbox" id="theme-toggle-checkbox" />
@@ -125,85 +128,115 @@
             </div>
           </label>
         </div>
-        <a href="predict.html" class="bg-[#00daf3] light:bg-[#006576] text-[#00363d] light:text-white px-5 py-2 rounded-lg font-bold hover:opacity-90 active:scale-95 transition-all text-sm shadow-md">
-          Start Predicting
+        <a href="predict.html" class="hidden sm:inline-flex items-center gap-2 btn-gold px-5 py-2 text-sm rounded-lg">
+          <i class="fa-solid fa-bolt text-xs"></i> Start Predicting
         </a>
+        <button id="mobile-menu-toggle" class="md:hidden text-white hover:opacity-80 focus:outline-none">
+          <i class="fa-solid fa-bars text-xl"></i>
+        </button>
       </div>
     </div>
   </nav>
 
+  <!-- Mobile Navigation Drawer -->
+  <div id="mobile-menu-drawer" class="hidden fixed inset-0 z-40 bg-[#0D1117]/97 backdrop-blur-lg flex flex-col p-8 pt-24">
+    <nav class="flex flex-col gap-6 text-center text-lg font-semibold">
+      <a href="index.html" class="text-[#D9A05B] flex items-center justify-center gap-2">
+        <span class="material-symbols-outlined">arrow_back</span> Platform Home
+      </a>
+      <a href="geominer.html" class="text-white hover:text-[#D9A05B] transition-colors">Overview</a>
+      <a href="dashboard.html" class="text-[#bac9cc] hover:text-[#D9A05B] transition-colors">Dashboard</a>
+      <a href="predict.html" class="text-[#bac9cc] hover:text-[#D9A05B] transition-colors">Prediction</a>
+      <a href="settings.html" class="text-[#bac9cc] hover:text-[#D9A05B] transition-colors">Settings</a>
+    </nav>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const toggle = document.getElementById('mobile-menu-toggle');
+      const drawer = document.getElementById('mobile-menu-drawer');
+      if (toggle && drawer) {
+        toggle.addEventListener('click', () => {
+          drawer.classList.toggle('hidden');
+          const icon = toggle.querySelector('i');
+          if (drawer.classList.contains('hidden')) {
+            icon.className = 'fa-solid fa-bars text-xl';
+          } else {
+            icon.className = 'fa-solid fa-xmark text-xl';
+          }
+        });
+      }
+    });
+  </script>
+
   <!-- Hero Section -->
-  <section class="relative overflow-hidden min-h-[800px] flex items-center px-8 md:px-12 bg-[#121414] dark:bg-[#121414] light:bg-[#f7f9fb]">
+  <section class="relative overflow-hidden min-h-[800px] flex items-center px-8 md:px-12" style="background:#0D1117;">
     <!-- Animated Particle Canvas Background -->
     <canvas id="hero-canvas" class="absolute inset-0 z-0 opacity-40 pointer-events-none"></canvas>
     <!-- Background Grid Lines -->
-    <div class="absolute inset-0 z-0 opacity-10 pointer-events-none bg-[linear-gradient(rgba(0,218,243,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(0,218,243,0.08)_1px,transparent_1px)] bg-[size:40px_40px]"></div>
+    <div class="absolute inset-0 z-0 opacity-10 pointer-events-none" style="background-image:linear-gradient(rgba(217,160,91,0.06) 1px,transparent 1px),linear-gradient(90deg,rgba(217,160,91,0.06) 1px,transparent 1px);background-size:40px 40px;"></div>
 
     <div class="relative z-10 max-w-[1440px] mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
       <div class="lg:col-span-7">
-        <div class="inline-flex items-center gap-2 px-3 py-1 bg-[#00daf3]/10 light:bg-[#006576]/10 border border-[#00daf3]/20 light:border-[#006576]/20 rounded-full mb-6">
-          <span class="status-pulse bg-[#10B981] light:bg-[#008094]"></span>
-          <span class="text-[#00daf3] light:text-[#006576] font-label text-xs tracking-wider">PREDICTIVE SERVER ONLINE • 10k DATA POINTS</span>
+        <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full mb-6" style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.2);">
+          <span class="status-pulse bg-[#10B981]"></span>
+          <span class="font-label text-xs tracking-wider" style="color:#10B981;">PREDICTIVE SERVER ONLINE • 10k DATA POINTS</span>
         </div>
-        <h1 class="font-display text-4xl lg:text-6xl mb-6 leading-tight font-bold tracking-tight text-white dark:text-white light:text-[#191c1e]">
+        <h1 class="font-display text-4xl lg:text-6xl mb-6 leading-tight font-bold tracking-tight text-white">
           The Next Generation of <br/>
-          <span class="text-[#00daf3] light:text-[#006576] bg-gradient-to-r from-[#00daf3] to-[#8A05FF] bg-clip-text text-transparent light:from-[#006576] light:to-[#7C3AED]">AI Mineral Discovery</span>
+          <span class="hero-title"><span class="gold-gradient">AI Mineral Discovery</span></span>
         </h1>
-        <p class="text-lg text-[#bac9cc] light:text-[#3d494c] max-w-xl mb-10 leading-relaxed">
+        <p class="text-lg text-[#bac9cc] max-w-xl mb-10 leading-relaxed">
           Harness institutional-grade geochemical mapping datasets and advanced Random Forest inversion modelling. Pinpoint prospectivity, access localized explanations, and download reports instantly.
         </p>
         <div class="flex flex-wrap gap-4">
-          <a href="predict.html" class="bg-[#00daf3] light:bg-[#006576] text-[#00363d] light:text-white px-8 py-4 rounded-xl font-bold hover:shadow-[0_0_20px_rgba(0,218,243,0.3)] light:hover:shadow-[0_0_20px_rgba(0,101,118,0.2)] transition-all flex items-center gap-2 group shadow-lg">
+          <a href="predict.html" class="btn-gold px-8 py-4 rounded-xl group">
             Start Prediction Map
-            <span class="material-symbols-outlined group-hover:translate-x-1 transition-transform">trending_up</span>
+            <span class="material-symbols-outlined text-base group-hover:translate-x-1 transition-transform">trending_up</span>
           </a>
-          <a href="dashboard.html" class="bg-transparent border border-[#00daf3]/50 light:border-[#006576]/50 text-[#00daf3] light:text-[#006576] hover:bg-[#00daf3]/5 light:hover:bg-[#006576]/5 px-8 py-4 rounded-xl font-bold transition-all">
+          <a href="dashboard.html" class="btn-gold-outline px-8 py-4 rounded-xl">
             View Analytics Dashboard
           </a>
         </div>
       </div>
       <div class="lg:col-span-5 hidden lg:block">
-        <div class="glass-card rounded-2xl p-8 glow-cyan shadow-xl border-white/10 dark:border-white/10 light:border-black/5 bg-slate-900/50 dark:bg-slate-900/50 light:bg-white/80 backdrop-blur-md">
-          <div class="flex justify-between items-center mb-8 border-b border-white/10 light:border-black/10 pb-4">
-            <span class="font-label text-xs text-[#bac9cc] light:text-[#3d494c] uppercase tracking-wider">MODEL VALIDATION STATE</span>
-            <span class="font-label text-xs text-[#10B981] light:text-[#008094] font-bold">READY</span>
+        <div class="validation-card">
+          <div class="validation-card-header">
+            <span>MODEL VALIDATION STATE</span>
+            <span class="ready-badge">READY</span>
           </div>
-          <div class="space-y-6">
-            <div class="bg-black/20 light:bg-black/5 p-5 rounded-xl border border-white/5 light:border-black/5">
-              <span class="block font-label text-xs text-[#bac9cc] light:text-[#3d494c] mb-1 uppercase tracking-wider">Model Accuracy R²</span>
-              <div class="flex items-baseline gap-2">
-                <span class="text-3xl font-bold text-white dark:text-white light:text-[#191c1e]">0.855</span>
-                <span class="font-label text-xs text-[#10B981] light:text-[#008094] font-semibold">(94.2% Peak)</span>
-              </div>
+          <div class="validation-metric">
+            <div class="validation-metric-label">Model Accuracy R²</div>
+            <div style="display:flex;align-items:baseline;gap:10px;">
+              <span class="validation-metric-value">0.855</span>
+              <span class="validation-metric-sub">(94.2% Peak)</span>
             </div>
-            <div class="grid grid-cols-2 gap-4">
-              <div class="bg-black/20 light:bg-black/5 p-5 rounded-xl border border-white/5 light:border-black/5">
-                <span class="block font-label text-xs text-[#bac9cc] light:text-[#3d494c] mb-1 uppercase tracking-wider">Geochem Points</span>
-                <span class="text-xl text-[#00daf3] light:text-[#006576] font-bold">10,004</span>
-              </div>
-              <div class="bg-black/20 light:bg-black/5 p-5 rounded-xl border border-white/5 light:border-black/5">
-                <span class="block font-label text-xs text-[#bac9cc] light:text-[#3d494c] mb-1 uppercase tracking-wider">Litho Polygons</span>
-                <span class="text-xl text-[#00daf3] light:text-[#006576] font-bold">3,599</span>
-              </div>
+          </div>
+          <div class="validation-sub-grid">
+            <div>
+              <div class="validation-sub-item-label">Geochem Points</div>
+              <div class="validation-sub-item-value">10,004</div>
             </div>
-            <div class="pt-4">
-              <div class="flex justify-between font-label text-xs text-[#bac9cc] light:text-[#3d494c] mb-2">
-                <span>MAPPING COVERAGE AREA</span>
-                <span class="font-bold">100% ACTIVE</span>
-              </div>
-              <div class="flex gap-1 h-3">
-                <div class="flex-1 bg-[#00daf3] light:bg-[#006576] rounded-sm"></div>
-                <div class="flex-1 bg-[#00daf3] light:bg-[#006576] rounded-sm"></div>
-                <div class="flex-1 bg-[#00daf3] light:bg-[#006576] rounded-sm"></div>
-                <div class="flex-1 bg-[#00daf3] light:bg-[#006576] rounded-sm"></div>
-                <div class="flex-1 bg-[#00daf3] light:bg-[#006576] rounded-sm"></div>
-                <div class="flex-1 bg-[#00daf3] light:bg-[#006576] rounded-sm"></div>
-                <div class="flex-1 bg-[#00daf3] light:bg-[#006576] rounded-sm"></div>
-                <div class="flex-1 bg-[#00daf3] light:bg-[#006576] rounded-sm"></div>
-                <div class="flex-1 bg-[#00daf3]/30 light:bg-[#006576]/20 rounded-sm"></div>
-                <div class="flex-1 bg-[#00daf3]/30 light:bg-[#006576]/20 rounded-sm"></div>
-              </div>
+            <div>
+              <div class="validation-sub-item-label">Litho Polygons</div>
+              <div class="validation-sub-item-value">3,599</div>
             </div>
+          </div>
+          <div class="coverage-bar-label">
+            <span>Mapping Coverage Area</span>
+            <span style="color:#E8BB80;font-weight:700;">100% ACTIVE</span>
+          </div>
+          <div class="coverage-bar-track">
+            <div class="coverage-bar-segment"></div>
+            <div class="coverage-bar-segment"></div>
+            <div class="coverage-bar-segment"></div>
+            <div class="coverage-bar-segment"></div>
+            <div class="coverage-bar-segment"></div>
+            <div class="coverage-bar-segment"></div>
+            <div class="coverage-bar-segment"></div>
+            <div class="coverage-bar-segment"></div>
+            <div class="coverage-bar-segment inactive"></div>
+            <div class="coverage-bar-segment inactive"></div>
           </div>
         </div>
       </div>
@@ -211,86 +244,82 @@
   </section>
 
   <!-- Features Bento Grid -->
-  <section class="py-24 px-8 md:px-12 max-w-[1440px] mx-auto">
+  <section class="py-24 px-8 md:px-12 max-w-[1440px] mx-auto" style="background:#0D1117;">
     <div class="mb-16">
-      <h2 class="font-label text-sm text-[#00daf3] light:text-[#006576] uppercase tracking-[0.2em] mb-4">Core Capabilities</h2>
-      <h3 class="font-display text-3xl md:text-4xl text-white dark:text-white light:text-[#191c1e] max-w-2xl font-bold tracking-tight">Engineered for absolute accuracy, transparency, and research depth.</h3>
+      <h2 class="font-label text-sm uppercase tracking-[0.2em] mb-4" style="color:#D9A05B;">Core Capabilities</h2>
+      <h3 class="font-display text-3xl md:text-4xl text-white max-w-2xl font-bold tracking-tight">Engineered for absolute accuracy, transparency, and research depth.</h3>
     </div>
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-      <!-- Analytical Interpolation Card -->
-      <div class="md:col-span-2 glass-card rounded-2xl p-8 hover:glow-cyan transition-all group overflow-hidden relative min-h-[380px] border border-white/10 light:border-black/5 bg-slate-900/40 light:bg-white/80">
+      <!-- High-Density Interpolation -->
+      <div class="md:col-span-2 capability-card overflow-hidden relative min-h-[340px]">
         <div class="relative z-10 max-w-md">
-          <span class="material-symbols-outlined text-[#00daf3] light:text-[#006576] text-4xl mb-6">explore</span>
-          <h4 class="font-display text-2xl text-white dark:text-white light:text-[#191c1e] mb-4 font-bold tracking-tight">High-Density Interpolation</h4>
-          <p class="text-[#bac9cc] light:text-[#3d494c] leading-relaxed">
-            Our Inverse Distance Weighting (IDW) interpolation engine processes thousands of active grid points spaced at strict intervals across Karnataka and Andhra Pradesh, assuring localized prediction accuracy.
+          <div class="capability-card-icon"><span class="material-symbols-outlined">explore</span></div>
+          <h4 class="capability-card-title text-xl mb-3">High-Density Interpolation</h4>
+          <p class="capability-card-desc">
+            Our Inverse Distance Weighting (IDW) interpolation engine processes 10,004 active geochemical points spaced at strict 2km intervals across Karnataka and Andhra Pradesh, ensuring localized prediction accuracy.
           </p>
         </div>
-        <div class="absolute right-0 bottom-0 w-2/3 h-2/3 opacity-10 group-hover:opacity-20 transition-opacity">
-          <img class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBn4iRCdNw-Tx7f9ZxQK0R2JrwOfhzCyR7mfY8OYarvHX8iaJ0ATPcQo-vbuC0_cdAgnPmt9CmIKzXRATzBDs5sUml8cpRb7wWMKBaMRRVxJSLeexAB6g03zMhqQrlotKd22BdIxa0BdWy9TQa3lA2JIiSfuAWlmBgovJpyM8ap7nuhdUJuJJUf4UUlLG0PJRcZnamn0e3-CtdD3RSuEmqeNhjsDOKdFtIr-VHXu_XynVFxBOP2waMLB_mhr5gAWUtMWqSc3Dcgo7I" alt="High-end circuit pathways"/>
+        <div class="absolute right-0 bottom-0 w-1/2 h-2/3 opacity-8" style="background:radial-gradient(ellipse at right bottom, rgba(217,160,91,0.15) 0%, transparent 70%);"></div>
+      </div>
+      <!-- Strict Local Validation -->
+      <div class="capability-card flex flex-col justify-between">
+        <div>
+          <div class="capability-card-icon"><span class="material-symbols-outlined">shield</span></div>
+          <h4 class="capability-card-title text-xl mb-3">Strict Local Validation</h4>
+          <p class="capability-card-desc">
+            Immediate coordinate bounding envelope checks flag out-of-region inputs, ensuring mathematical and geospatial integrity.
+          </p>
+        </div>
+        <div class="mt-6 p-3 rounded-lg flex items-center gap-3" style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.2);">
+          <span class="material-symbols-outlined" style="color:#10B981;">verified_user</span>
+          <span class="font-label text-[10px] text-white font-bold">BOUNDS CHECK COMPLIANT</span>
         </div>
       </div>
-      <!-- Security/Validation Card -->
-      <div class="glass-card rounded-2xl p-8 hover:glow-cyan transition-all flex flex-col justify-between border border-white/10 light:border-black/5 bg-slate-900/40 light:bg-white/80">
+      <!-- Explainable AI -->
+      <div class="capability-card flex flex-col justify-between">
         <div>
-          <span class="material-symbols-outlined text-[#00daf3] light:text-[#006576] text-4xl mb-6">shield</span>
-          <h4 class="font-display text-2xl text-white dark:text-white light:text-[#191c1e] mb-4 font-bold tracking-tight">Strict Local Validation</h4>
-          <p class="text-[#bac9cc] light:text-[#3d494c] leading-relaxed">
-            The platform enforces immediate checks of coordinate bounding envelopes, instantly flagging sea clicks or out-of-bounds inputs to assure mathematical and geospatial integrity.
+          <div class="capability-card-icon"><span class="material-symbols-outlined">query_stats</span></div>
+          <h4 class="capability-card-title text-xl mb-3">Explainable AI (XAI)</h4>
+          <p class="capability-card-desc">
+            Every score returns localized geological indicators explaining exactly why a region is prospectivity-rich.
           </p>
         </div>
-        <div class="mt-8 p-4 bg-black/30 light:bg-black/5 rounded-lg border border-white/5 light:border-black/5 flex items-center gap-3">
-          <span class="material-symbols-outlined text-[#10B981] light:text-[#008094]">verified_user</span>
-          <span class="font-label text-[10px] text-white dark:text-white light:text-[#191c1e] font-bold">BOUNDS CHECK COMPLIANT</span>
-        </div>
-      </div>
-      <!-- Explainable AI Card -->
-      <div class="glass-card rounded-2xl p-8 hover:glow-cyan transition-all flex flex-col justify-between border border-white/10 light:border-black/5 bg-slate-900/40 light:bg-white/80">
-        <div>
-          <span class="material-symbols-outlined text-[#00daf3] light:text-[#006576] text-4xl mb-6">query_stats</span>
-          <h4 class="font-display text-2xl text-white dark:text-white light:text-[#191c1e] mb-4 font-bold tracking-tight">Explainable AI (XAI)</h4>
-          <p class="text-[#bac9cc] light:text-[#3d494c] leading-relaxed">
-            Every score returns descriptive, localized geological indicators, explaining exactly why a region is prospectivity-rich rather than relying on distance metrics.
-          </p>
-        </div>
-        <div class="mt-8 font-label text-xs text-[#00daf3] light:text-[#006576] bg-[#00daf3]/5 p-2.5 rounded font-mono">
+        <div class="mt-6 font-label text-xs p-2.5 rounded font-mono" style="color:#D9A05B;background:rgba(217,160,91,0.07);border:1px solid rgba(217,160,91,0.15);">
           MODEL: RF_INVERSION_V2.0
         </div>
       </div>
-      <!-- Real-time Dashboard Card -->
-      <div class="md:col-span-2 glass-card rounded-2xl p-8 hover:glow-cyan transition-all group relative overflow-hidden border border-white/10 light:border-black/5 bg-slate-900/40 light:bg-white/80">
+      <!-- Unified Data Telemetry -->
+      <div class="md:col-span-2 capability-card">
         <div class="grid md:grid-cols-2 gap-8 items-center h-full">
           <div>
-            <span class="material-symbols-outlined text-[#00daf3] light:text-[#006576] text-4xl mb-6">monitoring</span>
-            <h4 class="font-display text-2xl text-white dark:text-white light:text-[#191c1e] mb-4 font-bold tracking-tight">Unified Data Telemetry</h4>
-            <p class="text-[#bac9cc] light:text-[#3d494c] mb-6 leading-relaxed">
-              Track prediction requests history, geological class distributions, and query metrics in real-time.
+            <div class="capability-card-icon"><span class="material-symbols-outlined">monitoring</span></div>
+            <h4 class="capability-card-title text-xl mb-3">Unified Data Telemetry</h4>
+            <p class="capability-card-desc mb-6">
+              Track prediction history, geological class distributions, and query metrics in real-time.
             </p>
             <ul class="space-y-3">
-              <li class="flex items-center gap-2 text-sm text-[#e2e2e2] light:text-[#191c1e]">
-                <span class="material-symbols-outlined text-[#00daf3] light:text-[#006576] text-sm">check_circle</span>
-                Dynamic occurrence bar charts
+              <li class="flex items-center gap-2 text-sm text-[#e2e2e2]">
+                <span class="material-symbols-outlined text-sm" style="color:#D9A05B;">check_circle</span>
+                Dynamic mineral occurrence bar charts
               </li>
-              <li class="flex items-center gap-2 text-sm text-[#e2e2e2] light:text-[#191c1e]">
-                <span class="material-symbols-outlined text-[#00daf3] light:text-[#006576] text-sm">check_circle</span>
+              <li class="flex items-center gap-2 text-sm text-[#e2e2e2]">
+                <span class="material-symbols-outlined text-sm" style="color:#D9A05B;">check_circle</span>
                 Detailed system status telemetry
               </li>
             </ul>
           </div>
-          <div class="bg-black/30 light:bg-black/5 rounded-xl border border-white/5 light:border-black/5 p-5 transform group-hover:scale-[1.02] transition-transform">
-            <div class="h-32 flex items-end gap-1.5 mb-4">
-              <div class="flex-1 bg-[#00daf3]/20 h-1/2 rounded-t-sm"></div>
-              <div class="flex-1 bg-[#00daf3]/40 h-2/3 rounded-t-sm"></div>
-              <div class="flex-1 bg-[#00daf3]/60 h-3/4 rounded-t-sm"></div>
-              <div class="flex-1 bg-[#00daf3] light:bg-[#006576] h-full rounded-t-sm"></div>
-              <div class="flex-1 bg-[#00daf3]/80 h-4/5 rounded-t-sm"></div>
-              <div class="flex-1 bg-[#00daf3]/40 h-1/2 rounded-t-sm"></div>
-              <div class="flex-1 bg-[#00daf3]/20 h-1/3 rounded-t-sm"></div>
+          <div class="rounded-xl p-5" style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);">
+            <div class="h-28 flex items-end gap-1.5 mb-4">
+              <div class="flex-1 rounded-t-sm" style="background:rgba(217,160,91,0.2);height:40%;"></div>
+              <div class="flex-1 rounded-t-sm" style="background:rgba(217,160,91,0.4);height:60%;"></div>
+              <div class="flex-1 rounded-t-sm" style="background:rgba(217,160,91,0.6);height:75%;"></div>
+              <div class="flex-1 rounded-t-sm" style="background:#D9A05B;height:100%;"></div>
+              <div class="flex-1 rounded-t-sm" style="background:rgba(217,160,91,0.75);height:85%;"></div>
+              <div class="flex-1 rounded-t-sm" style="background:rgba(217,160,91,0.4);height:50%;"></div>
+              <div class="flex-1 rounded-t-sm" style="background:rgba(217,160,91,0.2);height:30%;"></div>
             </div>
-            <div class="flex justify-between text-[10px] text-[#bac9cc] light:text-[#3d494c] font-mono">
-              <span>00:00</span>
-              <span>08:00</span>
-              <span>16:00</span>
+            <div class="flex justify-between text-[10px] text-[#bac9cc] font-mono">
+              <span>Copper</span><span>Diamond</span><span>Gold</span><span>Iron</span>
             </div>
           </div>
         </div>
@@ -300,18 +329,18 @@
 
 
 
-  <!-- Ready to predicted -->
-  <section class="py-32 px-8 text-center bg-[#121414] dark:bg-[#121414] light:bg-[#f7f9fb]">
+  <!-- Ready to Explore CTA -->
+  <section class="py-32 px-8 text-center" style="background:linear-gradient(180deg,#0D1117 0%,#161B22 100%);">
     <div class="max-w-3xl mx-auto">
-      <h2 class="font-display text-4xl text-white dark:text-white light:text-[#191c1e] mb-8 font-bold tracking-tight">Ready to explore mineral prospectivity?</h2>
-      <p class="text-[#bac9cc] light:text-[#3d494c] mb-12 text-lg">
+      <h2 class="font-display text-4xl text-white mb-8 font-bold tracking-tight">Ready to explore mineral prospectivity?</h2>
+      <p class="text-[#bac9cc] mb-12 text-lg">
         Run coordinate predictions on our high-performance AI inversion layers and generate localized PDF reports instantaneously.
       </p>
       <div class="flex flex-col sm:flex-row justify-center gap-6">
-        <a href="predict.html" class="bg-[#00daf3] light:bg-[#006576] text-[#00363d] light:text-white px-12 py-5 rounded-xl font-bold text-lg hover:shadow-[0_0_24px_rgba(0,218,243,0.4)] light:hover:shadow-[0_0_24px_rgba(0,101,118,0.3)] transition-all shadow-md">
-          Start Predicting Now
+        <a href="predict.html" class="btn-gold px-12 py-5 text-lg">
+          <i class="fa-solid fa-bolt"></i> Start Predicting Now
         </a>
-        <a href="dashboard.html" class="border border-[#00daf3]/50 light:border-[#006576]/50 text-[#00daf3] light:text-[#006576] px-12 py-5 rounded-xl font-bold text-lg hover:bg-[#00daf3]/5 light:hover:bg-[#006576]/5 transition-all">
+        <a href="dashboard.html" class="btn-gold-outline px-12 py-5 text-lg">
           View Dashboard
         </a>
       </div>
@@ -319,29 +348,21 @@
   </section>
 
   <!-- Footer -->
-  <footer class="w-full py-12 bg-[#0c0f0f] light:bg-white border-t border-white/10 light:border-black/10">
+  <footer class="w-full py-12 border-t" style="background:#0D1117;border-color:rgba(217,160,91,0.12);">
     <div class="flex flex-col md:flex-row justify-between items-center px-8 md:px-12 max-w-[1440px] mx-auto gap-8">
       <div class="flex flex-col items-center md:items-start gap-2">
-        <div class="font-label text-sm font-bold text-[#00daf3] light:text-[#006576] uppercase tracking-[0.2em]">
-          GeoMiner AI
-        </div>
-        <p class="font-label text-[10px] text-[#bac9cc] light:text-[#3d494c]">
-          © 2026 GeoMiner Systems. All rights reserved.
-        </p>
+        <div class="font-label text-sm font-bold uppercase tracking-[0.2em]" style="color:#D9A05B;">GeoMiner AI</div>
+        <p class="font-label text-[10px] text-[#bac9cc]">© 2026 GeoMiner Systems. All rights reserved.</p>
       </div>
       <div class="flex flex-wrap justify-center gap-x-8 gap-y-4">
-        <a class="font-label text-xs text-[#bac9cc] light:text-[#3d494c] hover:text-[#00daf3] light:hover:text-[#006576] transition-colors cursor-pointer" href="#">Privacy Policy</a>
-        <a class="font-label text-xs text-[#bac9cc] light:text-[#3d494c] hover:text-[#00daf3] light:hover:text-[#006576] transition-colors cursor-pointer" href="#">Terms of Service</a>
-        <a class="font-label text-xs text-[#bac9cc] light:text-[#3d494c] hover:text-[#00daf3] light:hover:text-[#006576] transition-colors cursor-pointer" href="#">API Documentation</a>
-        <a class="font-label text-xs text-[#bac9cc] light:text-[#3d494c] hover:text-[#00daf3] light:hover:text-[#006576] transition-colors cursor-pointer" href="#">Support</a>
+        <a class="font-label text-xs text-[#bac9cc] hover:text-[#D9A05B] transition-colors cursor-pointer" href="#">Privacy Policy</a>
+        <a class="font-label text-xs text-[#bac9cc] hover:text-[#D9A05B] transition-colors cursor-pointer" href="#">Terms of Service</a>
+        <a class="font-label text-xs text-[#bac9cc] hover:text-[#D9A05B] transition-colors cursor-pointer" href="#">API Documentation</a>
+        <a class="font-label text-xs text-[#bac9cc] hover:text-[#D9A05B] transition-colors cursor-pointer" href="#">Support</a>
       </div>
-      <div class="flex gap-6">
-        <a class="text-[#bac9cc] light:text-[#3d494c] hover:text-[#00daf3] light:hover:text-[#006576] transition-colors" href="#">
-          <span class="material-symbols-outlined text-[24px]">share</span>
-        </a>
-        <a class="text-[#bac9cc] light:text-[#3d494c] hover:text-[#00daf3] light:hover:text-[#006576] transition-colors" href="#">
-          <span class="material-symbols-outlined text-[24px]">database</span>
-        </a>
+      <div class="flex gap-4">
+        <a class="text-[#bac9cc] hover:text-[#D9A05B] transition-colors" href="#"><span class="material-symbols-outlined text-[22px]">share</span></a>
+        <a class="text-[#bac9cc] hover:text-[#D9A05B] transition-colors" href="#"><span class="material-symbols-outlined text-[22px]">database</span></a>
       </div>
     </div>
   </footer>
@@ -378,7 +399,7 @@
         }
         draw() {
           ctx.beginPath(); ctx.arc(this.x, this.y, this.r, 0, Math.PI*2);
-          ctx.fillStyle = `rgba(0,218,243,${this.alpha})`; ctx.fill();
+          ctx.fillStyle = `rgba(217,160,91,${this.alpha})`; ctx.fill();
         }
       }
 
@@ -391,7 +412,7 @@
             const d = Math.hypot(a.x - b.x, a.y - b.y);
             if (d < 120) {
               ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y);
-              ctx.strokeStyle = `rgba(0,218,243,${0.07 * (1 - d/120)})`; ctx.lineWidth = 0.8;
+              ctx.strokeStyle = `rgba(217,160,91,${0.06 * (1 - d/120)})`; ctx.lineWidth = 0.7;
               ctx.stroke();
             }
           });

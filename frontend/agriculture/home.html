@@ -34,6 +34,14 @@
     }
     .platform-topbar-back:hover { background: rgba(16,185,129,0.1); }
     body { padding-top: 48px; }
+
+    @media (max-width: 768px) {
+      .platform-topbar { padding: 0.45rem 0.85rem; }
+      .platform-topbar nav { display: none !important; }
+      .platform-topbar-logo { font-size: 0.8rem; }
+      .platform-topbar-back { font-size: 0.68rem; padding: 0.22rem 0.55rem; }
+      body { padding-top: 44px; }
+    }
   </style>
 </head>
 <body>
@@ -46,12 +54,13 @@
   <nav style="display:flex;gap:1.5rem;align-items:center;">
     <a href="../index.html" style="color:#64748b;font-size:0.8rem;text-decoration:none;font-family:'Space Grotesk',sans-serif;">Home</a>
     <a href="crop-predictor.html" style="color:#64748b;font-size:0.8rem;text-decoration:none;font-family:'Space Grotesk',sans-serif;">Crop Predictor</a>
-    <a href="https://geominer-ai-4379.onrender.com" style="color:#64748b;font-size:0.8rem;text-decoration:none;font-family:'Space Grotesk',sans-serif;">Geo Minerals</a>
+    <a href="../geominer.html" style="color:#64748b;font-size:0.8rem;text-decoration:none;font-family:'Space Grotesk',sans-serif;">Geo Minerals</a>
   </nav>
   <a href="../index.html" class="platform-topbar-back">
     <i class="fa-solid fa-arrow-left" style="font-size:0.7rem;"></i> Platform Home
   </a>
 </div>
+
 
 <nav class="navbar">
   <div class="logo">AgriSmart</div>

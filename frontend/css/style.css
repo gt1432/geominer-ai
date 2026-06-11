@@ -1,24 +1,29 @@
 /* ════════════════════════════════════════════════════════
-   GeoMiner AI — Premium Design System v2.0
-   New Color Palette: Deep Space Dark + Electric Blue
+   GeoMiner AI — Premium Geological Design System v3.0
+   Palette: Deep Dark + Gold (matches Render deployment)
    ════════════════════════════════════════════════════════ */
 
 @import url('https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&display=swap');
 
 /* ── Design Tokens ── */
 :root {
-  --bg:            #121414;
-  --bg-2:          #1a1c1c;
-  --bg-3:          #1e2020;
-  --card:          #1E293B;
-  --card-2:        #0c0f0f;
-  --border:        rgba(240, 240, 240, 0.1);
-  --border-bright: rgba(0, 229, 255, 0.3);
+  --bg:            #0D1117;
+  --bg-2:          #161B22;
+  --bg-3:          #1E2328;
+  --card:          #1C2128;
+  --card-2:        #0D1117;
+  --border:        rgba(240, 240, 240, 0.08);
+  --border-bright: rgba(217, 160, 91, 0.35);
 
-  --primary:       #00daf3;
-  --primary-dark:  #00363d;
-  --primary-glow:  rgba(0, 218, 243, 0.15);
-  --primary-light: #c3f5ff;
+  /* Gold geological primary */
+  --primary:       #D9A05B;
+  --primary-dark:  #B8843E;
+  --primary-glow:  rgba(217, 160, 91, 0.2);
+  --primary-light: #E8BB80;
+
+  /* Cyan secondary (keep for server-live badge, etc.) */
+  --cyan:          #00daf3;
+  --cyan-glow:     rgba(0, 218, 243, 0.15);
 
   --success:       #10B981;
   --success-bg:    rgba(16, 185, 129, 0.1);
@@ -26,8 +31,7 @@
   --warning-bg:    rgba(245, 158, 11, 0.12);
   --danger:        #EF4444;
   --danger-bg:     rgba(239, 68, 68, 0.12);
-  --purple:        #eedcff;
-  --cyan:          #00daf3;
+  --purple:        #8B5CF6;
 
   --text:          #e2e2e2;
   --text-2:        #bac9cc;
@@ -43,9 +47,10 @@
   --radius-xl:     24px;
   --shadow:        0 4px 24px rgba(0,0,0,0.4);
   --shadow-lg:     0 12px 48px rgba(0,0,0,0.5);
-  --shadow-glow:   0 0 40px rgba(0,218,243,0.15);
-  --btn-text:      #00363d;
+  --shadow-glow:   0 0 40px rgba(217,160,91,0.18);
+  --btn-text:      #1a0e00;
 }
+
 
 /* ── Reset & Base ── */
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
@@ -139,8 +144,8 @@ img { max-width: 100%; }
 .nav-item a:hover { color: var(--text); background: rgba(255,255,255,0.04); }
 .nav-item.active a {
   color: var(--primary-light);
-  background: rgba(59,130,246,0.12);
-  border: 1px solid rgba(59,130,246,0.2);
+  background: rgba(217, 160, 91, 0.12);
+  border: 1px solid rgba(217, 160, 91, 0.2);
 }
 
 .sidebar-footer {
@@ -166,7 +171,7 @@ img { max-width: 100%; }
 .glass-card:hover {
   transform: translateY(-3px);
   box-shadow: var(--shadow-lg);
-  border-color: rgba(59,130,246,0.15);
+  border-color: rgba(217, 160, 91, 0.15);
 }
 
 .glass-card-header {
@@ -217,20 +222,20 @@ img { max-width: 100%; }
   color: #fff; border: none; border-radius: 10px;
   padding: 12px 24px; font-weight: 600; font-family: var(--font);
   font-size: 0.9rem; cursor: pointer;
-  transition: all .25s; box-shadow: 0 4px 20px rgba(59,130,246,0.3);
+  transition: all .25s; box-shadow: 0 4px 20px rgba(217, 160, 91, 0.3);
   display: inline-flex; align-items: center; gap: 8px;
 }
-.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(59,130,246,0.45); }
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(217, 160, 91, 0.45); }
 .btn-primary:active { transform: translateY(0); }
 
 .btn-outline {
   background: transparent; color: var(--primary-light);
-  border: 1px solid rgba(59,130,246,0.35); border-radius: 10px;
+  border: 1px solid rgba(217, 160, 91, 0.35); border-radius: 10px;
   padding: 11px 24px; font-weight: 600; font-family: var(--font);
   font-size: 0.9rem; cursor: pointer; transition: all .25s;
   display: inline-flex; align-items: center; gap: 8px;
 }
-.btn-outline:hover { background: rgba(59,130,246,0.08); border-color: var(--primary-light); }
+.btn-outline:hover { background: rgba(217, 160, 91, 0.08); border-color: var(--primary-light); }
 
 .btn-ghost {
   background: rgba(255,255,255,0.04); color: var(--text-3);
@@ -259,7 +264,7 @@ img { max-width: 100%; }
 }
 .form-control:focus {
   outline: none; border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
+  box-shadow: 0 0 0 3px rgba(217, 160, 91, 0.15);
 }
 .form-control::placeholder { color: var(--text-4); }
 select.form-control { cursor: pointer; appearance: none; }
@@ -275,7 +280,7 @@ select.form-control { cursor: pointer; appearance: none; }
 .badge-high   { background: var(--danger-bg); color: var(--danger); border: 1px solid rgba(239,68,68,.2); }
 .badge-medium { background: var(--warning-bg); color: var(--warning); border: 1px solid rgba(245,158,11,.2); }
 .badge-low    { background: var(--success-bg); color: var(--success); border: 1px solid rgba(34,197,94,.2); }
-.badge-blue   { background: rgba(59,130,246,.12); color: var(--primary-light); border: 1px solid rgba(59,130,246,.2); }
+.badge-blue   { background: rgba(217, 160, 91, .12); color: var(--primary-light); border: 1px solid rgba(217, 160, 91, .2); }
 
 /* ══════════════════════════════════════════
    MAP CONTAINER
@@ -997,3 +1002,278 @@ body.light-theme .leaflet-bar a:hover {
   margin-left: auto;
 }
 
+/* ══════════════════════════════════════════
+   GOLD GEOLOGICAL THEME — COMPONENT OVERRIDES
+   Matches: https://geominer-ai-4379.onrender.com
+   ══════════════════════════════════════════ */
+
+/* Gold active mode button */
+.mode-btn.active {
+  background: var(--primary) !important;
+  color: var(--btn-text) !important;
+  border-color: var(--primary) !important;
+  box-shadow: 0 2px 14px var(--primary-glow);
+}
+
+/* Gold active layer button */
+.layer-btn.active {
+  background: rgba(217,160,91,0.15) !important;
+  color: var(--primary-light) !important;
+  border-color: rgba(217,160,91,0.4) !important;
+}
+.layer-btn:hover:not(.active) {
+  background: rgba(255,255,255,.05);
+  color: var(--text);
+}
+
+/* Gold sidebar active nav item */
+.nav-item.active a {
+  color: var(--btn-text) !important;
+  background: var(--primary) !important;
+  border: none !important;
+}
+.nav-item.active a i,
+.nav-item.active a .material-symbols-outlined { color: var(--btn-text) !important; }
+
+/* Progress bar pct in gold */
+.progress-bar-pct  { color: var(--primary-light); }
+.mineral-bar-pct   { color: var(--primary-light); }
+
+/* Glass card: gold border glow on hover */
+.glass-card:hover {
+  border-color: rgba(217,160,91,0.18);
+}
+
+/* ── Validation Card (Landing Page Hero) ── */
+.validation-card {
+  background: rgba(28,33,40,0.85);
+  border: 1px solid rgba(217,160,91,0.2);
+  border-radius: 16px;
+  padding: 28px;
+  backdrop-filter: blur(16px);
+}
+.validation-card-header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 20px;
+  font-size: 0.72rem; font-weight: 700; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--text-3);
+}
+.validation-card-header .ready-badge {
+  color: var(--success); font-weight: 700;
+  font-size: 0.72rem; letter-spacing: 0.08em;
+}
+.validation-metric {
+  margin-bottom: 20px;
+}
+.validation-metric-label {
+  font-size: 0.7rem; color: var(--text-3);
+  text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px;
+}
+.validation-metric-value {
+  font-size: 2.4rem; font-weight: 800; color: var(--primary-light);
+  font-family: var(--font-title); line-height: 1;
+}
+.validation-metric-sub {
+  font-size: 0.82rem; color: var(--success); margin-left: 8px;
+}
+.validation-sub-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;
+}
+.validation-sub-item-label {
+  font-size: 0.68rem; color: var(--text-3);
+  text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px;
+}
+.validation-sub-item-value {
+  font-size: 1.5rem; font-weight: 800; color: var(--primary-light);
+  font-family: var(--font-title);
+}
+.coverage-bar-label {
+  display: flex; justify-content: space-between;
+  font-size: 0.68rem; color: var(--text-3); margin-bottom: 8px;
+  text-transform: uppercase; letter-spacing: 0.1em;
+}
+.coverage-bar-track {
+  display: flex; gap: 4px; height: 12px;
+}
+.coverage-bar-segment {
+  flex: 1; border-radius: 3px; height: 100%;
+  background: var(--primary);
+  opacity: 0.85;
+}
+.coverage-bar-segment.inactive { background: rgba(255,255,255,0.08); }
+
+/* ── Circular Score Gauge ── */
+.score-gauge-wrap {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; padding: 24px 0;
+}
+.score-gauge-svg { transform: rotate(-90deg); }
+.score-gauge-track { fill: none; stroke: rgba(255,255,255,0.06); }
+.score-gauge-fill {
+  fill: none; stroke-linecap: round;
+  transition: stroke-dashoffset 1.5s cubic-bezier(0.4,0,0.2,1);
+}
+.score-gauge-label { text-anchor: middle; dominant-baseline: middle; }
+.score-gauge-pct {
+  font-size: 1.8rem; font-weight: 900;
+  fill: var(--primary-light);
+  font-family: var(--font-title);
+}
+.score-gauge-sub { font-size: 0.72rem; fill: var(--text-3); }
+.confidence-badge {
+  display: inline-flex; align-items: center;
+  padding: 5px 18px; border-radius: 30px;
+  font-size: 0.85rem; font-weight: 800;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  margin-top: 10px;
+}
+.confidence-badge.low    { background: rgba(16,185,129,0.12); color: #10B981; border: 1px solid rgba(16,185,129,0.3); }
+.confidence-badge.medium { background: rgba(245,158,11,0.12); color: #F59E0B; border: 1px solid rgba(245,158,11,0.3); }
+.confidence-badge.high   { background: rgba(239,68,68,0.12);  color: #EF4444; border: 1px solid rgba(239,68,68,0.3); }
+
+/* ── Spatial Data Grid (Results Page) ── */
+.spatial-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+}
+.spatial-cell {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--border);
+  border-radius: 10px; padding: 14px 16px;
+}
+.spatial-cell-label {
+  font-size: 0.68rem; color: var(--text-3);
+  text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 5px;
+}
+.spatial-cell-value {
+  font-size: 1rem; font-weight: 700; color: var(--text);
+}
+.spatial-cell-value.gold { color: var(--primary-light); }
+
+/* ── AI Explanation Card ── */
+.ai-explanation-card {
+  background: rgba(255,255,255,0.02);
+  border: 1px solid var(--border);
+  border-radius: 12px; padding: 16px;
+  font-size: 0.88rem; color: var(--text-2);
+  line-height: 1.7; max-height: 280px; overflow-y: auto;
+  scrollbar-width: thin; scrollbar-color: var(--card) transparent;
+}
+
+/* ── Dashboard Active Logs Card ── */
+.active-logs-card {
+  background: rgba(28,33,40,0.9);
+  border: 1px solid rgba(217,160,91,0.18);
+  border-radius: 14px; padding: 24px;
+}
+.pred-queries-count {
+  font-size: 3rem; font-weight: 900;
+  color: var(--text); font-family: var(--font-title);
+  margin: 12px 0;
+}
+.db-state-bar {
+  height: 5px; border-radius: 3px;
+  background: linear-gradient(90deg, var(--success), var(--success));
+  margin-top: 8px;
+}
+
+/* ── Hero Gold Gradient Text ── */
+.hero-title .gold-gradient {
+  background: linear-gradient(135deg, #D9A05B 0%, #F5C880 50%, #D9A05B 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Gold CTA Button ── */
+.btn-gold {
+  background: linear-gradient(135deg, #D9A05B, #B8843E);
+  color: #1a0e00; border: none; border-radius: 12px;
+  padding: 14px 32px; font-weight: 800; font-family: var(--font-title);
+  font-size: 1rem; cursor: pointer;
+  transition: all .25s; box-shadow: 0 4px 20px rgba(217,160,91,0.35);
+  display: inline-flex; align-items: center; gap: 10px;
+  letter-spacing: 0.02em;
+}
+.btn-gold:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(217,160,91,0.5);
+  background: linear-gradient(135deg, #E8BB80, #D9A05B);
+}
+.btn-gold:active { transform: translateY(0); }
+
+/* ── Gold Outline Button ── */
+.btn-gold-outline {
+  background: transparent; color: var(--primary-light);
+  border: 1.5px solid var(--primary); border-radius: 12px;
+  padding: 13px 28px; font-weight: 700; font-family: var(--font-title);
+  font-size: 0.95rem; cursor: pointer; transition: all .25s;
+  display: inline-flex; align-items: center; gap: 8px;
+}
+.btn-gold-outline:hover {
+  background: rgba(217,160,91,0.1);
+  border-color: var(--primary-light);
+  transform: translateY(-1px);
+}
+
+/* ── System Status Card (Settings) ── */
+.system-status-card {
+  background: rgba(28,33,40,0.85);
+  border: 1px solid var(--border);
+  border-radius: 14px; padding: 24px;
+  margin-bottom: 16px;
+}
+.system-status-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 10px 0; border-bottom: 1px solid var(--border);
+  font-size: 0.88rem;
+}
+.system-status-row:last-child { border-bottom: none; }
+.system-status-label { color: var(--text-3); }
+.system-status-value { font-weight: 600; color: var(--text); }
+.system-status-value.connected { color: var(--success); }
+.system-status-value.ready     { color: var(--primary-light); }
+.system-status-value.active    { color: var(--cyan); }
+
+/* ── Capabilities Grid ── */
+.capabilities-grid {
+  display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px;
+  margin-top: 40px;
+}
+.capability-card {
+  background: rgba(255,255,255,0.02);
+  border: 1px solid var(--border);
+  border-radius: 14px; padding: 24px;
+  transition: all 0.3s;
+}
+.capability-card:hover {
+  border-color: rgba(217,160,91,0.3);
+  background: rgba(217,160,91,0.04);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(0,0,0,0.3);
+}
+.capability-card-icon {
+  width: 44px; height: 44px; border-radius: 11px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.2rem; margin-bottom: 16px;
+  background: rgba(217,160,91,0.12);
+  color: var(--primary-light);
+  border: 1px solid rgba(217,160,91,0.2);
+}
+.capability-card-title {
+  font-size: 0.95rem; font-weight: 700; color: var(--text);
+  margin-bottom: 8px; font-family: var(--font-title);
+}
+.capability-card-desc {
+  font-size: 0.82rem; color: var(--text-3); line-height: 1.6;
+}
+
+/* ── Tailwind Inline Gold Accent Utilities ── */
+/* (Use these on HTML elements via inline style or class for gold color) */
+.text-gold { color: var(--primary-light); }
+.bg-gold-subtle { background: rgba(217,160,91,0.1); }
+.border-gold { border-color: rgba(217,160,91,0.3); }
+
+/* ── Mobile responsive sidebar toggle for GeoMiner ── */
+@media (max-width: 1024px) {
+  .geo-sidebar-hidden { transform: translateX(-100%); }
+}
