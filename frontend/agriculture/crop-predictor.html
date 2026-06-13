@@ -4,78 +4,21 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Crop Predictor — GeoSmart Agri</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;600;700;800&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
-  <link rel="stylesheet" href="style.css"/>
-  <style>
-    .platform-topbar {
-      position: fixed; top: 0; left: 0; right: 0; z-index: 9999;
-      background: rgba(8,11,12,0.95); backdrop-filter: blur(16px);
-      border-bottom: 1px solid rgba(16,185,129,0.15);
-      padding: 0.6rem 1.5rem;
-      display: flex; align-items: center; justify-content: space-between;
-      font-family: 'Space Grotesk', sans-serif;
-    }
-    .platform-topbar-logo {
-      display: flex; align-items: center; gap: 0.5rem;
-      text-decoration: none; font-weight: 700; font-size: 0.9rem;
-      background: linear-gradient(135deg,#10B981,#00daf3,#8B5CF6);
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-    }
-    .platform-topbar-back {
-      display: flex; align-items: center; gap: 0.4rem;
-      color: #10B981; font-size: 0.78rem; font-weight: 600;
-      text-decoration: none; border: 1px solid rgba(16,185,129,0.3);
-      padding: 0.3rem 0.8rem; border-radius: 99px; transition: all 0.2s;
-      font-family: 'Space Grotesk', sans-serif;
-    }
-    .platform-topbar-back:hover { background: rgba(16,185,129,0.1); }
-    body { padding-top: 48px; }
-    @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&display=swap');
-
-    /* Crop predictor layout */
-    .container {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 2rem;
-      align-items: flex-start;
-      max-width: 1300px;
-      margin: 0 auto;
-      padding: 20px 16px;
-    }
-    .form-section { flex: 1 1 420px; min-width: 0; }
-    .map-section  { flex: 1 1 420px; min-width: 0; }
-    .form-row {
-      display: flex;
-      gap: 1rem;
-    }
-    .form-row .form-group { flex: 1 1 0; min-width: 0; }
-
-    @media (max-width: 860px) {
-      .container { flex-direction: column; gap: 1.25rem; }
-      .form-section, .map-section { width: 100%; flex: none; }
-      .form-row { flex-direction: column; gap: 0; }
-      .form-row .form-group { width: 100%; }
-      #map { height: 260px !important; }
-    }
-    @media (max-width: 480px) {
-      body { padding-top: 44px; }
-      .container { padding: 10px 8px; gap: 1rem; }
-      #map { height: 210px !important; }
-      .platform-topbar { padding: 0.4rem 0.75rem; }
-      .platform-topbar nav { display: none !important; }
-    }
-  </style>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+  <link rel="stylesheet" href="crop-predictor.css"/>
 </head>
 <body>
 
 <!-- GeoSmart Agri Platform Topbar -->
 <div class="platform-topbar">
   <a href="../index.html" class="platform-topbar-logo">
-    🌿 GeoSmart Agri
+    <i class="fa-solid fa-seedling"></i> GeoSmart Agri
   </a>
   <nav style="display:flex;gap:1.5rem;align-items:center;">
     <a href="home.html" style="color:#64748b;font-size:0.8rem;text-decoration:none;font-family:'Space Grotesk',sans-serif;">Agri Home</a>
+    <a href="../agriculture-analytics.html" style="color:#64748b;font-size:0.8rem;text-decoration:none;font-family:'Space Grotesk',sans-serif;">Agri Analytics</a>
     <a href="../geominer.html" style="color:#64748b;font-size:0.8rem;text-decoration:none;font-family:'Space Grotesk',sans-serif;">Geo Minerals</a>
     <a href="../dashboard-unified.html" style="color:#64748b;font-size:0.8rem;text-decoration:none;font-family:'Space Grotesk',sans-serif;">Dashboard</a>
   </nav>
@@ -87,7 +30,7 @@
 <nav class="navbar">
   <div class="logo">AgriSmart</div>
   <ul>
-    <li><a href="home.html">Home</a></li>
+    <li class="active"><a href="home.html">Home</a></li>
     <li><a href="crop-predictor.html">Crop Predictor</a></li>
     <li>
       <select id="languageSwitcher" onchange="changeLanguage()">
@@ -99,17 +42,53 @@
   </ul>
 </nav>
 
-<!-- All original AgriSmart crop predictor content loads here via script.js -->
+<!-- Infinite Crop Marquee Scrolling Banner -->
 <div class="marquee-container">
   <div class="marquee-track">
-    <span>🌾 Rice &nbsp; | &nbsp; ☕ Coffee &nbsp; | &nbsp; 🌽 Maize &nbsp; | &nbsp; 🌿 Chickpea &nbsp; | &nbsp; 🧵 Jute &nbsp; | &nbsp; 🌻 Sunflower &nbsp; | &nbsp; 🍇 Grapes &nbsp; | &nbsp; 🍎 Apple &nbsp; | &nbsp; 🍊 Orange &nbsp; | &nbsp; 🥭 Mango</span>
-    <span>🌾 Rice &nbsp; | &nbsp; ☕ Coffee &nbsp; | &nbsp; 🌽 Maize &nbsp; | &nbsp; 🌿 Chickpea &nbsp; | &nbsp; 🧵 Jute &nbsp; | &nbsp; 🌻 Sunflower &nbsp; | &nbsp; 🍇 Grapes &nbsp; | &nbsp; 🍎 Apple &nbsp; | &nbsp; 🍊 Orange &nbsp; | &nbsp; 🥭 Mango</span>
+    <div class="marquee-item">🌾 Rice</div>
+    <div class="marquee-item">☕ Coffee</div>
+    <div class="marquee-item">🌽 Maize</div>
+    <div class="marquee-item">🌿 Chickpea</div>
+    <div class="marquee-item">🧵 Jute</div>
+    <div class="marquee-item">🌻 Sunflower</div>
+    <div class="marquee-item">🍇 Grapes</div>
+    <div class="marquee-item">🍎 Apple</div>
+    <div class="marquee-item">🍊 Orange</div>
+    <div class="marquee-item">🥭 Mango</div>
+    <!-- Duplicate for infinite loop -->
+    <div class="marquee-item">🌾 Rice</div>
+    <div class="marquee-item">☕ Coffee</div>
+    <div class="marquee-item">🌽 Maize</div>
+    <div class="marquee-item">🌿 Chickpea</div>
+    <div class="marquee-item">🧵 Jute</div>
+    <div class="marquee-item">🌻 Sunflower</div>
+    <div class="marquee-item">🍇 Grapes</div>
+    <div class="marquee-item">🍎 Apple</div>
+    <div class="marquee-item">🍊 Orange</div>
+    <div class="marquee-item">🥭 Mango</div>
   </div>
 </div>
 
+<!-- Predictor Hero Header -->
+<header class="predictor-hero">
+  <div class="hero-glow"></div>
+  <div class="floating-icons">
+    <span class="icon float-1">🌱</span>
+    <span class="icon float-2">🌾</span>
+    <span class="icon float-3">☀️</span>
+    <span class="icon float-4">💧</span>
+  </div>
+  <h1 class="hero-title">AI-Powered Smart Crop Recommendation</h1>
+  <p class="hero-subtitle">Optimize agricultural yields using deep climate intelligence and soil characteristics classification</p>
+</header>
+
 <div class="container">
+  <!-- Form Card Section -->
   <div class="form-section">
-    <h2 class="form-title" id="formTitle">🌿 Crop Recommendation</h2>
+    <h2 class="form-title" id="formTitle">
+      <i class="fa-solid fa-wand-magic-sparkles" style="color:#10B981;"></i>
+      <span>Crop Recommendation</span>
+    </h2>
     <p class="form-subtitle" id="formSubtitle">Enter soil parameters or click on the map to auto-fill weather data</p>
 
     <form id="cropForm">
@@ -133,17 +112,20 @@
       </div>
 
       <!-- AI Soil Camera Upload Section -->
-      <div class="camera-section" style="margin: 1.25rem 0; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); padding: 1.25rem; border-radius: 1rem;">
+      <div class="camera-section">
         <label style="font-weight: 600; color: #f1f5f9; display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem; font-size: 0.9rem;">
-          📷 AI Soil Detection (Camera / Gallery)
+          <i class="fa-solid fa-camera-retro" style="color:#10B981;"></i>
+          <span>AI Soil Detection (Camera / Gallery)</span>
         </label>
-        <div class="upload-buttons" style="display: flex; gap: 0.75rem;">
-          <button type="button" onclick="document.getElementById('galleryInput').click()" style="flex: 1; background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3); color: #10B981; padding: 0.6rem; border-radius: 0.5rem; font-size: 0.85rem; font-weight: 600; cursor: pointer; text-align: center;">
-            📁 Gallery Upload
-          </button>
-          <button type="button" onclick="document.getElementById('cameraInput').click()" style="flex: 1; background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3); color: #10B981; padding: 0.6rem; border-radius: 0.5rem; font-size: 0.85rem; font-weight: 600; cursor: pointer; text-align: center;">
-            📸 Open Camera
-          </button>
+        <div class="upload-buttons">
+          <div class="upload-btn" onclick="document.getElementById('galleryInput').click()">
+            <i class="fa-solid fa-folder-open"></i>
+            <span>Gallery Upload</span>
+          </div>
+          <div class="upload-btn" onclick="document.getElementById('cameraInput').click()">
+            <i class="fa-solid fa-camera"></i>
+            <span>Open Camera</span>
+          </div>
         </div>
         <input type="file" id="galleryInput" accept="image/*" style="display: none;" />
         <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display: none;" />
@@ -189,18 +171,28 @@
         <input type="number" id="rainfall" placeholder="e.g. 200" min="0" required/>
       </div>
 
-      <button type="submit" class="predict-btn" id="predictBtn">🌱 Predict Best Crop</button>
+      <button type="submit" class="predict-btn" id="predictBtn">
+        <i class="fa-solid fa-seedling"></i>
+        <span>Predict Best Crop</span>
+      </button>
     </form>
 
     <div id="result" class="result-box" style="display:none;"></div>
   </div>
 
+  <!-- Map Section Card Redesign -->
   <div class="map-section">
-    <h3 id="mapTitle">📍 Select Your Location</h3>
+    <h3 id="mapTitle">
+      <i class="fa-solid fa-map-location-dot" style="color:#06B6D4;"></i>
+      <span>Select Your Location</span>
+    </h3>
     <p id="mapDesc">Click on the map to auto-fill temperature, humidity, and rainfall</p>
     <div id="map"></div>
-    <div id="coords" style="margin-top: 1rem; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255,255,255,0.08); padding: 1rem; border-radius: 1rem; font-size: 0.85rem; color: #cbd5e1; line-height: 1.6;">
-      <i>No location selected. Click on the map to choose a point.</i>
+    <div id="coords">
+      <div style="display:flex; align-items:center; gap:0.5rem;">
+        <i class="fa-solid fa-circle-info" style="color:#94a3b8;"></i>
+        <span>No location selected. Click on the map to choose a point.</span>
+      </div>
     </div>
   </div>
 </div>

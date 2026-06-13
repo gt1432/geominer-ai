@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>GeoMiner Analytics — GeoSmart Agri</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <link rel="stylesheet" href="css/style.css"/>
+  <script>tailwind.config={darkMode:'class',theme:{extend:{fontFamily:{display:['Space Grotesk'],body:['Inter'],mono:['JetBrains Mono']}}}}</script>
+  <style>
+    body { background: #0c0f0f; color: #e2e2e2; }
+    .sidebar { width: 260px; background: #080a0a; border-right: 1px solid rgba(255,255,255,0.06); }
+    .kpi { background: rgba(255,255,255,0.03); border: 1px solid rgba(217,160,91,0.15); border-radius:0.75rem; padding:1.25rem; }
+    .kpi-val { font-family:'Space Grotesk',sans-serif; font-size:1.8rem; font-weight:700; color: #D9A05B; }
+    .kpi-lbl { font-size:0.7rem; text-transform:uppercase; letter-spacing:0.1em; color:#849fa3; margin-top:0.25rem; }
+    .chart-container { background: rgba(255,255,255,0.02); border: 1px solid rgba(217,160,91,0.08); border-radius: 1rem; padding: 1.5rem; position: relative; }
+    #map { border-radius: 0.75rem; height: 400px; border: 1px solid rgba(217,160,91,0.15); }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: rgba(255,255,255,0.01); }
+    ::-webkit-scrollbar-thumb { background: rgba(217,160,91,0.15); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(217,160,91,0.3); }
+  </style>
+</head>
+<body class="flex min-h-screen">
+
+<!-- Sidebar -->
+<aside class="sidebar h-screen fixed left-0 top-0 flex flex-col p-6 z-50">
+  <div class="mb-8">
+    <a href="index.html" class="flex items-center gap-2.5 no-underline mb-1">
+      <div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#10B981,#00daf3,#8B5CF6);display:flex;align-items:center;justify-content:center;color:white;font-size:1rem;">
+        <i class="fa-solid fa-seedling"></i>
+      </div>
+      <span style="font-family:'Space Grotesk',sans-serif;font-weight:800;font-size:1.1rem;background:linear-gradient(135deg,#10B981,#00daf3,#8B5CF6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">GeoSmart Agri</span>
+    </a>
+    <p style="font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:#64748b;letter-spacing:0.1em;">UNIFIED PLATFORM v1.0</p>
+  </div>
+
+  <nav class="flex-1 flex flex-col gap-1.5 overflow-y-auto">
+    <a href="index.html" class="flex items-center gap-3 px-4 py-3 rounded-lg text-[#bac9cc] hover:bg-white/5 transition-all text-sm font-medium">
+      <span class="material-symbols-outlined text-base">home</span> Platform Home
+    </a>
+    
+    <div class="mt-3 mb-1 px-4 text-xs font-mono text-slate-600 uppercase tracking-widest">Agriculture</div>
+    <a href="agriculture/home.html" class="flex items-center gap-3 px-4 py-3 rounded-lg text-[#bac9cc] hover:bg-[#10B981]/10 transition-all text-sm font-medium">
+      <span style="color:#10B981;">🌾</span> AgriSmart Home
+    </a>
+    <a href="agriculture/crop-predictor.html" class="flex items-center gap-3 px-4 py-3 rounded-lg text-[#bac9cc] hover:bg-[#10B981]/10 transition-all text-sm font-medium">
+      <span style="color:#84CC16;">🌱</span> Crop Predictor
+    </a>
+    <a href="agriculture-analytics.html" class="flex items-center gap-3 px-4 py-3 rounded-lg text-[#bac9cc] hover:bg-[#10B981]/10 transition-all text-sm font-medium">
+      <span style="color:#10B981;">📊</span> Agri Analytics
+    </a>
+
+    <div class="mt-3 mb-1 px-4 text-xs font-mono text-slate-600 uppercase tracking-widest">Geo Minerals</div>
+    <a href="geominer.html" class="flex items-center gap-3 px-4 py-3 rounded-lg text-[#bac9cc] hover:bg-[#00daf3]/10 transition-all text-sm font-medium">
+      <span style="color:#00daf3;">⛏️</span> GeoMiner Home
+    </a>
+    <a href="predict.html" class="flex items-center gap-3 px-4 py-3 rounded-lg text-[#bac9cc] hover:bg-[#00daf3]/10 transition-all text-sm font-medium">
+      <span class="material-symbols-outlined text-base text-[#00daf3]">map</span> Mineral Prediction
+    </a>
+    <a href="geominer-analytics.html" class="flex items-center gap-3 px-4 py-3 rounded-lg text-white bg-[#D9A05B]/20 border border-[#D9A05B]/30 transition-all text-sm font-semibold">
+      <span class="material-symbols-outlined text-base text-[#D9A05B]">insights</span> Geo Analytics
+    </a>
+    <a href="dashboard.html" class="flex items-center gap-3 px-4 py-3 rounded-lg text-[#bac9cc] hover:bg-[#00daf3]/10 transition-all text-sm font-medium">
+      <span class="material-symbols-outlined text-base text-[#00daf3]">dashboard</span> Geo Dashboard
+    </a>
+    <a href="results.html" class="flex items-center gap-3 px-4 py-3 rounded-lg text-[#bac9cc] hover:bg-[#00daf3]/10 transition-all text-sm font-medium">
+      <span class="material-symbols-outlined text-base text-[#8B5CF6]">description</span> Results & Reports
+    </a>
+  </nav>
+
+  <div class="mt-auto pt-4 border-t border-white/5 text-xs text-slate-600 text-center">
+    © 2026 GeoSmart Agri
+  </div>
+</aside>
+
+<!-- Main Content Area -->
+<main class="flex-1 min-h-screen pb-12" style="margin-left:260px;">
+  <!-- Top Header Bar -->
+  <header class="sticky top-0 z-40 px-8 py-4 flex items-center justify-between" style="background:rgba(12,15,15,0.85);backdrop-filter:blur(16px);border-bottom:1px solid rgba(217,160,91,0.15);">
+    <div>
+      <h1 style="font-family:'Space Grotesk',sans-serif;font-size:1.5rem;font-weight:700;color:#f1f5f9;">GeoMiner AI Mineral Analytics</h1>
+      <p style="color:#bac9cc;font-size:0.8rem;">Geochemical prospectivity mapping & geological clustering</p>
+    </div>
+    <div style="display:flex;align-items:center;gap:0.5rem;background:rgba(217,160,91,0.08);border:1px solid rgba(217,160,91,0.25);border-radius:99px;padding:0.35rem 1rem;">
+      <span style="width:7px;height:7px;background:#D9A05B;border-radius:50%;box-shadow:0 0 8px #D9A05B;animation:livepulse 2s infinite;"></span>
+      <span style="font-size:0.72rem;color:#D9A05B;font-weight:600;font-family:'JetBrains Mono',monospace;">GEOMINERAL GPU ENGINE ACTIVE</span>
+    </div>
+  </header>
+
+  <div class="p-8 space-y-8">
+    
+    <!-- KPI Row -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div class="kpi">
+        <div class="kpi-val text-amber-400">Iron / Gold</div>
+        <div class="kpi-lbl">Top Predicted Commodities</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-val text-yellow-400">82.8%</div>
+        <div class="kpi-lbl">Avg Exploration Score</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-val text-[#00daf3]">R² = 0.855</div>
+        <div class="kpi-lbl">Validation Metrics</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-val text-purple-400">60</div>
+        <div class="kpi-lbl">Mapped Survey Locations</div>
+      </div>
+    </div>
+
+    <!-- Section: Mineral Analysis Graphs -->
+    <section class="space-y-4">
+      <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-500 font-mono">1. Mineral Analysis Graphs</h2>
+      <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <div class="chart-container lg:col-span-2">
+          <h3 class="text-sm font-bold mb-4 text-[#D9A05B]">Mineral Prediction Frequency</h3>
+          <div class="h-64"><canvas id="mineralFrequencyChart"></canvas></div>
+        </div>
+        <div class="chart-container lg:col-span-2">
+          <h3 class="text-sm font-bold mb-4 text-[#D9A05B]">Top Predicted Minerals Percentage</h3>
+          <div class="h-64"><canvas id="topMineralsChart"></canvas></div>
+        </div>
+        <div class="chart-container lg:col-span-2">
+          <h3 class="text-sm font-bold mb-4 text-[#D9A05B]">Mineral Probability Score Curves</h3>
+          <div class="h-64"><canvas id="probabilityScoreChart"></canvas></div>
+        </div>
+        <div class="chart-container lg:col-span-2">
+          <h3 class="text-sm font-bold mb-4 text-[#D9A05B]">Mineral Concentration Distribution</h3>
+          <div class="h-64"><canvas id="concentrationDistChart"></canvas></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section: Geological Analysis -->
+    <section class="space-y-4">
+      <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-500 font-mono">2. Geological Analysis</h2>
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="chart-container">
+          <h3 class="text-sm font-bold mb-4 text-[#D9A05B]">Rock Type Distribution</h3>
+          <div class="h-64"><canvas id="rockTypeChart"></canvas></div>
+        </div>
+        <div class="chart-container">
+          <h3 class="text-sm font-bold mb-4 text-[#D9A05B]">Geological Formation Occurrences</h3>
+          <div class="h-64"><canvas id="formationStatsChart"></canvas></div>
+        </div>
+        <div class="chart-container">
+          <h3 class="text-sm font-bold mb-4 text-[#D9A05B]">Exploration Potential vs Elevation</h3>
+          <div class="h-64"><canvas id="explorationScoreChart"></canvas></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section: Clustering Analysis -->
+    <section class="space-y-4">
+      <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-500 font-mono">3. Geological & Mineral Clustering (K-Means)</h2>
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        
+        <!-- Controls Panel -->
+        <div class="lg:col-span-4 chart-container space-y-5">
+          <h3 class="text-sm font-bold text-[#D9A05B] border-b border-white/10 pb-3">Clustering Controls</h3>
+          
+          <div class="space-y-2">
+            <label class="text-xs text-slate-400 block font-semibold">Clustering Algorithm</label>
+            <div class="bg-black/40 p-2 rounded-lg border border-white/5 text-xs font-semibold font-mono text-amber-400">
+              K-Means Clustering
+            </div>
+          </div>
+
+          <div class="space-y-2">
+            <label class="text-xs text-slate-400 block font-semibold">Clustering Target Mode</label>
+            <div class="flex gap-2">
+              <button id="cluster-mode-mineral" onclick="switchGeoClusterMode('mineral')" class="flex-1 py-2 text-xs font-semibold rounded bg-[#D9A05B] text-black transition-all">
+                💎 Mineral Zone
+              </button>
+              <button id="cluster-mode-geo" onclick="switchGeoClusterMode('geo')" class="flex-1 py-2 text-xs font-semibold rounded bg-white/5 text-slate-300 hover:bg-white/10 transition-all">
+                🪨 Geological Similarity
+              </button>
+            </div>
+          </div>
+
+          <div class="space-y-2">
+            <label for="k-val" class="text-xs text-slate-400 flex justify-between font-semibold">
+              <span>Number of Clusters (K)</span>
+              <span id="k-val-display" class="font-bold text-[#D9A05B]">4</span>
+            </label>
+            <input type="range" id="k-val" min="2" max="6" value="4" oninput="updateKDisplay(this.value)" class="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[#D9A05B]">
+          </div>
+
+          <button onclick="runGeoKMeansPipeline()" class="w-full bg-[#D9A05B] hover:bg-[#b8843e] text-black font-bold py-3 rounded-lg text-sm transition-all shadow-lg flex justify-center items-center gap-2">
+            <i class="fa-solid fa-rotate"></i> Re-Calculate Clusters
+          </button>
+          
+          <div class="p-3 bg-white/5 border border-white/10 rounded-lg text-xs leading-relaxed text-slate-400">
+            <b>Mineral Zone</b> groups survey points by mineral probability, elevation, and iron/copper/zinc indicators. <b>Geological Similarity</b> clusters based on rock type distribution, elevation profile, and geologic formation.
+          </div>
+        </div>
+
+        <!-- Visualizers (8 cols) -->
+        <div class="lg:col-span-8 space-y-6">
+          <div class="chart-container">
+            <h3 id="scatter-title" class="text-sm font-bold mb-4 text-[#D9A05B]">Interactive Scatter Plot — Elevation vs Mineral Probability Clusters</h3>
+            <div class="h-80"><canvas id="clusterScatterPlot"></canvas></div>
+          </div>
+          
+          <div class="chart-container">
+            <h3 id="map-title" class="text-sm font-bold mb-4 text-[#D9A05B]">Geospatial Cluster map</h3>
+            <div id="map"></div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+<script>
+// --- Simulated Geochemical Survey Points of Karnataka and Andhra Pradesh ---
+const geoPointsData = [
+  { id: 1, name: "Chitradurga Metasediment Belt", lat: 14.150, lng: 76.502, elevation: 620, rockType: "Metamorphic", formation: "Chitradurga Belt", Fe: 15.6, Cu: 85, Zn: 120, probability: 82, commodity: "Copper", potential: 85 },
+  { id: 2, name: "Kolar Lode Gold Outcrop", lat: 12.965, lng: 78.270, elevation: 840, rockType: "Metamorphic", formation: "Kolar Gold Field", Fe: 5.4, Cu: 15, Zn: 32, probability: 96, commodity: "Gold", potential: 98 },
+  { id: 3, name: "Sandur Iron Complex", lat: 15.082, lng: 76.554, elevation: 750, rockType: "Metamorphic", formation: "Sandur Schist Belt", Fe: 52.4, Cu: 42, Zn: 85, probability: 94, commodity: "Iron", potential: 96 },
+  { id: 4, name: "Bellary Hematite Ridge", lat: 15.148, lng: 76.920, elevation: 490, rockType: "Sedimentary", formation: "Bellary Iron Belt", Fe: 58.2, Cu: 35, Zn: 72, probability: 91, commodity: "Iron", potential: 94 },
+  { id: 5, name: "Kurnool Kimberlite Field", lat: 15.520, lng: 77.420, elevation: 320, rockType: "Igneous", formation: "Kurnool Diamond Zone", Fe: 4.8, Cu: 22, Zn: 50, probability: 88, commodity: "Diamond", potential: 90 },
+  { id: 6, name: "Kadapa Basin Limestone", lat: 14.480, lng: 78.820, elevation: 180, rockType: "Sedimentary", formation: "Eastern Ghats Belt", Fe: 1.8, Cu: 12, Zn: 95, probability: 68, commodity: "Zinc", potential: 65 },
+  { id: 7, name: "Nellore Pegmatite Belt", lat: 14.450, lng: 79.980, elevation: 80, rockType: "Igneous", formation: "Eastern Ghats Belt", Fe: 2.5, Cu: 48, Zn: 64, probability: 74, commodity: "Manganese", potential: 78 },
+  { id: 8, name: "Peninsular Gneissic Plain West", lat: 13.330, lng: 77.100, elevation: 820, rockType: "Igneous", formation: "Peninsular Gneissic Complex", Fe: 4.2, Cu: 28, Zn: 55, probability: 42, commodity: "Copper", potential: 45 },
+  { id: 9, name: "Dharwar Metabasalt Scarp", lat: 15.450, lng: 75.007, elevation: 680, rockType: "Metamorphic", formation: "Peninsular Gneissic Complex", Fe: 10.2, Cu: 58, Zn: 92, probability: 79, commodity: "Manganese", potential: 80 },
+  { id: 10, name: "Shimoga Greenstone Outcrop", lat: 13.920, lng: 75.560, elevation: 580, rockType: "Metamorphic", formation: "Peninsular Gneissic Complex", Fe: 8.6, Cu: 62, Zn: 110, probability: 83, commodity: "Zinc", potential: 82 },
+  { id: 11, name: "Gooty Diamond Prospect", lat: 15.120, lng: 77.630, elevation: 340, rockType: "Igneous", formation: "Kurnool Diamond Zone", Fe: 4.5, Cu: 18, Zn: 42, probability: 85, commodity: "Diamond", potential: 87 },
+  { id: 12, name: "Anantapur Gold Quartz Vein", lat: 14.680, lng: 77.600, elevation: 420, rockType: "Metamorphic", formation: "Kolar Gold Field", Fe: 6.2, Cu: 20, Zn: 38, probability: 76, commodity: "Gold", potential: 79 },
+  { id: 13, name: "Hassan Chromite Belt", lat: 13.060, lng: 76.190, elevation: 910, rockType: "Igneous", formation: "Peninsular Gneissic Complex", Fe: 18.2, Cu: 12, Zn: 30, probability: 89, commodity: "Manganese", potential: 92 },
+  { id: 14, name: "Donimalai Iron Lobe", lat: 15.040, lng: 76.610, elevation: 800, rockType: "Metamorphic", formation: "Sandur Schist Belt", Fe: 62.1, Cu: 10, Zn: 25, probability: 97, commodity: "Iron", potential: 99 },
+  { id: 15, name: "Tumkur Iron Ore Caps", lat: 13.330, lng: 76.800, elevation: 880, rockType: "Metamorphic", formation: "Chitradurga Belt", Fe: 45.3, Cu: 18, Zn: 45, probability: 84, commodity: "Iron", potential: 86 },
+  { id: 16, name: "Kurnool North Kimberlite", lat: 15.760, lng: 77.400, elevation: 310, rockType: "Igneous", formation: "Kurnool Diamond Zone", Fe: 4.9, Cu: 24, Zn: 52, probability: 90, commodity: "Diamond", potential: 91 },
+  { id: 17, name: "Chitradurga Sulfide Ridge", lat: 14.230, lng: 76.380, elevation: 710, rockType: "Metamorphic", formation: "Chitradurga Belt", Fe: 14.2, Cu: 110, Zn: 140, probability: 87, commodity: "Copper", potential: 88 },
+  { id: 18, name: "Banganapalle Conglomerate", lat: 15.310, lng: 78.230, elevation: 260, rockType: "Sedimentary", formation: "Kurnool Diamond Zone", Fe: 3.2, Cu: 15, Zn: 48, probability: 80, commodity: "Diamond", potential: 82 },
+  { id: 19, name: "Dharwar Gold Scarp", lat: 15.280, lng: 75.630, elevation: 620, rockType: "Metamorphic", formation: "Peninsular Gneissic Complex", Fe: 7.2, Cu: 25, Zn: 58, probability: 72, commodity: "Gold", potential: 75 },
+  { id: 20, name: "Mangampeta Barytes Basin", lat: 14.020, lng: 79.320, elevation: 220, rockType: "Sedimentary", formation: "Eastern Ghats Belt", Fe: 5.6, Cu: 40, Zn: 150, probability: 95, commodity: "Zinc", potential: 97 }
+];
+
+let scatterChartInstance = null;
+let mapInstance = null;
+let mapMarkers = [];
+let activeClusterMode = 'mineral'; // 'mineral' or 'geo'
+
+// --- K-Means algorithm implementation ---
+function runKMeans(data, k, features, maxIterations = 80) {
+  const normData = data.map(item => {
+    const val = {};
+    features.forEach(f => {
+      // Map qualitative features to numerical scales
+      if (f === 'rockType') {
+        val[f] = item[f] === 'Igneous' ? 0.0 : item[f] === 'Sedimentary' ? 0.5 : 1.0;
+      } else if (f === 'formation') {
+        const formList = ['PGC', 'Dharwar', 'Chitradurga', 'Kolar', 'Kurnool', 'Sandur', 'Eastern Ghats Belt'];
+        const idx = formList.findIndex(x => item[f].includes(x));
+        val[f] = idx !== -1 ? idx / (formList.length - 1) : 0.5;
+      } else {
+        val[f] = item[f];
+      }
+    });
+    return { id: item.id, val, orig: item };
+  });
+
+  const stats = {};
+  features.forEach(f => {
+    const vals = normData.map(d => d.val[f]);
+    stats[f] = { min: Math.min(...vals), max: Math.max(...vals) };
+  });
+
+  normData.forEach(d => {
+    features.forEach(f => {
+      const denom = (stats[f].max - stats[f].min) || 1.0;
+      d.val[f] = (d.val[f] - stats[f].min) / denom;
+    });
+  });
+
+  let centroids = [];
+  const selectedIndices = [];
+  while (centroids.length < k && centroids.length < normData.length) {
+    const idx = Math.floor(Math.random() * normData.length);
+    if (!selectedIndices.includes(idx)) {
+      selectedIndices.push(idx);
+      centroids.push({ ...normData[idx].val });
+    }
+  }
+
+  let clusters = Array(k).fill().map(() => []);
+  let assignments = {};
+  let iterations = 0;
+  let centroidsChanged = true;
+
+  while (centroidsChanged && iterations < maxIterations) {
+    iterations++;
+    clusters = Array(k).fill().map(() => []);
+    centroidsChanged = false;
+
+    // Assignment Step
+    normData.forEach(d => {
+      let minDist = Infinity;
+      let closestCentroid = 0;
+      for (let i = 0; i < k; i++) {
+        let sumSq = 0;
+        features.forEach(f => {
+          sumSq += (d.val[f] - centroids[i][f]) ** 2;
+        });
+        const dist = Math.sqrt(sumSq);
+        if (dist < minDist) {
+          minDist = dist;
+          closestCentroid = i;
+        }
+      }
+      clusters[closestCentroid].push(d);
+      assignments[d.id] = closestCentroid;
+    });
+
+    // Update Centroids Step
+    for (let i = 0; i < k; i++) {
+      if (clusters[i].length === 0) continue;
+      const newCentroid = {};
+      features.forEach(f => {
+        const sum = clusters[i].reduce((acc, d) => acc + d.val[f], 0);
+        newCentroid[f] = sum / clusters[i].length;
+        if (Math.abs(newCentroid[f] - centroids[i][f]) > 0.0001) {
+          centroidsChanged = true;
+        }
+      });
+      centroids[i] = newCentroid;
+    }
+  }
+
+  return { assignments, clusters };
+}
+
+// --- Dynamic Visual Updates ---
+function updateKDisplay(val) {
+  document.getElementById('k-val-display').textContent = val;
+}
+
+function switchGeoClusterMode(mode) {
+  activeClusterMode = mode;
+  const minBtn = document.getElementById('cluster-mode-mineral');
+  const geoBtn = document.getElementById('cluster-mode-geo');
+
+  if (mode === 'mineral') {
+    minBtn.className = "flex-1 py-2 text-xs font-semibold rounded bg-[#D9A05B] text-black transition-all";
+    geoBtn.className = "flex-1 py-2 text-xs font-semibold rounded bg-white/5 text-slate-300 hover:bg-white/10 transition-all";
+    document.getElementById('scatter-title').textContent = "Interactive Scatter Plot — Elevation vs Mineral Probability Clusters";
+  } else {
+    geoBtn.className = "flex-1 py-2 text-xs font-semibold rounded bg-[#D9A05B] text-black transition-all";
+    minBtn.className = "flex-1 py-2 text-xs font-semibold rounded bg-white/5 text-slate-300 hover:bg-white/10 transition-all";
+    document.getElementById('scatter-title').textContent = "Interactive Scatter Plot — Elevation vs Fe Concentration Similarity Clusters";
+  }
+  runGeoKMeansPipeline();
+}
+
+function runGeoKMeansPipeline() {
+  const k = parseInt(document.getElementById('k-val').value);
+  let features = [];
+  if (activeClusterMode === 'mineral') {
+    features = ['probability', 'elevation', 'Fe', 'Cu'];
+  } else {
+    features = ['rockType', 'elevation', 'formation'];
+  }
+
+  const { assignments } = runKMeans(geoPointsData, k, features);
+
+  // Update Scatter plot
+  renderScatterPlot(k, assignments);
+
+  // Update Leaflet map markers
+  renderMapMarkers(k, assignments);
+}
+
+const CLUSTER_COLORS = [
+  '#D9A05B', // gold/amber
+  '#00daf3', // cyan
+  '#8B5CF6', // purple
+  '#EF4444', // red
+  '#10B981', // green
+  '#EC4899'  // pink
+];
+
+function renderScatterPlot(k, assignments) {
+  const canvas = document.getElementById('clusterScatterPlot');
+  if (!canvas) return;
+
+  const datasets = Array(k).fill().map((_, idx) => ({
+    label: `Cluster ${idx + 1}`,
+    data: [],
+    backgroundColor: CLUSTER_COLORS[idx] + 'CC',
+    borderColor: CLUSTER_COLORS[idx],
+    borderWidth: 1.5,
+    pointRadius: 6,
+    pointHoverRadius: 8
+  }));
+
+  geoPointsData.forEach(item => {
+    const clusterIdx = assignments[item.id];
+    let xVal, yVal;
+    if (activeClusterMode === 'mineral') {
+      xVal = item.probability; // Probability on X-axis
+      yVal = item.elevation;   // Elevation on Y-axis
+    } else {
+      xVal = item.Fe;          // Iron content on X-axis
+      yVal = item.elevation;   // Elevation on Y-axis
+    }
+    datasets[clusterIdx].data.push({ x: xVal, y: yVal, name: item.name, commodity: item.commodity, formation: item.formation });
+  });
+
+  if (scatterChartInstance) {
+    scatterChartInstance.destroy();
+  }
+
+  scatterChartInstance = new Chart(canvas, {
+    type: 'scatter',
+    data: { datasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { labels: { color: '#bac9cc', font: { family: 'Inter' } } },
+        tooltip: {
+          callbacks: {
+            label: (ctx) => {
+              const pt = ctx.raw;
+              if (activeClusterMode === 'mineral') {
+                return ` ${pt.name} (${pt.formation}): Elev=${pt.y}m, Prob=${pt.x}% | Commodity: ${pt.commodity}`;
+              } else {
+                return ` ${pt.name}: Fe=${pt.x}%, Elev=${pt.y}m | Commodity: ${pt.commodity}`;
+              }
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          title: { display: true, text: activeClusterMode === 'mineral' ? 'Mineral Probability (%)' : 'Iron Oxide (Fe₂O₃) Concentration %', color: '#bac9cc' },
+          grid: { color: 'rgba(255,255,255,0.03)' },
+          ticks: { color: '#849fa3' }
+        },
+        y: {
+          title: { display: true, text: 'Elevation (m AMSL)', color: '#bac9cc' },
+          grid: { color: 'rgba(255,255,255,0.03)' },
+          ticks: { color: '#849fa3' }
+        }
+      }
+    }
+  });
+}
+
+function initMap() {
+  const mapEl = document.getElementById('map');
+  if (!mapEl) return;
+
+  mapInstance = L.map('map').setView([14.40, 77.20], 6);
+
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    attribution: '&copy; OSM &copy; CARTO'
+  }).addTo(mapInstance);
+}
+
+function renderMapMarkers(k, assignments) {
+  if (!mapInstance) return;
+
+  mapMarkers.forEach(m => mapInstance.removeLayer(m));
+  mapMarkers = [];
+
+  geoPointsData.forEach(item => {
+    const clusterIdx = assignments[item.id];
+    const color = CLUSTER_COLORS[clusterIdx];
+
+    const marker = L.circleMarker([item.lat, item.lng], {
+      radius: 8,
+      fillColor: color,
+      color: '#fff',
+      weight: 1.5,
+      opacity: 0.9,
+      fillOpacity: 0.75
+    }).addTo(mapInstance);
+
+    marker.bindPopup(`
+      <div style="font-family: 'Inter', sans-serif; font-size: 0.82rem; color: #1e293b; min-width: 170px;">
+        <b style="color: #b8843e; display: block; font-size: 0.9rem; margin-bottom: 0.25rem;">💎 ${item.name}</b>
+        <b>Formation:</b> ${item.formation}<br/>
+        <b>Rock Profile:</b> ${item.rockType}<br/>
+        <b>Geochem Fe:</b> ${item.Fe}% &nbsp;|&nbsp; <b>Cu:</b> ${item.Cu} ppm<br/>
+        <b>Mineral Probability:</b> <span style="font-weight: 700; color: #D9A05B;">${item.probability}%</span><br/>
+        <b>Dominant Commodity:</b> ${item.commodity}<br/>
+        <b>Exploration Score:</b> ${item.potential}<br/>
+        <span style="font-size:0.65rem; color:#64748b; font-weight:700; display:block; margin-top:0.4rem; text-transform:uppercase; letter-spacing:0.05em;">K-Means Cluster ${clusterIdx + 1}</span>
+      </div>
+    `);
+
+    mapMarkers.push(marker);
+  });
+}
+
+// --- Non-clustering Dashboard charts setup ---
+function initDashboardCharts() {
+  const chartConfigs = [
+    {
+      id: 'mineralFrequencyChart',
+      type: 'bar',
+      labels: ['Iron', 'Gold', 'Manganese', 'Copper', 'Diamond', 'Zinc', 'Others'],
+      data: [18, 14, 8, 7, 5, 4, 4],
+      bg: '#D9A05B',
+      label: 'Target Mapping Frequency'
+    },
+    {
+      id: 'topMineralsChart',
+      type: 'doughnut',
+      labels: ['Iron', 'Gold', 'Manganese', 'Copper', 'Diamond', 'Zinc', 'Others'],
+      data: [30, 23, 13, 12, 8, 7, 7],
+      bg: ['#9b6f37', '#b8843e', '#D9A05B', '#e8b57b', '#f2ceaa', '#f9e4ce', '#64748b'],
+      label: 'Commodity Ratio %'
+    },
+    {
+      id: 'probabilityScoreChart',
+      type: 'line',
+      labels: ['Zone A', 'Zone B', 'Zone C', 'Zone D', 'Zone E', 'Zone F', 'Zone G'],
+      data: [82, 96, 94, 91, 88, 68, 74],
+      borderColor: '#D9A05B',
+      bg: 'rgba(217,160,91,0.08)',
+      label: 'Mineral Potential Score (%)'
+    },
+    {
+      id: 'concentrationDistChart',
+      type: 'radar',
+      labels: ['Iron (Fe)', 'Copper (Cu)', 'Zinc (Zn)', 'Manganese (Mn)', 'Nickel (Ni)', 'Lead (Pb)'],
+      data: [85, 45, 60, 38, 22, 14],
+      bg: 'rgba(217,160,91,0.15)',
+      borderColor: '#D9A05B',
+      label: 'Relative Geochemical Density'
+    },
+    {
+      id: 'rockTypeChart',
+      type: 'pie',
+      labels: ['Metamorphic', 'Igneous', 'Sedimentary'],
+      data: [52, 28, 20],
+      bg: ['#9b6f37', '#D9A05B', '#849fa3'],
+      label: 'Rock Classification'
+    },
+    {
+      id: 'formationStatsChart',
+      type: 'bar',
+      labels: ['Sandur Belt', 'Kolar Belt', 'Chitradurga Belt', 'Kurnool Kimberlite', 'PGC', 'Eastern Ghats'],
+      data: [15, 12, 14, 10, 8, 11],
+      bg: '#849fa3',
+      label: 'Occurrence Counts'
+    },
+    {
+      id: 'explorationScoreChart',
+      type: 'line',
+      labels: ['80m', '180m', '220m', '260m', '320m', '420m', '490m', '620m', '750m', '840m'],
+      data: [78, 65, 97, 82, 90, 79, 94, 85, 96, 98],
+      borderColor: '#a78bfa',
+      bg: 'rgba(167,139,250,0.08)',
+      label: 'Exploration Potential'
+    }
+  ];
+
+  chartConfigs.forEach(conf => {
+    const canvas = document.getElementById(conf.id);
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    
+    new Chart(ctx, {
+      type: conf.type,
+      data: {
+        labels: conf.labels,
+        datasets: [{
+          label: conf.label,
+          data: conf.data,
+          backgroundColor: conf.bg,
+          borderColor: conf.borderColor || 'transparent',
+          borderWidth: conf.borderColor ? 2 : 0,
+          fill: !!conf.bg
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { labels: { color: '#849fa3', font: { size: 10, family: 'Inter' } } }
+        },
+        scales: conf.type !== 'radar' && conf.type !== 'doughnut' && conf.type !== 'pie' ? {
+          x: { grid: { color: 'rgba(255,255,255,0.02)' }, ticks: { color: '#849fa3', font: { size: 9 } } },
+          y: { grid: { color: 'rgba(255,255,255,0.02)' }, ticks: { color: '#849fa3', font: { size: 9 } } }
+        } : {}
+      }
+    });
+  });
+}
+
+// Bootstrapping
+document.addEventListener('DOMContentLoaded', () => {
+  initDashboardCharts();
+  initMap();
+  runGeoKMeansPipeline();
+});
+</script>
+</body>
+</html>

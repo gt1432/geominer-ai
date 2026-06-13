@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Agriculture Analytics — GeoSmart Agri</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <link rel="stylesheet" href="css/agrigeo.css"/>
+  <script>tailwind.config={darkMode:'class',theme:{extend:{fontFamily:{display:['Space Grotesk'],body:['Inter'],mono:['JetBrains Mono']}}}}</script>
+  <style>
+    body { background: #080b0c; color: #f1f5f9; }
+    .sidebar { width: 260px; background: #0c0f10; border-right: 1px solid rgba(255,255,255,0.07); }
+    .kpi { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius:0.75rem; padding:1.25rem; }
+    .kpi-val { font-family:'Space Grotesk',sans-serif; font-size:1.8rem; font-weight:700; }
+    .kpi-lbl { font-size:0.7rem; text-transform:uppercase; letter-spacing:0.1em; color:#64748b; margin-top:0.25rem; }
+    .chart-container { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 1rem; padding: 1.5rem; position: relative; }
+    .active-tab { border-bottom: 2px solid #10B981; color: #10B981; }
+    #map { border-radius: 0.75rem; height: 400px; border: 1px solid rgba(255,255,255,0.08); }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: rgba(255,255,255,0.01); }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.15); }
+  </style>
+</head>
+<body class="flex min-h-screen">
+
+<!-- Sidebar -->
+<aside class="sidebar h-screen fixed left-0 top-0 flex flex-col p-6 z-50">
+  <div class="mb-8">
+    <a href="index.html" class="flex items-center gap-2.5 no-underline mb-1">
+      <div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#10B981,#00daf3,#8B5CF6);display:flex;align-items:center;justify-content:center;color:white;font-size:1rem;">
+        <i class="fa-solid fa-seedling"></i>
+      </div>
+      <span style="font-family:'Space Grotesk',sans-serif;font-weight:800;font-size:1.1rem;background:linear-gradient(135deg,#10B981,#00daf3,#8B5CF6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">GeoSmart Agri</span>
+    </a>
+    <p style="font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:#64748b;letter-spacing:0.1em;">UNIFIED PLATFORM v1.0</p>
+  </div>
+
+  <nav class="flex-1 flex flex-col gap-1.5 overflow-y-auto">
+    <a href="index.html" class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-400 hover:bg-white/5 transition-all text-sm font-medium">
+      <span class="material-symbols-outlined text-base">home</span> Platform Home
+    </a>
+    
+    <div class="mt-3 mb-1 px-4 text-xs font-mono text-slate-600 uppercase tracking-widest">Agriculture</div>
+    <a href="agriculture/home.html" class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-400 hover:bg-[#10B981]/10 transition-all text-sm font-medium">
+      <span style="color:#10B981;">🌾</span> AgriSmart Home
+    </a>
+    <a href="agriculture/crop-predictor.html" class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-400 hover:bg-[#10B981]/10 transition-all text-sm font-medium">
+      <span style="color:#84CC16;">🌱</span> Crop Predictor
+    </a>
+    <a href="agriculture-analytics.html" class="flex items-center gap-3 px-4 py-3 rounded-lg text-white bg-[#10B981]/20 border border-[#10B981]/30 transition-all text-sm font-semibold">
+      <span style="color:#10B981;">📊</span> Agri Analytics
+    </a>
+
+    <div class="mt-3 mb-1 px-4 text-xs font-mono text-slate-600 uppercase tracking-widest">Geo Minerals</div>
+    <a href="geominer.html" class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-400 hover:bg-[#00daf3]/10 transition-all text-sm font-medium">
+      <span style="color:#00daf3;">⛏️</span> GeoMiner Home
+    </a>
+    <a href="predict.html" class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-400 hover:bg-[#00daf3]/10 transition-all text-sm font-medium">
+      <span class="material-symbols-outlined text-base text-[#00daf3]">map</span> Mineral Prediction
+    </a>
+    <a href="geominer-analytics.html" class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-400 hover:bg-[#00daf3]/10 transition-all text-sm font-medium">
+      <span class="material-symbols-outlined text-base text-[#00daf3]">insights</span> Geo Analytics
+    </a>
+    <a href="dashboard.html" class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-400 hover:bg-[#00daf3]/10 transition-all text-sm font-medium">
+      <span class="material-symbols-outlined text-base text-[#00daf3]">dashboard</span> Geo Dashboard
+    </a>
+    <a href="results.html" class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-400 hover:bg-[#00daf3]/10 transition-all text-sm font-medium">
+      <span class="material-symbols-outlined text-base text-[#8B5CF6]">description</span> Results & Reports
+    </a>
+  </nav>
+
+  <div class="mt-auto pt-4 border-t border-white/5 text-xs text-slate-600 text-center">
+    © 2026 GeoSmart Agri
+  </div>
+</aside>
+
+<!-- Main Content Area -->
+<main class="flex-1 min-h-screen pb-12" style="margin-left:260px;">
+  <!-- Top Header Bar -->
+  <header class="sticky top-0 z-40 px-8 py-4 flex items-center justify-between" style="background:rgba(8,11,12,0.85);backdrop-filter:blur(16px);border-bottom:1px solid rgba(255,255,255,0.07);">
+    <div>
+      <h1 style="font-family:'Space Grotesk',sans-serif;font-size:1.5rem;font-weight:700;color:#f1f5f9;">Agriculture Analytics Workspace</h1>
+      <p style="color:#64748b;font-size:0.8rem;">Deep agricultural insights & crop recommendation models</p>
+    </div>
+    <div style="display:flex;align-items:center;gap:0.5rem;background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.2);border-radius:99px;padding:0.35rem 1rem;">
+      <span style="width:7px;height:7px;background:#10B981;border-radius:50%;box-shadow:0 0 8px #10B981;animation:livepulse 2s infinite;"></span>
+      <span style="font-size:0.72rem;color:#10B981;font-weight:600;font-family:'JetBrains Mono',monospace;">AGRI ENGINE ONLINE</span>
+    </div>
+  </header>
+
+  <!-- Dashboard Telemetry content -->
+  <div class="p-8 space-y-8">
+    
+    <!-- KPI Row -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div class="kpi">
+        <div class="kpi-val text-emerald-400">Rice / Cotton</div>
+        <div class="kpi-lbl">Top Recommended Crops</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-val text-lime-400">84.5%</div>
+        <div class="kpi-lbl">Avg Suitability Score</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-val text-sky-400">76.2%</div>
+        <div class="kpi-lbl">Mean Moisture Index</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-val text-indigo-400">55</div>
+        <div class="kpi-lbl">Analyzed Crop Zones</div>
+      </div>
+    </div>
+
+    <!-- Section: Crop Distribution Graphs -->
+    <section class="space-y-4">
+      <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-500 font-mono">1. Crop Distribution Graphs</h2>
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="chart-container lg:col-span-1">
+          <h3 class="text-sm font-bold mb-4 text-[#10B981]">Most Recommended Crops</h3>
+          <div class="h-64"><canvas id="recommendedCropsChart"></canvas></div>
+        </div>
+        <div class="chart-container lg:col-span-1">
+          <h3 class="text-sm font-bold mb-4 text-[#10B981]">Crop Suitability Distribution</h3>
+          <div class="h-64"><canvas id="suitabilityDistributionChart"></canvas></div>
+        </div>
+        <div class="chart-container lg:col-span-1">
+          <h3 class="text-sm font-bold mb-4 text-[#10B981]">Regional Suitability Trends</h3>
+          <div class="h-64"><canvas id="regionalTrendsChart"></canvas></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section: Soil Analysis Charts -->
+    <section class="space-y-4">
+      <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-500 font-mono">2. Soil Analysis Charts</h2>
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="chart-container">
+          <h3 class="text-sm font-bold mb-4 text-[#10B981]">Soil Type Distribution</h3>
+          <div class="h-64"><canvas id="soilTypeChart"></canvas></div>
+        </div>
+        <div class="chart-container">
+          <h3 class="text-sm font-bold mb-4 text-[#10B981]">Soil N-P-K Fertility Profile</h3>
+          <div class="h-64"><canvas id="soilFertilityChart"></canvas></div>
+        </div>
+        <div class="chart-container">
+          <h3 class="text-sm font-bold mb-4 text-[#10B981]">Water Retention / Moisture Trends</h3>
+          <div class="h-64"><canvas id="moistureTrendsChart"></canvas></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section: Yield Prediction Analytics -->
+    <section class="space-y-4">
+      <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-500 font-mono">3. Yield Prediction Analytics</h2>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="chart-container">
+          <h3 class="text-sm font-bold mb-4 text-[#10B981]">Predicted Crop Yield Comparison (Tons/Ha)</h3>
+          <div class="h-64"><canvas id="yieldComparisonChart"></canvas></div>
+        </div>
+        <div class="chart-container">
+          <h3 class="text-sm font-bold mb-4 text-[#10B981]">Historical vs Predicted Yield</h3>
+          <div class="h-64"><canvas id="historicalYieldChart"></canvas></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section: Clustering Analysis -->
+    <section class="space-y-4">
+      <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-500 font-mono">4. Crop Zone & Soil Clustering (K-Means)</h2>
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        
+        <!-- Controls Panel -->
+        <div class="lg:col-span-4 chart-container space-y-5">
+          <h3 class="text-sm font-bold text-[#10B981] border-b border-white/10 pb-3">Clustering Controls</h3>
+          
+          <div class="space-y-2">
+            <label class="text-xs text-slate-400 block font-semibold">Clustering Algorithm</label>
+            <div class="bg-black/40 p-2 rounded-lg border border-white/5 text-xs font-semibold font-mono text-emerald-400">
+              K-Means Clustering
+            </div>
+          </div>
+
+          <div class="space-y-2">
+            <label class="text-xs text-slate-400 block font-semibold">Clustering Target Mode</label>
+            <div class="flex gap-2">
+              <button id="cluster-mode-zone" onclick="switchClusterMode('zone')" class="flex-1 py-2 text-xs font-semibold rounded bg-[#10B981] text-black transition-all">
+                📍 Crop Zone
+              </button>
+              <button id="cluster-mode-soil" onclick="switchClusterMode('soil')" class="flex-1 py-2 text-xs font-semibold rounded bg-white/5 text-slate-300 hover:bg-white/10 transition-all">
+                🧪 Soil Similarity
+              </button>
+            </div>
+          </div>
+
+          <div class="space-y-2">
+            <label for="k-val" class="text-xs text-slate-400 flex justify-between font-semibold">
+              <span>Number of Clusters (K)</span>
+              <span id="k-val-display" class="font-bold text-[#10B981]">3</span>
+            </label>
+            <input type="range" id="k-val" min="2" max="6" value="3" oninput="updateKDisplay(this.value)" class="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[#10B981]">
+          </div>
+
+          <button onclick="runKMeansPipeline()" class="w-full bg-[#10B981] hover:bg-[#059669] text-black font-bold py-3 rounded-lg text-sm transition-all shadow-lg flex justify-center items-center gap-2">
+            <i class="fa-solid fa-rotate"></i> Re-Calculate Clusters
+          </button>
+          
+          <div class="p-3 bg-white/5 border border-white/10 rounded-lg text-xs leading-relaxed text-slate-400">
+            <b>Crop Zone</b> clusters coordinates to identify geographic suitability hubs. <b>Soil Similarity</b> clusters nitrogen (N), phosphorus (P), potassium (K), and pH levels.
+          </div>
+        </div>
+
+        <!-- Visualizers (8 cols) -->
+        <div class="lg:col-span-8 space-y-6">
+          <div class="chart-container">
+            <h3 id="scatter-title" class="text-sm font-bold mb-4 text-[#10B981]">Interactive Scatter Plot — Latitude vs Longitude Clusters</h3>
+            <div class="h-80"><canvas id="clusterScatterPlot"></canvas></div>
+          </div>
+          
+          <div class="chart-container">
+            <h3 id="map-title" class="text-sm font-bold mb-4 text-[#10B981]">Geospatial Cluster map</h3>
+            <div id="map"></div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+<script>
+// --- Simulated Regional Agricultural dataset of Karnataka and AP ---
+const zonesData = [
+  { id: 1, name: "Chitradurga North Hub", lat: 14.228, lng: 76.401, soil: "Red Soil", N: 40, P: 20, K: 30, ph: 6.0, temp: 28, humidity: 55, rainfall: 650, crop: "Mothbeans", suitability: 85, yield: 2.1, histYield: 1.9, moisture: 35 },
+  { id: 2, name: "Kolar Borderlands", lat: 12.960, lng: 78.275, soil: "Laterite Soil", N: 25, P: 15, K: 25, ph: 5.5, temp: 26, humidity: 62, rainfall: 850, crop: "Coffee", suitability: 72, yield: 1.4, histYield: 1.3, moisture: 42 },
+  { id: 3, name: "Bellary Central Valley", lat: 15.148, lng: 76.921, soil: "Black Soil", N: 52, P: 32, K: 68, ph: 7.6, temp: 31, humidity: 45, rainfall: 550, crop: "Cotton", suitability: 92, yield: 2.3, histYield: 2.1, moisture: 50 },
+  { id: 4, name: "Shimoga Highlands", lat: 13.929, lng: 75.568, soil: "Loamy Soil", N: 92, P: 48, K: 52, ph: 6.6, temp: 24, humidity: 75, rainfall: 1850, crop: "Maize", suitability: 89, yield: 5.8, histYield: 5.4, moisture: 78 },
+  { id: 5, name: "Davanagere Plains", lat: 14.464, lng: 75.922, soil: "Clay Soil", N: 60, P: 42, K: 48, ph: 6.4, temp: 29, humidity: 58, rainfall: 780, crop: "Rice", suitability: 81, yield: 4.2, histYield: 3.9, moisture: 60 },
+  { id: 6, name: "Hassan Valley", lat: 13.007, lng: 76.103, soil: "Red Soil", N: 42, P: 18, K: 28, ph: 5.8, temp: 23, humidity: 68, rainfall: 1050, crop: "Coffee", suitability: 88, yield: 1.9, histYield: 1.7, moisture: 48 },
+  { id: 7, name: "Kurnool Black Soil Plains", lat: 15.828, lng: 78.035, soil: "Black Soil", N: 55, P: 35, K: 72, ph: 7.8, temp: 33, humidity: 40, rainfall: 580, crop: "Cotton", suitability: 94, yield: 2.5, histYield: 2.3, moisture: 52 },
+  { id: 8, name: "Anantapur Arid Zone", lat: 14.682, lng: 77.601, soil: "Sandy Soil", N: 18, P: 12, K: 18, ph: 6.3, temp: 32, humidity: 38, rainfall: 420, crop: "Mothbeans", suitability: 78, yield: 1.1, histYield: 1.0, moisture: 28 },
+  { id: 9, name: "Kadapa Silt Basin", lat: 14.467, lng: 78.824, soil: "Silt Soil", N: 58, P: 36, K: 42, ph: 6.8, temp: 30, humidity: 50, rainfall: 720, crop: "Chickpea", suitability: 83, yield: 2.2, histYield: 2.0, moisture: 55 },
+  { id: 10, name: "Chittoor Foot-hills", lat: 13.217, lng: 79.100, soil: "Red Soil", N: 38, P: 22, K: 32, ph: 6.1, temp: 27, humidity: 60, rainfall: 900, crop: "Chickpea", suitability: 80, yield: 2.0, histYield: 1.8, moisture: 45 },
+  { id: 11, name: "Nellore Alluvial Coast", lat: 14.443, lng: 79.982, soil: "Alluvial Soil", N: 82, P: 42, K: 42, ph: 6.9, temp: 29, humidity: 78, rainfall: 1050, crop: "Rice", suitability: 95, yield: 4.9, histYield: 4.6, moisture: 85 },
+  { id: 12, name: "Belgaum Agri Cluster", lat: 15.849, lng: 74.498, soil: "Loamy Soil", N: 88, P: 52, K: 48, ph: 6.5, temp: 24, humidity: 70, rainfall: 1250, crop: "Maize", suitability: 91, yield: 5.6, histYield: 5.3, moisture: 72 },
+  { id: 13, name: "Guntur Cotton Zone", lat: 16.307, lng: 80.455, soil: "Black Soil", N: 50, P: 30, K: 70, ph: 7.5, temp: 32, humidity: 55, rainfall: 850, crop: "Cotton", suitability: 96, yield: 2.7, histYield: 2.5, moisture: 58 },
+  { id: 14, name: "Raichur Basin", lat: 16.212, lng: 77.355, soil: "Black Soil", N: 48, P: 28, K: 65, ph: 7.7, temp: 34, humidity: 35, rainfall: 600, crop: "Cotton", suitability: 88, yield: 2.1, histYield: 2.0, moisture: 46 },
+  { id: 15, name: "Mandya Crop Fields", lat: 12.522, lng: 76.896, soil: "Clay Soil", N: 78, P: 38, K: 42, ph: 6.7, temp: 26, humidity: 65, rainfall: 950, crop: "Rice", suitability: 90, yield: 4.6, histYield: 4.2, moisture: 70 },
+  { id: 16, name: "Tumkur Coconut Belt", lat: 13.338, lng: 77.102, soil: "Sandy Soil", N: 22, P: 12, K: 20, ph: 6.2, temp: 28, humidity: 52, rainfall: 680, crop: "Mothbeans", suitability: 82, yield: 1.3, histYield: 1.2, moisture: 32 },
+  { id: 17, name: "Mysore Agro Zone", lat: 12.295, lng: 76.639, soil: "Loamy Soil", N: 85, P: 48, K: 50, ph: 6.6, temp: 25, humidity: 64, rainfall: 820, crop: "Maize", suitability: 87, yield: 5.2, histYield: 4.9, moisture: 66 },
+  { id: 18, name: "Koppal Silt Fields", lat: 15.348, lng: 76.155, soil: "Silt Soil", N: 52, P: 32, K: 38, ph: 6.5, temp: 31, humidity: 48, rainfall: 580, crop: "Chickpea", suitability: 79, yield: 1.8, histYield: 1.7, moisture: 48 },
+  { id: 19, name: "Haveri Seed Hub", lat: 14.796, lng: 75.402, soil: "Red Soil", N: 45, P: 22, K: 30, ph: 6.1, temp: 28, humidity: 55, rainfall: 750, crop: "Chickpea", suitability: 82, yield: 2.0, histYield: 1.8, moisture: 40 },
+  { id: 20, name: "Bagalkot Calcareous Zone", lat: 16.182, lng: 75.697, soil: "Chalky Soil", N: 32, P: 18, K: 22, ph: 7.9, temp: 32, humidity: 40, rainfall: 520, crop: "Chickpea", suitability: 75, yield: 1.7, histYield: 1.6, moisture: 30 },
+  { id: 21, name: "East Godavari Delta", lat: 16.989, lng: 82.247, soil: "Alluvial Soil", N: 85, P: 45, K: 45, ph: 7.0, temp: 28, humidity: 80, rainfall: 1200, crop: "Rice", suitability: 97, yield: 5.1, histYield: 4.8, moisture: 88 },
+  { id: 22, name: "Krishna Basin fields", lat: 16.180, lng: 81.130, soil: "Alluvial Soil", N: 80, P: 40, K: 40, ph: 6.8, temp: 29, humidity: 75, rainfall: 1100, crop: "Rice", suitability: 94, yield: 4.8, histYield: 4.5, moisture: 84 },
+  { id: 23, name: "Visakhapatnam Hills", lat: 17.686, lng: 83.218, soil: "Peaty Soil", N: 68, P: 32, K: 28, ph: 5.3, temp: 25, humidity: 78, rainfall: 1300, crop: "Coffee", suitability: 81, yield: 1.8, histYield: 1.6, moisture: 68 },
+  { id: 24, name: "KGF Hills Extension", lat: 12.850, lng: 78.350, soil: "Laterite Soil", N: 28, P: 16, K: 24, ph: 5.6, temp: 25, humidity: 65, rainfall: 920, crop: "Coffee", suitability: 74, yield: 1.5, histYield: 1.4, moisture: 45 },
+  { id: 25, name: "Sandur Ore-Soil Border", lat: 15.080, lng: 76.550, soil: "Red Soil", N: 36, P: 20, K: 28, ph: 5.9, temp: 29, humidity: 50, rainfall: 700, crop: "Mothbeans", suitability: 80, yield: 1.8, histYield: 1.7, moisture: 38 },
+  { id: 26, name: "Chitradurga Hills South", lat: 13.920, lng: 76.510, soil: "Red Soil", N: 38, P: 21, K: 30, ph: 6.2, temp: 27, humidity: 54, rainfall: 680, crop: "Mothbeans", suitability: 83, yield: 1.9, histYield: 1.8, moisture: 37 }
+];
+
+let scatterChartInstance = null;
+let mapInstance = null;
+let mapMarkers = [];
+let activeClusterMode = 'zone'; // 'zone' or 'soil'
+
+// --- K-Means algorithm implementation ---
+function runKMeans(data, k, features, maxIterations = 80) {
+  // Normalize features for K-Means consistency
+  const normData = data.map(item => {
+    const val = {};
+    features.forEach(f => {
+      val[f] = item[f];
+    });
+    return { id: item.id, val, orig: item };
+  });
+
+  // Feature scaling (Min-Max Standardization)
+  const stats = {};
+  features.forEach(f => {
+    const vals = normData.map(d => d.val[f]);
+    stats[f] = { min: Math.min(...vals), max: Math.max(...vals) };
+  });
+
+  normData.forEach(d => {
+    features.forEach(f => {
+      const denom = (stats[f].max - stats[f].min) || 1.0;
+      d.val[f] = (d.val[f] - stats[f].min) / denom;
+    });
+  });
+
+  // Select initial centroids randomly
+  let centroids = [];
+  const selectedIndices = [];
+  while (centroids.length < k && centroids.length < normData.length) {
+    const idx = Math.floor(Math.random() * normData.length);
+    if (!selectedIndices.includes(idx)) {
+      selectedIndices.push(idx);
+      centroids.push({ ...normData[idx].val });
+    }
+  }
+
+  let clusters = Array(k).fill().map(() => []);
+  let assignments = {};
+  let iterations = 0;
+  let centroidsChanged = true;
+
+  while (centroidsChanged && iterations < maxIterations) {
+    iterations++;
+    clusters = Array(k).fill().map(() => []);
+    centroidsChanged = false;
+
+    // Assignment Step
+    normData.forEach(d => {
+      let minDist = Infinity;
+      let closestCentroid = 0;
+      for (let i = 0; i < k; i++) {
+        let sumSq = 0;
+        features.forEach(f => {
+          sumSq += (d.val[f] - centroids[i][f]) ** 2;
+        });
+        const dist = Math.sqrt(sumSq);
+        if (dist < minDist) {
+          minDist = dist;
+          closestCentroid = i;
+        }
+      }
+      clusters[closestCentroid].push(d);
+      assignments[d.id] = closestCentroid;
+    });
+
+    // Update Centroids Step
+    for (let i = 0; i < k; i++) {
+      if (clusters[i].length === 0) continue;
+      const newCentroid = {};
+      features.forEach(f => {
+        const sum = clusters[i].reduce((acc, d) => acc + d.val[f], 0);
+        newCentroid[f] = sum / clusters[i].length;
+        if (Math.abs(newCentroid[f] - centroids[i][f]) > 0.0001) {
+          centroidsChanged = true;
+        }
+      });
+      centroids[i] = newCentroid;
+    }
+  }
+
+  return { assignments, clusters, rawCentroids: centroids };
+}
+
+// --- Dynamic Visual Updates ---
+function updateKDisplay(val) {
+  document.getElementById('k-val-display').textContent = val;
+}
+
+function switchClusterMode(mode) {
+  activeClusterMode = mode;
+  const zoneBtn = document.getElementById('cluster-mode-zone');
+  const soilBtn = document.getElementById('cluster-mode-soil');
+
+  if (mode === 'zone') {
+    zoneBtn.className = "flex-1 py-2 text-xs font-semibold rounded bg-[#10B981] text-black transition-all";
+    soilBtn.className = "flex-1 py-2 text-xs font-semibold rounded bg-white/5 text-slate-300 hover:bg-white/10 transition-all";
+    document.getElementById('scatter-title').textContent = "Interactive Scatter Plot — Latitude vs Longitude Clusters";
+  } else {
+    soilBtn.className = "flex-1 py-2 text-xs font-semibold rounded bg-[#10B981] text-black transition-all";
+    zoneBtn.className = "flex-1 py-2 text-xs font-semibold rounded bg-white/5 text-slate-300 hover:bg-white/10 transition-all";
+    document.getElementById('scatter-title').textContent = "Interactive Scatter Plot — Nitrogen (N) vs Potassium (K) Similarity Clusters";
+  }
+  runKMeansPipeline();
+}
+
+function runKMeansPipeline() {
+  const k = parseInt(document.getElementById('k-val').value);
+  let features = [];
+  if (activeClusterMode === 'zone') {
+    features = ['lat', 'lng'];
+  } else {
+    features = ['N', 'K', 'ph', 'rainfall'];
+  }
+
+  const { assignments } = runKMeans(zonesData, k, features);
+
+  // Update Scatter plot
+  renderScatterPlot(k, assignments);
+
+  // Update Leaflet map markers
+  renderMapMarkers(k, assignments);
+}
+
+// Color palette for clusters
+const CLUSTER_COLORS = [
+  '#10B981', // green
+  '#00daf3', // cyan
+  '#8B5CF6', // purple
+  '#F59E0B', // amber
+  '#EF4444', // red
+  '#EC4899'  // pink
+];
+
+function renderScatterPlot(k, assignments) {
+  const canvas = document.getElementById('clusterScatterPlot');
+  if (!canvas) return;
+
+  // Group data by cluster assignment
+  const datasets = Array(k).fill().map((_, idx) => ({
+    label: `Cluster ${idx + 1}`,
+    data: [],
+    backgroundColor: CLUSTER_COLORS[idx] + 'CC',
+    borderColor: CLUSTER_COLORS[idx],
+    borderWidth: 1.5,
+    pointRadius: 6,
+    pointHoverRadius: 8
+  }));
+
+  zonesData.forEach(item => {
+    const clusterIdx = assignments[item.id];
+    let xVal, yVal;
+    if (activeClusterMode === 'zone') {
+      xVal = item.lng; // Longitude on X-axis
+      yVal = item.lat; // Latitude on Y-axis
+    } else {
+      xVal = item.K;   // Potassium on X-axis
+      yVal = item.N;   // Nitrogen on Y-axis
+    }
+    datasets[clusterIdx].data.push({ x: xVal, y: yVal, name: item.name, crop: item.crop, soil: item.soil });
+  });
+
+  if (scatterChartInstance) {
+    scatterChartInstance.destroy();
+  }
+
+  scatterChartInstance = new Chart(canvas, {
+    type: 'scatter',
+    data: { datasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { labels: { color: '#94a3b8', font: { family: 'Inter' } } },
+        tooltip: {
+          callbacks: {
+            label: (ctx) => {
+              const pt = ctx.raw;
+              if (activeClusterMode === 'zone') {
+                return ` ${pt.name} (${pt.soil}): ${pt.y.toFixed(3)}°N, ${pt.x.toFixed(3)}°E | Crop: ${pt.crop}`;
+              } else {
+                return ` ${pt.name}: K=${pt.x} mg/kg, N=${pt.y} mg/kg | Crop: ${pt.crop}`;
+              }
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          title: { display: true, text: activeClusterMode === 'zone' ? 'Longitude (°E)' : 'Potassium (K) ppm', color: '#94a3b8' },
+          grid: { color: 'rgba(255,255,255,0.04)' },
+          ticks: { color: '#64748b' }
+        },
+        y: {
+          title: { display: true, text: activeClusterMode === 'zone' ? 'Latitude (°N)' : 'Nitrogen (N) ppm', color: '#94a3b8' },
+          grid: { color: 'rgba(255,255,255,0.04)' },
+          ticks: { color: '#64748b' }
+        }
+      }
+    }
+  });
+}
+
+function initMap() {
+  const mapEl = document.getElementById('map');
+  if (!mapEl) return;
+
+  // Center on middle coordinates of Karnataka / Andhra Pradesh
+  mapInstance = L.map('map').setView([14.40, 77.20], 6);
+
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    attribution: '&copy; OSM &copy; CARTO'
+  }).addTo(mapInstance);
+}
+
+function renderMapMarkers(k, assignments) {
+  if (!mapInstance) return;
+
+  // Clear existing markers
+  mapMarkers.forEach(m => mapInstance.removeLayer(m));
+  mapMarkers = [];
+
+  // Add markers matching cluster assignments
+  zonesData.forEach(item => {
+    const clusterIdx = assignments[item.id];
+    const color = CLUSTER_COLORS[clusterIdx];
+
+    const marker = L.circleMarker([item.lat, item.lng], {
+      radius: 8,
+      fillColor: color,
+      color: '#fff',
+      weight: 1.5,
+      opacity: 0.9,
+      fillOpacity: 0.75
+    }).addTo(mapInstance);
+
+    marker.bindPopup(`
+      <div style="font-family: 'Inter', sans-serif; font-size: 0.82rem; color: #1e293b; min-width: 170px;">
+        <b style="color: #047857; display: block; font-size: 0.9rem; margin-bottom: 0.25rem;">📍 ${item.name}</b>
+        <b>Soil Profile:</b> ${item.soil}<br/>
+        <b>NPK levels:</b> ${item.N}-${item.P}-${item.K} &nbsp;|&nbsp; <b>pH:</b> ${item.ph}<br/>
+        <b>Annual Rain:</b> ${item.rainfall} mm<br/>
+        <b>Best Crop Target:</b> <span style="font-weight: 700; color: #10B981;">${item.crop}</span><br/>
+        <b>Expected Yield:</b> ${item.yield} T/Ha<br/>
+        <span style="font-size:0.65rem; color:#64748b; font-weight:700; display:block; margin-top:0.4rem; text-transform:uppercase; letter-spacing:0.05em;">K-Means: Cluster ${clusterIdx + 1}</span>
+      </div>
+    `);
+
+    mapMarkers.push(marker);
+  });
+}
+
+// --- Non-clustering Dashboard charts setup ---
+function initDashboardCharts() {
+  const chartConfigs = [
+    {
+      id: 'recommendedCropsChart',
+      type: 'bar',
+      labels: ['Rice', 'Cotton', 'Coffee', 'Chickpea', 'Maize', 'Mothbeans'],
+      data: [7, 5, 4, 3, 3, 4],
+      bg: '#10B981',
+      label: 'Recommended Zone Count'
+    },
+    {
+      id: 'suitabilityDistributionChart',
+      type: 'radar',
+      labels: ['Nitrogen', 'Phosphorus', 'Potassium', 'Rainfall', 'pH Level', 'Elevation'],
+      data: [82, 64, 75, 88, 92, 54],
+      bg: 'rgba(16,185,129,0.15)',
+      borderColor: '#10B981',
+      label: 'Suitability Weight (%)'
+    },
+    {
+      id: 'regionalTrendsChart',
+      type: 'line',
+      labels: ['Anantapur', 'Chitradurga', 'Kolar', 'Hassan', 'Shimoga', 'Belgaum'],
+      data: [62, 75, 80, 85, 92, 95],
+      borderColor: '#84CC16',
+      bg: 'rgba(132,204,22,0.1)',
+      label: 'Avg Crop Suitability %'
+    },
+    {
+      id: 'soilTypeChart',
+      type: 'doughnut',
+      labels: ['Black Soil', 'Red Soil', 'Laterite', 'Loamy', 'Alluvial', 'Others'],
+      data: [25, 20, 15, 18, 12, 10],
+      bg: ['#047857', '#059669', '#10B981', '#34D399', '#6EE7B7', '#A7F3D0'],
+      label: 'Distribution %'
+    },
+    {
+      id: 'soilFertilityChart',
+      type: 'bar',
+      labels: ['Black', 'Red', 'Laterite', 'Loamy', 'Alluvial'],
+      datasets: [
+        { label: 'Nitrogen (N)', data: [50, 40, 26, 88, 81], backgroundColor: '#10B981' },
+        { label: 'Phosphorus (P)', data: [30, 20, 15, 50, 42], backgroundColor: '#84CC16' },
+        { label: 'Potassium (K)', data: [68, 30, 24, 50, 42], backgroundColor: '#00daf3' }
+      ]
+    },
+    {
+      id: 'moistureTrendsChart',
+      type: 'line',
+      labels: ['Jan', 'Mar', 'May', 'Jul', 'Sep', 'Nov'],
+      data: [42, 35, 30, 78, 85, 55],
+      borderColor: '#00daf3',
+      bg: 'rgba(0,218,243,0.08)',
+      label: 'Soil Moisture Level (%)'
+    },
+    {
+      id: 'yieldComparisonChart',
+      type: 'bar',
+      labels: ['Maize', 'Rice', 'Cotton', 'Chickpea', 'Coffee', 'Mothbeans'],
+      data: [5.5, 4.6, 2.3, 1.9, 1.6, 1.2],
+      bg: '#84CC16',
+      label: 'Predicted Yield (Tons/Hectare)'
+    },
+    {
+      id: 'historicalYieldChart',
+      type: 'line',
+      labels: ['2021', '2022', '2023', '2024', '2025', '2026 (Pred)'],
+      datasets: [
+        { label: 'Historical Avg', data: [3.2, 3.4, 3.5, 3.6, 3.8, 3.9], borderColor: '#64748b', backgroundColor: 'transparent', tension: 0.3 },
+        { label: 'AI Predicted Yield', data: [3.3, 3.5, 3.8, 4.1, 4.3, 4.5], borderColor: '#10B981', backgroundColor: 'rgba(16,185,129,0.05)', fill: true, tension: 0.3 }
+      ]
+    }
+  ];
+
+  chartConfigs.forEach(conf => {
+    const canvas = document.getElementById(conf.id);
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    
+    // Custom handling for grouped datasets
+    let dataObj = {};
+    if (conf.datasets) {
+      dataObj = { labels: conf.labels, datasets: conf.datasets };
+    } else {
+      dataObj = {
+        labels: conf.labels,
+        datasets: [{
+          label: conf.label,
+          data: conf.data,
+          backgroundColor: conf.bg,
+          borderColor: conf.borderColor || 'transparent',
+          borderWidth: conf.borderColor ? 2 : 0,
+          fill: !!conf.bg
+        }]
+      };
+    }
+
+    new Chart(ctx, {
+      type: conf.type,
+      data: dataObj,
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { labels: { color: '#64748b', font: { size: 10, family: 'Inter' } } }
+        },
+        scales: conf.type !== 'radar' && conf.type !== 'doughnut' ? {
+          x: { grid: { color: 'rgba(255,255,255,0.03)' }, ticks: { color: '#64748b', font: { size: 9 } } },
+          y: { grid: { color: 'rgba(255,255,255,0.03)' }, ticks: { color: '#64748b', font: { size: 9 } } }
+        } : {}
+      }
+    });
+  });
+}
+
+// Bootstrapping
+document.addEventListener('DOMContentLoaded', () => {
+  initDashboardCharts();
+  initMap();
+  runKMeansPipeline();
+});
+</script>
+</body>
+</html>

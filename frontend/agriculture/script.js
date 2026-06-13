@@ -466,6 +466,18 @@ async function handleSoilImage(event) {
         if (!response.ok) throw new Error("Soil classification failed");
         const data = await response.json();
 
+        if (data.error) {
+            soilResult.innerHTML = `
+                <div class="soil-card" style="margin-top:0.75rem; padding:1rem; background:rgba(239,68,68,0.08); border-left:4px solid #ef4444; border-radius:0.5rem; font-size:0.85rem; color:#fca5a5; line-height:1.5;">
+                    <div style="font-weight:700; color:#ef4444; font-size:0.95rem; margin-bottom:0.25rem;">
+                        <span>❌ Image Rejected</span>
+                    </div>
+                    <div>${data.error}</div>
+                </div>
+            `;
+            return;
+        }
+
         // Display properties details
         soilResult.innerHTML = `
             <div class="soil-card" style="margin-top:0.75rem; padding:1rem; background:rgba(16,185,129,0.08); border-left:4px solid #10B981; border-radius:0.5rem; font-size:0.85rem; color:#cbd5e1; line-height:1.5;">
@@ -480,7 +492,8 @@ async function handleSoilImage(event) {
         `;
 
         // Update the Dropdown & Trigger Soil updates
-        const soilKey = data.soil.toLowerCase().split(' ')[0];
+        let soilKey = data.soil.toLowerCase().split(' ')[0];
+        if (soilKey === 'peaty') soilKey = 'peat';
         const soilSelect = document.getElementById("soilType");
         
         let matched = false;

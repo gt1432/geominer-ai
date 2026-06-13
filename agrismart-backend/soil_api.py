@@ -2,36 +2,29 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import os
 import numpy as np
+from PIL import Image
 
 app = Flask(__name__)
 CORS(app)
 
 classes = [
+    "Sandy Soil",
+    "Clay Soil",
+    "Loamy Soil",
+    "Silt Soil",
     "Black Soil",
-    "Cinder Soil",
+    "Red Soil",
     "Laterite Soil",
-    "Peat Soil",
+    "Alluvial Soil",
+    "Peaty Soil",
+    "Chalky Soil",
+    "Cinder Soil",
     "Yellow Soil"
 ]
 
 UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), "uploads")
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
-
-# Try loading Keras model
-HAS_MODEL = False
-try:
-    from tensorflow.keras.models import load_model
-    from tensorflow.keras.preprocessing import image
-    model_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "soil_model.h5")
-    if os.path.exists(model_path):
-        model = load_model(model_path)
-        HAS_MODEL = True
-        print("Successfully loaded Keras soil model.")
-    else:
-        print(f"Keras soil model not found at {model_path}. Using fallback.")
-except Exception as e:
-    print(f"TensorFlow not loaded or model load failed: {e}. Using fallback.")
 
 SOIL_DETAILS = {
     "Sandy Soil": {
@@ -127,61 +120,161 @@ SOIL_DETAILS = {
     }
 }
 
-def fallback_predict_soil(filepath):
-    """Fallback color-based and name/size deterministic heuristic classification."""
+def validate_and_predict_soil(filepath):
     try:
-        from PIL import Image
+        # Load image and convert to RGB
         img = Image.open(filepath).convert('RGB')
-        img = img.resize((10, 10))
-        pixels = list(img.getdata())
-        avg_r = sum(p[0] for p in pixels) / len(pixels)
-        avg_g = sum(p[1] for p in pixels) / len(pixels)
-        avg_b = sum(p[2] for p in pixels) / len(pixels)
-        print(f"PIL Analysis: R={avg_r:.1f}, G={avg_g:.1f}, B={avg_b:.1f}")
+        
+        # 1. Image Quality Checks
+        # Resize to a standard size for consistent gradient scale
+        img_check = img.resize((256, 256))
+        arr_check = np.array(img_check, dtype=np.float32)
+        
+        # Convert to Grayscale for brightness and blur check
+        gray = 0.2989 * arr_check[:,:,0] + 0.5870 * arr_check[:,:,1] + 0.1140 * arr_check[:,:,2]
+        
+        # Brightness check
+        mean_brightness = np.mean(gray)
+        if mean_brightness < 40.0:
+            return None, "Low-light image detected. Please capture or upload a brighter, clearer photo of the soil."
+        if mean_brightness > 235.0:
+            return None, "Overexposed or white/blank image detected. Please capture or upload a clearer photo of the soil."
+            
+        # Sharpness/Blur check
+        gy, gx = np.gradient(gray)
+        gnorm = np.sqrt(gx**2 + gy**2)
+        sharpness = np.var(gnorm)
+        if sharpness < 12.0:
+            return None, "Blurry image detected. Please hold the camera steady and capture a sharper photo."
+            
+        # Non-soil check in HSV space
+        # Convert RGB to HSV
+        r, g, b = arr_check[:,:,0]/255.0, arr_check[:,:,1]/255.0, arr_check[:,:,2]/255.0
+        mx = np.maximum(r, np.maximum(g, b))
+        mn = np.minimum(r, np.minimum(g, b))
+        df = mx - mn
+        
+        # Avoid division by zero
+        df_safe = np.where(df == 0, 1.0, df)
+        h = np.zeros_like(mx)
+        h = np.where(mx == r, (60 * ((g - b) / df_safe) + 360) % 360, h)
+        h = np.where(mx == g, (60 * ((b - r) / df_safe) + 120) % 360, h)
+        h = np.where(mx == b, (60 * ((r - g) / df_safe) + 240) % 360, h)
+        h = np.where(df == 0, 0, h)
+        
+        s = np.where(mx == 0, 0, (df / np.where(mx == 0, 1.0, mx)) * 100)
+        v = mx * 100
+        
+        # Soil Hue is typically between 0 and 50 degrees (reds, browns, yellows)
+        # We also allow low saturation (S < 22) for neutral/gray/whitish chalky soils
+        is_soil = ((h >= 0) & (h <= 50)) | (h >= 330) | (s < 22)
+        soil_pixel_ratio = np.sum(is_soil) / is_soil.size
+        
+        # If less than 75% of pixels resemble soil, reject
+        if soil_pixel_ratio < 0.75:
+            return None, "Non-soil image detected. Please upload an image containing only soil."
 
-        # Color routing
-        # Red / Laterite
-        if avg_r > 120 and avg_r > avg_g * 1.25 and avg_r > avg_b * 1.25:
-            if avg_r > 165:
-                return "Red Soil", 89.2
-            else:
-                return "Laterite Soil", 84.5
-        # Black / Peaty
-        elif avg_r < 65 and avg_g < 60 and avg_b < 55:
-            if (avg_r + avg_g + avg_b) < 130:
-                return "Black Soil", 92.4
-            else:
-                return "Peaty Soil", 81.2
-        # Sandy / Yellow / Chalky
-        elif avg_r > 140 and avg_g > 115 and avg_b < 100:
-            if avg_r > 180:
-                return "Sandy Soil", 87.5
-            else:
-                return "Yellow Soil", 82.1
-        elif avg_r > 175 and avg_g > 175 and avg_b > 165:
-            return "Chalky Soil", 79.8
-        # Alluvial / Clay / Silt / Loamy
-        elif avg_r > 110 and avg_g > 105 and avg_b > 90:
-            return "Alluvial Soil", 88.3
-        elif avg_r > 90 and avg_g > 85 and avg_b > 75:
-            return "Clay Soil", 83.1
-        elif avg_r > 75 and avg_g > 70 and avg_b > 65:
-            return "Loamy Soil", 85.6
-        else:
-            return "Silt Soil", 78.4
+        # 2. Prediction Pipeline (Weighted KNN with centroid fallback)
+        avg_r = float(np.mean(r))
+        avg_g = float(np.mean(g))
+        avg_b = float(np.mean(b))
+        
+        # Calculate HSV of the average RGB
+        mx_avg = max(avg_r, avg_g, avg_b)
+        mn_avg = min(avg_r, avg_g, avg_b)
+        df_avg = mx_avg - mn_avg
+        if mx_avg == mn_avg:
+            avg_h = 0.0
+        elif mx_avg == avg_r:
+            avg_h = (60 * ((avg_g - avg_b) / df_avg) + 360) % 360
+        elif mx_avg == avg_g:
+            avg_h = (60 * ((avg_b - avg_r) / df_avg) + 120) % 360
+        elif mx_avg == avg_b:
+            avg_h = (60 * ((avg_r - avg_g) / df_avg) + 240) % 360
+            
+        avg_s = 0.0 if mx_avg == 0 else (df_avg / mx_avg) * 100.0
+        avg_v = mx_avg * 100.0
+        
+        try:
+            base_dir = os.path.dirname(os.path.abspath(__file__))
+            json_path = os.path.join(base_dir, "soil_features.json")
+            import json
+            with open(json_path, 'r') as f:
+                knn_data = json.load(f)
+                
+            f_input = np.array([avg_r, avg_g, avg_b, avg_h/360.0, avg_s/100.0, avg_v/100.0])
+            
+            # Compute Euclidean distances to all samples
+            distances = []
+            for item in knn_data:
+                f_sample = np.array(item["features"])
+                d = np.sqrt(np.sum((f_input - f_sample)**2))
+                distances.append((item["label"], d))
+                
+            # Sort by distance
+            distances.sort(key=lambda x: x[1])
+            
+            # Take K nearest neighbors
+            K = 11
+            neighbors = distances[:K]
+            
+            # Weighted voting
+            weights = {}
+            epsilon = 1e-5
+            for label, d in neighbors:
+                w = 1.0 / (d + epsilon)
+                weights[label] = weights.get(label, 0.0) + w
+                
+            total_w = sum(weights.values())
+            probabilities = {cls: (w / total_w) * 100.0 for cls, w in weights.items()}
+            
+            best_class = max(weights, key=weights.get)
+            best_confidence = probabilities[best_class]
+            
+        except Exception as err:
+            # Fallback to centroid-based method if JSON fails to load
+            class_centers = {
+                "Sandy Soil":    {"rgb": (0.75, 0.65, 0.48), "hsv": (36.0, 35.0, 75.0)},
+                "Clay Soil":     {"rgb": (0.42, 0.36, 0.30), "hsv": (28.0, 28.0, 42.0)},
+                "Loamy Soil":    {"rgb": (0.34, 0.28, 0.22), "hsv": (24.0, 35.0, 34.0)},
+                "Silt Soil":     {"rgb": (0.50, 0.44, 0.38), "hsv": (30.0, 24.0, 50.0)},
+                "Black Soil":    {"rgb": (0.2368, 0.1987, 0.1815), "hsv": (18.7, 23.4, 23.7)},
+                "Red Soil":      {"rgb": (0.64, 0.36, 0.26), "hsv": (12.0, 58.0, 64.0)},
+                "Laterite Soil": {"rgb": (0.6407, 0.3714, 0.2600), "hsv": (17.6, 59.4, 64.1)},
+                "Alluvial Soil": {"rgb": (0.60, 0.55, 0.48), "hsv": (32.0, 20.0, 60.0)},
+                "Peaty Soil":    {"rgb": (0.4586, 0.3686, 0.3233), "hsv": (20.1, 29.5, 45.9)},
+                "Chalky Soil":   {"rgb": (0.80, 0.78, 0.74), "hsv": (35.0, 8.0, 80.0)},
+                "Cinder Soil":   {"rgb": (0.4693, 0.4147, 0.3986), "hsv": (13.7, 15.1, 46.9)},
+                "Yellow Soil":   {"rgb": (0.7063, 0.5195, 0.2575), "hsv": (35.0, 63.6, 70.6)}
+            }
+            
+            distances = {}
+            for cls, center in class_centers.items():
+                rgb_center = center["rgb"]
+                hsv_center = center["hsv"]
+                dist_rgb = np.sqrt((avg_r - rgb_center[0])**2 + (avg_g - rgb_center[1])**2 + (avg_b - rgb_center[2])**2)
+                dh = min(abs(avg_h - hsv_center[0]), 360 - abs(avg_h - hsv_center[0])) / 360.0
+                ds = abs(avg_s - hsv_center[1]) / 100.0
+                dv = abs(avg_v - hsv_center[2]) / 100.0
+                dist_hsv = np.sqrt(dh**2 + ds**2 + dv**2)
+                distances[cls] = 0.7 * dist_rgb + 0.3 * dist_hsv
+                
+            beta = 18.0
+            exps = {cls: np.exp(-dist * beta) for cls, dist in distances.items()}
+            sum_exps = sum(exps.values())
+            probabilities = {cls: (val / sum_exps) * 100.0 for cls, val in exps.items()}
+            
+            best_class = min(distances, key=distances.get)
+            best_confidence = probabilities[best_class]
+        
+        # Confidence threshold check
+        if best_confidence < 25.0:
+            return None, "Low confidence prediction. Please provide a clearer and more direct photo of the soil."
+            
+        return best_class, round(float(best_confidence), 2)
+        
     except Exception as e:
-        print(f"Pillow analysis failed: {e}. Deterministic filename hashing fallback.")
-        import os
-        filename = os.path.basename(filepath)
-        size = os.path.getsize(filepath) if os.path.exists(filepath) else 1000
-        classes_fallback = [
-            "Sandy Soil", "Clay Soil", "Loamy Soil", "Silt Soil", "Peaty Soil",
-            "Chalky Soil", "Black Soil", "Red Soil", "Laterite Soil", "Alluvial Soil"
-        ]
-        # Use file size and length of filename to select a stable index
-        idx = (size + len(filename)) % len(classes_fallback)
-        conf = 75.0 + (size % 200) / 10.0
-        return classes_fallback[idx], round(conf, 2)
+        return None, f"Soil prediction pipeline error: {str(e)}"
 
 @app.route("/predict-soil", methods=["POST"])
 def predict_soil():
@@ -195,26 +288,15 @@ def predict_soil():
     filepath = os.path.join(UPLOAD_FOLDER, file.filename)
     file.save(filepath)
 
-    soil_type = None
-    confidence = 0.0
+    soil_type, confidence_or_error = validate_and_predict_soil(filepath)
+    
+    try:
+        os.remove(filepath)
+    except:
+        pass
 
-    if HAS_MODEL:
-        try:
-            img = image.load_img(filepath, target_size=(224, 224))
-            img_array = image.img_to_array(img)
-            img_array = np.expand_dims(img_array, axis=0)
-            img_array = img_array / 255.0
-
-            prediction = model.predict(img_array)
-            index = np.argmax(prediction)
-            soil_type = classes[index]
-            confidence = float(np.max(prediction) * 100)
-            print(f"Keras prediction: {soil_type} with confidence {confidence:.2f}%")
-        except Exception as e:
-            print(f"Keras inference failed: {e}. Using fallback.")
-            soil_type, confidence = fallback_predict_soil(filepath)
-    else:
-        soil_type, confidence = fallback_predict_soil(filepath)
+    if soil_type is None:
+        return jsonify({"error": confidence_or_error})
 
     details = SOIL_DETAILS.get(soil_type, {
         "characteristics": "Varied geological properties.",
@@ -226,7 +308,7 @@ def predict_soil():
 
     return jsonify({
         "soil": soil_type,
-        "confidence": round(confidence, 2),
+        "confidence": confidence_or_error,
         "characteristics": details["characteristics"],
         "retention": details["retention"],
         "fertility": details["fertility"],
