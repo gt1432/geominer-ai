@@ -44,5 +44,11 @@ router.post('/crop-predict', agriController.predictCrop);
 // 10. POST /predict-soil -> Run ML soil type image classification
 router.post('/predict-soil', agriController.predictSoil);
 
+// 11. GET /health -> Check system health
+router.get('/health', agriController.getHealth);
+
+// 12. GET /model-status -> Check model loading status
+router.get('/model-status', agriController.getModelStatus);
+
 module.exports = router;
 

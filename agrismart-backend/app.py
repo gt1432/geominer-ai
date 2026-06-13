@@ -20,7 +20,22 @@ def home():
 
 @app.route("/health")
 def health():
-    return jsonify({"status": "ok", "model": "RandomForestClassifier", "features": FEATURE_COLUMNS})
+    crop_exists = os.path.exists(os.path.join(BASE_DIR, "model.pkl"))
+    soil_exists = os.path.exists(os.path.join(BASE_DIR, "soil_features.json"))
+    return jsonify({
+        "status": "healthy",
+        "crop_model": crop_exists,
+        "soil_model": soil_exists
+    })
+
+@app.route("/model-status")
+def model_status():
+    crop_exists = os.path.exists(os.path.join(BASE_DIR, "model.pkl"))
+    soil_exists = os.path.exists(os.path.join(BASE_DIR, "soil_features.json"))
+    return jsonify({
+        "crop_prediction": "loaded" if crop_exists else "not_found",
+        "soil_prediction": "loaded" if soil_exists else "not_found"
+    })
 
 @app.route("/rainfall/<state>")
 def get_rainfall(state):

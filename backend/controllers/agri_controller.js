@@ -202,3 +202,31 @@ exports.predictSoil = (req, res) => {
         }
     });
 };
+
+exports.getHealth = (req, res) => {
+    const cropModelPath = path.join(__dirname, '..', '..', 'agrismart-backend', 'model.pkl');
+    const soilModelPath = path.join(__dirname, '..', '..', 'agrismart-backend', 'soil_features.json');
+    
+    const cropModelExists = fs.existsSync(cropModelPath);
+    const soilModelExists = fs.existsSync(soilModelPath);
+    
+    return res.status(200).json({
+        status: "healthy",
+        crop_model: cropModelExists,
+        soil_model: soilModelExists
+    });
+};
+
+exports.getModelStatus = (req, res) => {
+    const cropModelPath = path.join(__dirname, '..', '..', 'agrismart-backend', 'model.pkl');
+    const soilModelPath = path.join(__dirname, '..', '..', 'agrismart-backend', 'soil_features.json');
+    
+    const cropModelExists = fs.existsSync(cropModelPath);
+    const soilModelExists = fs.existsSync(soilModelPath);
+    
+    return res.status(200).json({
+        crop_prediction: cropModelExists ? "loaded" : "not_found",
+        soil_prediction: soilModelExists ? "loaded" : "not_found"
+    });
+};
+

@@ -1,4 +1,21 @@
+// Environment Detection and API Base URL configuration
+const getApiBaseUrl = () => {
+    const hostname = window.location.hostname;
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+        console.log("[GeoSmart Agri] Local Development Environment detected.");
+        return window.location.origin;
+    } else if (hostname.includes('onrender.com')) {
+        console.log("[GeoSmart Agri] Render Deployment Environment detected.");
+        return window.location.origin;
+    } else {
+        console.log("[GeoSmart Agri] Production Deployment Environment detected.");
+        return window.location.origin;
+    }
+};
+const API_BASE_URL = getApiBaseUrl();
+
 const API_KEY = "80a09e21dad3d9284a10a028a31171bf";
+
 
 const cropInfo = {
     rice: {
@@ -206,7 +223,7 @@ map.on('click', async function (e) {
         let rainfallValue = 1000; // default fallback
         if (district) {
             try {
-                const rainfallRes = await fetch(`/rainfall?city=${encodeURIComponent(district)}`);
+                const rainfallRes = await fetch(`${API_BASE_URL}/rainfall?city=${encodeURIComponent(district)}`);
                 if (rainfallRes.ok) {
                     const rainfallData = await rainfallRes.json();
                     if (rainfallData.rainfall) {
@@ -304,14 +321,20 @@ async function predictCrop() {
             rainfall: parseFloat(document.getElementById("rainfall").value)
         };
 
-        const response = await fetch(`/crop-predict`, {
+        console.log("[GeoSmart Agri] Sending crop prediction request:", payload);
+
+        const response = await fetch(`${API_BASE_URL}/crop-predict`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload)
         });
 
-        if (!response.ok) throw new Error("Backend response error");
+        if (!response.ok) {
+            const errText = await response.text();
+            throw new Error(`Server returned status ${response.status}: ${errText}`);
+        }
         const result = await response.json();
+        console.log("[GeoSmart Agri] Received crop prediction response:", result);
 
         if (result.best_crop && result.best_crop.crop) {
             const cropName = result.best_crop.crop;
@@ -427,10 +450,11 @@ async function predictCrop() {
         }
 
     } catch (error) {
-        console.error(error);
+        console.error("[GeoSmart Agri] Crop prediction connection failed:", error);
         resultBox.innerHTML = `
-            <div style="padding:1.25rem; background:rgba(245,158,11,0.08); border:1px solid rgba(245,158,11,0.25); border-radius:0.75rem; color:#d97706; text-align:center; font-size:0.9rem;">
-                ⚠️ Could not connect to crop prediction server on port 5000. Please ensure the backend is started via: <code>python app.py</code>
+            <div style="padding:1.25rem; background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.2); border-radius:0.75rem; color:#ef4444; text-align:center; font-size:0.9rem;">
+                ⚠️ <b>Connection Error:</b> Could not retrieve crop recommendation from backend. <br>
+                <span style="font-size:0.8rem; color:#fca5a5; margin-top:0.5rem; display:block;">Details: ${error.message}</span>
             </div>
         `;
     }
@@ -444,83 +468,139 @@ async function handleSoilImage(event) {
     const preview = document.getElementById("preview");
     const soilResult = document.getElementById("soilResult");
 
+    // 1. Validate Image Extension
+    const allowedExtensions = ['jpg', 'jpeg', 'png', 'webp'];
+    const extension = file.name.split('.').pop().toLowerCase();
+    
+    console.log(`[GeoSmart Agri] Image Selected - Name: ${file.name}, Size: ${file.size} bytes, Format/Extension: ${extension}`);
+
+    if (!allowedExtensions.includes(extension)) {
+        console.warn(`[GeoSmart Agri] Upload rejected: Unsupported file format ${extension}`);
+        soilResult.innerHTML = `
+            <div style="color:#ef4444; font-size:0.85rem; font-weight:600; margin-top:0.75rem;">
+                ❌ Unsupported file format. Please upload a JPG, JPEG, PNG, or WEBP image.
+            </div>
+        `;
+        event.target.value = ''; // clear input
+        preview.style.display = "none";
+        return;
+    }
+
     preview.src = URL.createObjectURL(file);
     preview.style.display = "block";
     
+    // 2. Show Progress Bar and Loading state
     soilResult.innerHTML = `
-        <div style="display:flex; align-items:center; gap:0.5rem; font-size:0.85rem; color:#10B981; font-weight:600;">
-            <div style="border: 2px solid rgba(16,185,129,0.1); border-left-color: #10B981; border-radius:50%; width:16px; height:16px; animation: spin 1s linear infinite;"></div>
-            <span>AI analyzing soil image...</span>
+        <div style="display:flex; flex-direction:column; gap:0.5rem; font-size:0.85rem; color:#10B981; font-weight:600; margin-top:0.75rem;">
+            <div style="display:flex; align-items:center; gap:0.5rem;">
+                <div style="border: 2px solid rgba(16,185,129,0.1); border-left-color: #10B981; border-radius:50%; width:16px; height:16px; animation: spin 1s linear infinite;"></div>
+                <span>Uploading image & analyzing soil type...</span>
+            </div>
+            <div style="background: rgba(255,255,255,0.05); border-radius: 99px; height: 6px; overflow: hidden; width: 100%;">
+                <div id="uploadProgressBar" style="background: #10B981; width: 10%; height: 100%; transition: width 0.3s ease;"></div>
+            </div>
         </div>
     `;
 
     const formData = new FormData();
     formData.append("image", file);
 
-    try {
-        const response = await fetch(`/predict-soil`, {
-            method: "POST",
-            body: formData
-        });
+    console.log(`[GeoSmart Agri] Initiating soil classification API request to ${API_BASE_URL}/predict-soil`);
 
-        if (!response.ok) throw new Error("Soil classification failed");
-        const data = await response.json();
+    // Use XMLHttpRequest to track progress and send upload
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", `${API_BASE_URL}/predict-soil`, true);
 
-        if (data.error) {
-            soilResult.innerHTML = `
-                <div class="soil-card" style="margin-top:0.75rem; padding:1rem; background:rgba(239,68,68,0.08); border-left:4px solid #ef4444; border-radius:0.5rem; font-size:0.85rem; color:#fca5a5; line-height:1.5;">
-                    <div style="font-weight:700; color:#ef4444; font-size:0.95rem; margin-bottom:0.25rem;">
-                        <span>❌ Image Rejected</span>
-                    </div>
-                    <div>${data.error}</div>
-                </div>
-            `;
-            return;
+    // Track upload progress
+    xhr.upload.onprogress = function(e) {
+        if (e.lengthComputable) {
+            const percentComplete = Math.round((e.loaded / e.total) * 100);
+            console.log(`[GeoSmart Agri] Image upload progress: ${percentComplete}%`);
+            const progressBar = document.getElementById("uploadProgressBar");
+            if (progressBar) {
+                // Keep progress bar at max 95% until server responds
+                progressBar.style.width = Math.min(percentComplete, 95) + "%";
+            }
         }
+    };
 
-        // Display properties details
-        soilResult.innerHTML = `
-            <div class="soil-card" style="margin-top:0.75rem; padding:1rem; background:rgba(16,185,129,0.08); border-left:4px solid #10B981; border-radius:0.5rem; font-size:0.85rem; color:#cbd5e1; line-height:1.5;">
-                <div style="font-weight:700; color:#10B981; font-size:0.95rem; display:flex; justify-content:space-between; align-items:center; margin-bottom:0.25rem;">
-                    <span>AI Detected: ${data.soil}</span>
-                    <span style="font-size:0.78rem; font-weight:600; color:#84CC16;">Confidence: ${data.confidence}%</span>
-                </div>
-                <div style="margin-bottom:0.25rem;"><b>Soil Features:</b> ${data.characteristics}</div>
-                <div style="margin-bottom:0.25rem;"><b>Water Retention:</b> ${data.retention} &nbsp;|&nbsp; <b>Fertility:</b> ${data.fertility} &nbsp;|&nbsp; <b>Drainage:</b> ${data.drainage}</div>
-                <div><b>Suitable Crops:</b> ${data.suitable}</div>
-            </div>
-        `;
-
-        // Update the Dropdown & Trigger Soil updates
-        let soilKey = data.soil.toLowerCase().split(' ')[0];
-        if (soilKey === 'peaty') soilKey = 'peat';
-        const soilSelect = document.getElementById("soilType");
+    xhr.onload = function() {
+        console.log(`[GeoSmart Agri] API response received with status: ${xhr.status}`);
         
-        let matched = false;
-        for (let i = 0; i < soilSelect.options.length; i++) {
-            if (soilSelect.options[i].value === soilKey) {
-                soilSelect.selectedIndex = i;
-                matched = true;
-                break;
-            }
-        }
-        if (!matched) {
-            // Check full matching name
-            for (let i = 0; i < soilSelect.options.length; i++) {
-                if (soilSelect.options[i].text.toLowerCase().includes(soilKey)) {
-                    soilSelect.selectedIndex = i;
-                    break;
+        if (xhr.status === 200) {
+            try {
+                const data = JSON.parse(xhr.responseText);
+                console.log("[GeoSmart Agri] Classification result:", data);
+
+                const progressBar = document.getElementById("uploadProgressBar");
+                if (progressBar) progressBar.style.width = "100%";
+
+                if (data.error) {
+                    soilResult.innerHTML = `
+                        <div class="soil-card" style="margin-top:0.75rem; padding:1rem; background:rgba(239,68,68,0.08); border-left:4px solid #ef4444; border-radius:0.5rem; font-size:0.85rem; color:#fca5a5; line-height:1.5;">
+                            <div style="font-weight:700; color:#ef4444; font-size:0.95rem; margin-bottom:0.25rem;">
+                                <span>❌ Image Rejected</span>
+                            </div>
+                            <div>${data.error}</div>
+                        </div>
+                    `;
+                    return;
                 }
+
+                // Display properties details
+                soilResult.innerHTML = `
+                    <div class="soil-card" style="margin-top:0.75rem; padding:1rem; background:rgba(16,185,129,0.08); border-left:4px solid #10B981; border-radius:0.5rem; font-size:0.85rem; color:#cbd5e1; line-height:1.5;">
+                        <div style="font-weight:700; color:#10B981; font-size:0.95rem; display:flex; justify-content:space-between; align-items:center; margin-bottom:0.25rem;">
+                            <span>AI Detected: ${data.soil}</span>
+                            <span style="font-size:0.78rem; font-weight:600; color:#84CC16;">Confidence: ${data.confidence}%</span>
+                        </div>
+                        <div style="margin-bottom:0.25rem;"><b>Soil Features:</b> ${data.characteristics}</div>
+                        <div style="margin-bottom:0.25rem;"><b>Water Retention:</b> ${data.retention} &nbsp;|&nbsp; <b>Fertility:</b> ${data.fertility} &nbsp;|&nbsp; <b>Drainage:</b> ${data.drainage}</div>
+                        <div><b>Suitable Crops:</b> ${data.suitable}</div>
+                    </div>
+                `;
+
+                // Update the Dropdown & Trigger Soil updates
+                let soilKey = data.soil.toLowerCase().split(' ')[0];
+                if (soilKey === 'peaty') soilKey = 'peat';
+                const soilSelect = document.getElementById("soilType");
+                
+                let matched = false;
+                for (let i = 0; i < soilSelect.options.length; i++) {
+                    if (soilSelect.options[i].value === soilKey) {
+                        soilSelect.selectedIndex = i;
+                        matched = true;
+                        break;
+                    }
+                }
+                if (!matched) {
+                    for (let i = 0; i < soilSelect.options.length; i++) {
+                        if (soilSelect.options[i].text.toLowerCase().includes(soilKey)) {
+                            soilSelect.selectedIndex = i;
+                            break;
+                        }
+                    }
+                }
+
+                // Set soil properties N, P, K, pH and check prediction
+                setSoilType();
+
+            } catch (err) {
+                console.error("[GeoSmart Agri] Error parsing response:", err);
+                soilResult.innerHTML = `<div style="color:#ef4444; font-size:0.85rem; font-weight:600; margin-top:0.75rem;">❌ Failed to parse response from server.</div>`;
             }
+        } else {
+            console.error("[GeoSmart Agri] Server returned error status code:", xhr.status);
+            soilResult.innerHTML = `<div style="color:#ef4444; font-size:0.85rem; font-weight:600; margin-top:0.75rem;">❌ Server error (${xhr.status}): Soil prediction failed.</div>`;
         }
+    };
 
-        // Set soil properties N, P, K, pH and check prediction
-        setSoilType();
+    xhr.onerror = function() {
+        console.error("[GeoSmart Agri] XHR network error occurred.");
+        soilResult.innerHTML = `<div style="color:#ef4444; font-size:0.85rem; font-weight:600; margin-top:0.75rem;">❌ Network error: Could not connect to the server.</div>`;
+    };
 
-    } catch (error) {
-        console.error(error);
-        soilResult.innerHTML = `<div style="color:#ef4444; font-size:0.85rem; font-weight:600;">❌ Soil classification server on port 5001 is offline. Check connection.</div>`;
-    }
+    xhr.send(formData);
 }
 
 document.getElementById("galleryInput").addEventListener("change", handleSoilImage);

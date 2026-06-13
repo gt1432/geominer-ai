@@ -35,7 +35,8 @@ app.get('*', (req, res) => {
     if (req.path.startsWith('/api/') || req.path.startsWith('/predict') ||
         req.path.startsWith('/predictions') || req.path.startsWith('/stats') ||
         req.path.startsWith('/occurrences') || req.path.startsWith('/geocode') ||
-        req.path.startsWith('/crop-predict') || req.path.startsWith('/rainfall')) {
+        req.path.startsWith('/crop-predict') || req.path.startsWith('/rainfall') ||
+        req.path.startsWith('/health') || req.path.startsWith('/model-status')) {
         return res.status(404).json({ error: `Route not found: ${req.method} ${req.path}` });
     }
     res.sendFile(path.join(frontendPath, 'index.html'));
